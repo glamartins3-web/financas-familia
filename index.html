@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meu Controle Financeiro Pro</title>
+    <title>Meu Controle Financeiro Online</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        body { background: #f0f2f5; padding-top: 70px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background: #f0f2f5; padding-top: 70px; font-family: 'Segoe UI', sans-serif; }
         .nav-top { background: #1a252f; padding: 12px; position: fixed; top: 0; width: 100%; z-index: 1000; display: flex; justify-content: center; gap: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.2); }
         .container-box { background: white; border-radius: 15px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
         .hidden { display: none; }
@@ -19,19 +19,18 @@
         .val-despesa { color: #e74c3c; font-weight: bold; }
         .status-pago { color: #27ae60; font-weight: bold; font-size: 0.8rem; }
         .status-pendente { color: #f39c12; font-weight: bold; font-size: 0.8rem; }
-        .data-pagamento { font-size: 0.65rem; color: #7f8c8d; display: block; }
-        .btn-edit { color: #3498db; cursor: pointer; border: none; background: none; font-size: 1.1rem; }
-        .btn-del { color: #e74c3c; cursor: pointer; border: none; background: none; font-size: 1.1rem; }
         label { font-size: 0.75rem; text-transform: uppercase; color: #7f8c8d; font-weight: bold; }
         .month-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(75px, 1fr)); gap: 8px; margin-top: 10px; }
         .btn-month { border: 1px solid #dee2e6; background: white; padding: 8px; border-radius: 8px; font-size: 0.8rem; font-weight: bold; }
         .btn-month.active { background: #1a252f; color: white; border-color: #1a252f; }
-        .tabela-totais { background-color: #f8f9fa; font-weight: bold; }
-        /* Ajuste do Filtro de Ano na Pag 2 */
         .filtro-ano-mini { width: auto; min-width: 80px; max-width: 100px; display: inline-block; height: 28px; font-size: 0.8rem; padding: 2px 5px; }
+        /* Indicador de salvamento */
+        #status-cloud { position: fixed; bottom: 10px; right: 10px; font-size: 0.7rem; padding: 5px 10px; border-radius: 20px; background: #eee; z-index: 2000; }
     </style>
 </head>
 <body>
+
+<div id="status-cloud">☁️ Sincronizado</div>
 
 <nav class="nav-top">
     <button class="btn btn-light btn-sm px-4 fw-bold" onclick="showPage('historia')">📊 HISTÓRICO</button>
@@ -44,22 +43,19 @@
             <div class="col-6 col-md-3"><label>📅 Filtrar Ano</label><select id="filtro-ano-hist" class="form-select" onchange="render()"></select></div>
             <div class="col-6 col-md-3"><label>🌓 Período</label>
                 <select id="filtro-semestre" class="form-select" onchange="render()">
-                    <option value="todos">Ano Inteiro</option>
-                    <option value="1">1º Semestre</option>
-                    <option value="2">2º Semestre</option>
+                    <option value="todos">Ano Inteiro</option><option value="1">1º Semestre</option><option value="2">2º Semestre</option>
                 </select>
             </div>
         </div>
     </div>
     <div class="container-box text-center">
-        <h5 class="fw-bold mb-3">📈 EVOLUÇÃO E PROJEÇÃO</h5>
+        <h5 class="fw-bold mb-3">📈 EVOLUÇÃO NO DRIVE</h5>
         <div style="height: 300px;"><canvas id="chartHist"></canvas></div>
     </div>
     <div class="container-box table-responsive">
         <table class="table table-hover align-middle">
             <thead class="table-dark"><tr><th>🗓️ Mês/Ano</th><th>📈 Receita</th><th>📉 Despesa</th><th>💰 Saldo</th></tr></thead>
             <tbody id="corpo-historia"></tbody>
-            <tfoot id="total-historia" class="tabela-totais"></tfoot>
         </table>
     </div>
 </div>
@@ -74,16 +70,6 @@
         <input type="hidden" id="mes-foco">
     </div>
 
-    <div class="container-box py-2 mb-3 bg-light">
-        <label class="d-block mb-2">💾 Manutenção de Dados (Backup)</label>
-        <div class="d-flex gap-2">
-            <button class="btn btn-primary btn-sm w-100 fw-bold" onclick="document.getElementById('inputImport').click()">📥 IMPORTAR</button>
-            <button class="btn btn-success btn-sm w-100 fw-bold" onclick="exportarExcel()">📗 EXCEL</button>
-            <button class="btn btn-secondary btn-sm w-100 fw-bold" onclick="exportarTXT()">📄 BACKUP</button>
-            <input type="file" id="inputImport" class="hidden" accept=".txt" onchange="importarDados(this)">
-        </div>
-    </div>
-
     <div class="row g-2 mb-3 text-uppercase fw-bold">
         <div class="col-4"><div class="card-resumo bg-receita"><small>Ganhos</small><div id="res-rec">R$ 0</div></div></div>
         <div class="col-4"><div class="card-resumo bg-despesa"><small>Gastos</small><div id="res-des">R$ 0</div></div></div>
@@ -91,7 +77,7 @@
     </div>
 
     <div class="container-box">
-        <input type="hidden" id="edit-id"><input type="hidden" id="edit-group">
+        <input type="hidden" id="edit-id">
         <div class="row g-2">
             <div class="col-6 col-md-2"><label>📅 Data</label><input type="date" id="f-data" class="form-control"></div>
             <div class="col-6 col-md-3"><label>📝 Descrição</label><input type="text" id="f-desc" class="form-control" placeholder="Ex: Mercado"></div>
@@ -99,35 +85,59 @@
             <div class="col-6 col-md-2"><label>⚙️ Tipo</label>
                 <select id="f-tipo" class="form-select"><option value="Receita">Receita</option><option value="Despesa" selected>Despesa</option></select>
             </div>
-            <div class="col-12 col-md-3 d-flex align-items-end"><button id="btn-main" class="btn btn-dark w-100 fw-bold" onclick="adicionar()">➕ INCLUIR</button></div>
+            <div class="col-12 col-md-3 d-flex align-items-end"><button id="btn-main" class="btn btn-dark w-100 fw-bold" onclick="adicionar()">➕ INCLUIR NO DRIVE</button></div>
             <div class="col-12 mt-2">
-                <input type="checkbox" id="f-rec-check" onchange="document.getElementById('box-parc').classList.toggle('hidden', !this.checked)"> 🔁 Parcelar / Recorrente?
-                <div id="box-parc" class="hidden mt-2 p-2 border rounded bg-light"><label>Quantidade de meses</label><input type="number" id="f-parc" class="form-control w-25" value="1"></div>
+                <input type="checkbox" id="f-rec-check" onchange="document.getElementById('box-parc').classList.toggle('hidden', !this.checked)"> 🔁 Parcelar?
+                <div id="box-parc" class="hidden mt-2 p-2 border rounded bg-light"><label>Meses</label><input type="number" id="f-parc" class="form-control w-25" value="1"></div>
             </div>
-            <div class="col-12 mt-2"><button class="btn btn-outline-primary btn-sm w-100 fw-bold" data-bs-toggle="modal" data-bs-target="#modalSalario">💰 LANÇAR SALÁRIO / ADIANTAMENTO</button></div>
         </div>
     </div>
 
     <div class="container-box table-responsive">
         <table class="table table-sm align-middle table-hover">
-            <thead class="table-light"><tr><th>Pago</th><th>Data</th><th>Valor</th><th>Status</th><th>Ações</th></tr></thead>
             <tbody id="corpo-itens" class="small"></tbody>
         </table>
     </div>
 </div>
 
-<div class="modal fade" id="modalSalario" tabindex="-1">
-  <div class="modal-dialog modal-sm"><div class="modal-content">
-      <div class="modal-header bg-primary text-white"><h5>💰 Entradas</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
-      <div class="modal-body"><label>💵 Salário (Dia 05)</label><input type="number" id="sal-05" class="form-control mb-3" placeholder="0.00"><label>💵 Adiantamento (Dia 20)</label><input type="number" id="sal-20" class="form-control" placeholder="0.00"></div>
-      <div class="modal-footer"><button class="btn btn-primary w-100" onclick="salvarSalario()" data-bs-dismiss="modal">SALVAR RECEITAS</button></div>
-  </div></div>
-</div>
-
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    let db = JSON.parse(localStorage.getItem('financas_pro_v6')) || [];
+    // --- PASSO 3: CONFIGURAÇÃO DO GOOGLE DRIVE ---
+    const URL_GOOGLE_SCRIPT = "https://script.google.com/macros/s/AKfycbwAPPjSGWDTPtO1FEJgSYJ-dAZbXgDy61GeKuxUc5WxdhWgsL5QUDYbuR_7CrGscjsk/exec";
+
+    let db = [];
     let chartH = null;
+
+    // Função para Salvar na Nuvem
+    async function salvarNoDrive() {
+        document.getElementById('status-cloud').innerText = "⏳ Salvando...";
+        try {
+            await fetch(URL_GOOGLE_SCRIPT, {
+                method: 'POST',
+                mode: 'no-cors', // Necessário para o Google Apps Script
+                body: JSON.stringify(db)
+            });
+            document.getElementById('status-cloud').innerText = "☁️ Sincronizado";
+        } catch (e) {
+            document.getElementById('status-cloud').innerText = "❌ Erro ao sincronizar";
+        }
+    }
+
+    // Função para Carregar da Nuvem
+    async function carregarDoDrive() {
+        document.getElementById('status-cloud').innerText = "⏳ Carregando Drive...";
+        try {
+            const response = await fetch(URL_GOOGLE_SCRIPT);
+            const dados = await response.json();
+            if (dados && dados.length > 0) {
+                db = dados;
+                render();
+            }
+            document.getElementById('status-cloud').innerText = "☁️ Online";
+        } catch (e) {
+            document.getElementById('status-cloud').innerText = "⚠️ Modo Offline";
+        }
+    }
 
     function initFilters() {
         const anoAtual = new Date().getFullYear();
@@ -168,47 +178,12 @@
         render();
     }
 
-    // --- FUNÇÕES DE IMPORTAÇÃO E EXPORTAÇÃO ---
-    function exportarExcel() {
-        let csv = "Data;Descricao;Valor;Tipo;Status;Data Registro Pagamento\n";
-        db.forEach(i => csv += `${i.data};${i.desc};${i.valor.toFixed(2)};${i.tipo};${i.pago?'Pago':'Pendente'};${i.dataPagto||'-'}\n`);
-        const blob = new Blob(["\ufeff" + csv], { type: 'text/csv' });
-        const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "financeiro_excel.csv"; a.click();
-    }
-
-    function exportarTXT() {
-        const blob = new Blob([JSON.stringify(db, null, 2)], { type: 'text/plain' });
-        const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "backup_financeiro.txt"; a.click();
-    }
-
-    function importarDados(input) {
-        const file = input.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            try {
-                const importado = JSON.parse(e.target.result);
-                if (Array.isArray(importado)) {
-                    if (confirm(`Deseja importar ${importado.length} registros? Isso substituirá seus dados atuais.`)) {
-                        db = importado;
-                        salvar();
-                        alert("Dados importados com sucesso!");
-                    }
-                } else { alert("Arquivo inválido."); }
-            } catch (err) { alert("Erro ao ler o arquivo. Certifique-se de importar o arquivo de BACKUP (.txt)"); }
-            input.value = ""; // Limpa o input
-        };
-        reader.readAsText(file);
-    }
-
-    // --- LÓGICA DE LANÇAMENTOS ---
     function adicionar() {
         const editId = document.getElementById('edit-id').value;
         const dataVal = document.getElementById('f-data').value;
         const descBase = document.getElementById('f-desc').value;
         const valorVal = parseFloat(document.getElementById('f-valor').value);
         const tipoVal = document.getElementById('f-tipo').value;
-        const isRec = document.getElementById('f-rec-check').checked;
         const numParc = parseInt(document.getElementById('f-parc').value) || 1;
 
         if (!dataVal || isNaN(valorVal)) return alert("Preencha Data e Valor!");
@@ -220,64 +195,37 @@
             for(let i=0; i < numParc; i++) {
                 let d = new Date(dataVal + "T00:00:00");
                 d.setMonth(d.getMonth() + i);
-                db.push({ id: Date.now() + i, data: d.toISOString().split('T')[0], desc: descBase + (isRec ? ` [${i+1}/${numParc}]` : ""), valor: valorVal, tipo: tipoVal, pago: false, dataPagto: null });
+                db.push({ id: Date.now() + i, data: d.toISOString().split('T')[0], desc: descBase + (numParc > 1 ? ` [${i+1}/${numParc}]` : ""), valor: valorVal, tipo: tipoVal, pago: false });
             }
         }
-        salvar(); limpar();
-    }
-
-    function salvarSalario() {
-        const v5 = parseFloat(document.getElementById('sal-05').value) || 0;
-        const v20 = parseFloat(document.getElementById('sal-20').value) || 0;
-        const mesBase = document.getElementById('mes-foco').value + "-";
-        if(v5 > 0) db.push({ id: Date.now()+1, data: mesBase+"05", desc: "Salário Mensal", valor: v5, tipo: "Receita", pago: true, dataPagto: "Automático" });
-        if(v20 > 0) db.push({ id: Date.now()+2, data: mesBase+"20", desc: "Adiantamento", valor: v20, tipo: "Receita", pago: true, dataPagto: "Automático" });
         salvar();
-    }
-
-    function editar(id) {
-        let item = db.find(x => x.id === id);
-        document.getElementById('edit-id').value = item.id;
-        document.getElementById('f-data').value = item.data;
-        document.getElementById('f-desc').value = item.desc.split(' [')[0];
-        document.getElementById('f-valor').value = item.valor;
-        document.getElementById('f-tipo').value = item.tipo;
-        document.getElementById('btn-main').innerText = "✏️ SALVAR";
-        window.scrollTo(0,0);
     }
 
     function togglePago(id) {
         let item = db.find(x => x.id === id);
         item.pago = !item.pago;
-        item.dataPagto = item.pago ? new Date().toLocaleString('pt-BR', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'}) : null;
         salvar();
     }
 
-    function salvar() { localStorage.setItem('financas_pro_v6', JSON.stringify(db)); render(); }
-    function limpar() { document.getElementById('edit-id').value = ""; document.getElementById('f-desc').value = ""; document.getElementById('f-valor').value = ""; document.getElementById('btn-main').innerText = "➕ INCLUIR"; }
     function deletar(id) { if(confirm("Excluir?")) { db = db.filter(x => x.id !== id); salvar(); } }
+
+    function salvar() {
+        localStorage.setItem('financas_pro_v6', JSON.stringify(db));
+        render();
+        salvarNoDrive(); // Envia para o Google Sheets
+    }
 
     function render() {
         const mesFoco = document.getElementById('mes-foco').value;
-        const anoH = document.getElementById('filtro-ano-hist').value;
-        const semH = document.getElementById('filtro-semestre').value;
         const corpoI = document.getElementById('corpo-itens');
         const corpoH = document.getElementById('corpo-historia');
-        const footH = document.getElementById('total-historia');
         corpoI.innerHTML = ""; corpoH.innerHTML = "";
-        let rMes = 0, dMes = 0, hist = {}, totR = 0, totD = 0;
+        let rMes = 0, dMes = 0, hist = {};
 
         db.sort((a,b) => new Date(a.data) - new Date(b.data)).forEach(item => {
             const mD = item.data.substring(0,7);
-            const aD = item.data.substring(0,4);
-            const mN = parseInt(item.data.substring(5,7));
-
-            if(aD === anoH) {
-                if(semH === "todos" || (semH === "1" && mN <= 6) || (semH === "2" && mN > 6)) {
-                    if(!hist[mD]) hist[mD] = {r:0, d:0};
-                    if(item.tipo === "Receita") hist[mD].r += item.valor; else hist[mD].d += item.valor;
-                }
-            }
+            if(!hist[mD]) hist[mD] = {r:0, d:0};
+            if(item.tipo === "Receita") hist[mD].r += item.valor; else hist[mD].d += item.valor;
 
             if(mD === mesFoco) {
                 if(item.tipo === "Receita") rMes += item.valor; else dMes += item.valor;
@@ -285,17 +233,15 @@
                     <td><input type="checkbox" class="form-check-input" ${item.pago?'checked':''} onclick="togglePago(${item.id})"></td>
                     <td><b>${item.data.split('-').reverse().join('/')}</b><br>${item.desc}</td>
                     <td class="${item.tipo==='Receita'?'val-receita':'val-despesa'}">R$ ${item.valor.toFixed(2)}</td>
-                    <td>${item.pago ? `<span class="status-pago">✅ PAGO</span><small class="data-pagamento">Em: ${item.dataPagto}</small>` : `<span class="status-pendente">⏳ PENDENTE</span>`}</td>
-                    <td><button class="btn-edit" onclick="editar(${item.id})">✏️</button><button class="btn-del" onclick="deletar(${item.id})">🗑️</button></td>
+                    <td><button class="btn btn-sm btn-outline-danger" onclick="deletar(${item.id})">🗑️</button></td>
                 </tr>`;
             }
         });
 
         Object.keys(hist).sort().reverse().forEach(m => {
-            const s = hist[m]; totR += s.r; totD += s.d;
-            corpoH.innerHTML += `<tr><td>🗓️ ${m}</td><td class="val-receita">R$ ${s.r.toFixed(2)}</td><td class="val-despesa">R$ ${s.d.toFixed(2)}</td><td class="fw-bold">R$ ${(s.r-s.d).toFixed(2)}</td></tr>`;
+            const s = hist[m];
+            corpoH.innerHTML += `<tr><td>${m}</td><td class="val-receita">R$ ${s.r.toFixed(2)}</td><td class="val-despesa">R$ ${s.d.toFixed(2)}</td><td class="fw-bold">R$ ${(s.r-s.d).toFixed(2)}</td></tr>`;
         });
-        footH.innerHTML = `<tr><td>SOMA PERÍODO</td><td class="val-receita">R$ ${totR.toFixed(2)}</td><td class="val-despesa">R$ ${totD.toFixed(2)}</td><td class="bg-dark text-white">R$ ${(totR-totD).toFixed(2)}</td></tr>`;
 
         document.getElementById('res-rec').innerText = "R$ " + rMes.toFixed(2);
         document.getElementById('res-des').innerText = "R$ " + dMes.toFixed(2);
@@ -306,7 +252,7 @@
             data: {
                 labels: Object.keys(hist).sort(),
                 datasets: [
-                    { type: 'line', label: 'Saldo', data: Object.keys(hist).sort().map(l => hist[l].r - hist[l].d), borderColor: '#2c3e50', tension: 0.3 },
+                    { type: 'line', label: 'Saldo', data: Object.keys(hist).sort().map(l => hist[l].r - hist[l].d), borderColor: '#2c3e50' },
                     { type: 'bar', label: 'Ganhos', data: Object.keys(hist).sort().map(l => hist[l].r), backgroundColor: '#27ae60' },
                     { type: 'bar', label: 'Gastos', data: Object.keys(hist).sort().map(l => hist[l].d), backgroundColor: '#e74c3c' }
                 ]
@@ -315,7 +261,11 @@
         });
     }
 
-    window.onload = () => { initFilters(); initMonthSelector(); };
+    window.onload = () => { 
+        initFilters(); 
+        initMonthSelector(); 
+        carregarDoDrive(); // Busca os dados do Google Drive ao abrir
+    };
 </script>
 </body>
 </html>
