@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minhas Finanças Online</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+    <style>
+        body { background: #f0f2f5; padding-top: 70px; font-family: 'Segoe UI', sans-serif; }
+        .nav-top { background: #1a252f; padding: 12px; position: fixed; top: 0; width: 100%; z-index: 1000; display: flex; justify-content: center; gap: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.2); }
+        .container-box { background: white; border-radius: 15px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+        .hidden { display: none; }
+        .card-resumo { border-radius: 12px; color: white; padding: 15px; text-align: center; }
+        .bg-receita { background: linear-gradient(135deg, #27ae60, #2ecc71); }
+        .bg-despesa { background: linear-gradient(135deg, #e74c3c, #ff7675); }
+        .bg-saldo { background: linear-gradient(135deg, #2c3e50, #34495e); }
+        .val-receita { color: #27ae60; font-weight: bold; }
+        .val-despesa { color: #e74c3c; font-weight: bold; }
+        .status-pago { color: #27ae60; font-weight: bold; font-size: 0.8rem; }
+        .status-pendente { color: #f39c12; font-weight: bold; font-size: 0.8rem; }
+        .data-pagamento { font-size: 0.65rem; color: #7f8c8d; display: block; }
+        .btn-edit, .btn-del { border: none; background: none; font-size: 1.1rem; }
+        .btn-edit { color: #3498db; } .btn-del { color: #e74c3c; }
+        label { font-size: 0.75rem; text-transform: uppercase; color: #7f8c8d; font-weight: bold; }
+        .month-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(75px, 1fr)); gap: 8px; margin-top: 10px; }
+        .btn-month { border: 1px solid #dee2e6; background: white; padding: 8px; border-radius: 8px; font-size: 0.8rem; font-weight: bold; }
+        .btn-month.active { background: #1a252f; color: white; border-color: #1a252f; }
+        .tabela-totais { background-color: #f8f9fa; font-weight: bold; }
+        .filtro-ano-mini { width: auto; min-width: 80px; max-width: 100px; display: inline-block; height: 28px; font-size: 0.8rem; padding: 2px 5px; }
+    </style>
+</head>
+<body>
+
+<nav class="nav-top">
+    <button class="btn btn-light btn-sm px-4 fw-bold" onclick="showPage('historia')">📊 HISTÓRICO</button>
+    <button class="btn btn-light btn-sm px-4 fw-bold" onclick="showPage('lancamentos')">💸 LANÇAMENTOS</button>
+</nav>
+
+<div id="pg-historia" class="container">
+    <div class="container-box">
+        <div class="row g-2 align-items-end">
+            <div class="col-6 col-md-3"><label>📅 Ano</label><select id="filtro-ano-hist" class="form-select" onchange="render()"></select></div>
+            <div class="col-6 col-md-3"><label>🌓 Período</label>
+                <select id="filtro-semestre" class="form-select" onchange="render()">
+                    <option value="todos">Ano Inteiro</option><option value="1">1º Semestre</option><option value="2">2º Semestre</option>
+                </select>
+            </div>
+        </div>
+    </div>
+    <div class="container-box text-center">
+        <h5 class="fw-bold mb-3">📈 EVOLUÇÃO E PROJEÇÃO</h5>
+        <div style="height: 300px;"><canvas id="chartHist"></canvas></div>
+    </div>
+    <div class="container-box table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-dark"><tr><th>🗓️ Mês/Ano</th><th>📈 Rec.</th><th>📉 Desp.</th><th>💰 Saldo</th></tr></thead>
+            <tbody id="corpo-historia"></tbody>
+            <tfoot id="total-historia" class="tabela-totais"></tfoot>
+        </table>
+    </div>
+</div>
+
+<div id="pg-lancamentos" class="container hidden">
+    <div class="container-box">
+        <div class="d-flex flex-column gap-1">
+            <label>🔍 Selecionar Mês e Ano</label>
+            <select id="f-ano-lanc" class="form-select filtro-ano-mini" onchange="initMonthSelector()"></select>
+        </div>
+        <div class="month-grid" id="month-selector"></div>
+        <input type="hidden" id="mes-foco">
+    </div>
+
+    <div class="container-box py-2 mb-3 bg-light">
+        <label class="d-block mb-2">💾 Manutenção de Dados</label>
+        <div class="d-flex gap-2">
+            <button class="btn btn-success btn-sm w-100 fw-bold" onclick="exportarExcel()">📗 EXCEL</button>
+            <button class="btn btn-secondary btn-sm w-100 fw-bold" onclick="exportarTXT()">📄 BACKUP</button>
+        </div>
+    </div>
+
+    <div class="row g-2 mb-3 text-uppercase fw-bold">
+        <div class="col-4"><div class="card-resumo bg-receita"><small>Ganhos</small><div id="res-rec">R$ 0</div></div></div>
+        <div class="col-4"><div class="card-resumo bg-despesa"><small>Gastos</small><div id="res-des">R$ 0</div></div></div>
+        <div class="col-4"><div class="card-resumo bg-saldo"><small>Sobra</small><div id="res-sal">R$ 0</div></div></div>
+    </div>
+
+    <div class="container-box">
+        <input type="hidden" id="edit-id">
+        <div class="row g-2">
+            <div class="col-6 col-md-2"><label>📅 Data</label><input type="date" id="f-data" class="form-control"></div>
+            <div class="col-6 col-md-3"><label>📝 Descrição</label><input type="text" id="f-desc" class="form-control"></div>
+            <div class="col-6 col-md-2"><label>💵 Valor</label><input type="number" id="f-valor" class="form-control"></div>
+            <div class="col-6 col-md-2"><label>⚙️ Tipo</label>
+                <select id="f-tipo" class="form-select"><option value="Receita">Receita</option><option value="Despesa" selected>Despesa</option></select>
+            </div>
+            <div class="col-12 col-md-3 d-flex align-items-end"><button id="btn-main" class="btn btn-dark w-100 fw-bold" onclick="adicionar()">➕ INCLUIR</button></div>
+            <div class="col-12 mt-2">
+                <input type="checkbox" id="f-rec-check" onchange="document.getElementById('box-parc').classList.toggle('hidden', !this.checked)"> 🔁 Parcelar?
+                <div id="box-parc" class="hidden mt-2 p-2 border rounded bg-light"><label>Meses</label><input type="number" id="f-parc" class="form-control w-25" value="1"></div>
+            </div>
+            <div class="col-12 mt-2"><button class="btn btn-outline-primary btn-sm w-100 fw-bold" data-bs-toggle="modal" data-bs-target="#modalSalario">💰 SALÁRIO RÁPIDO</button></div>
+        </div>
+    </div>
+
+    <div class="container-box table-responsive">
+        <table class="table table-sm align-middle table-hover">
+            <tbody id="corpo-itens" class="small"></tbody>
+        </table>
+    </div>
+</div>
+
+<div class="modal fade" id="modalSalario" tabindex="-1"><div class="modal-dialog modal-sm"><div class="modal-content">
+    <div class="modal-header bg-primary text-white"><h5>💰 Entradas</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+    <div class="modal-body"><label>Salário (05)</label><input type="number" id="sal-05" class="form-control mb-2"><label>Adiantamento (20)</label><input type="number" id="sal-20" class="form-control"></div>
+    <div class="modal-footer"><button class="btn btn-primary w-100" onclick="salvarSalario()" data-bs-dismiss="modal">SALVAR</button></div>
+</div></div></div>
+
+<script>
+    // --- CONFIGURAÇÃO DO FIREBASE (COLE SEUS DADOS AQUI) ---
+    const firebaseConfig = {
+        apiKey: "COLE_AQUI_SEU_API_KEY",
+        authDomain: "SEU_PROJETO.firebaseapp.com",
+        databaseURL: "https://SEU_PROJETO.firebaseio.com",
+        projectId: "SEU_PROJETO",
+        storageBucket: "SEU_PROJETO.appspot.com",
+        messagingSenderId: "ID_SENDER",
+        appId: "ID_APP"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+
+    let db = [];
+    let chartH = null;
+
+    // --- SINCRONIZAÇÃO EM TEMPO REAL ---
+    database.ref('transacoes').on('value', (snapshot) => {
+        const data = snapshot.val();
+        db = data ? Object.values(data) : [];
+        render();
+    });
+
+    function salvarDB() {
+        database.ref('transacoes').set(db);
+    }
+
+    // --- FUNÇÕES DE INTERFACE ---
+    function initFilters() {
+        const anoAtual = new Date().getFullYear();
+        const selHist = document.getElementById('filtro-ano-hist');
+        const selLanc = document.getElementById('f-ano-lanc');
+        [selHist, selLanc].forEach(s => {
+            s.innerHTML = "";
+            for(let i = anoAtual - 1; i <= anoAtual + 2; i++) {
+                s.innerHTML += `<option value="${i}" ${i === anoAtual ? 'selected' : ''}>${i}</option>`;
+            }
+        });
+    }
+
+    function initMonthSelector() {
+        const grid = document.getElementById('month-selector');
+        const ano = document.getElementById('f-ano-lanc').value;
+        const meses = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+        const mesAtual = new Date().getMonth();
+        grid.innerHTML = "";
+        meses.forEach((m, i) => {
+            const valor = `${ano}-${String(i+1).padStart(2, '0')}`;
+            grid.innerHTML += `<button class="btn-month ${i === mesAtual ? 'active' : ''}" onclick="setMesFoco('${valor}', this)">${m}</button>`;
+        });
+        document.getElementById('mes-foco').value = `${ano}-${String(mesAtual+1).padStart(2, '0')}`;
+        render();
+    }
+
+    function setMesFoco(v, b) {
+        document.querySelectorAll('.btn-month').forEach(x => x.classList.remove('active'));
+        b.classList.add('active');
+        document.getElementById('mes-foco').value = v;
+        render();
+    }
+
+    function showPage(p) {
+        document.getElementById('pg-historia').classList.toggle('hidden', p !== 'historia');
+        document.getElementById('pg-lancamentos').classList.toggle('hidden', p !== 'lancamentos');
+        render();
+    }
+
+    function adicionar() {
+        const editId = document.getElementById('edit-id').value;
+        const dataVal = document.getElementById('f-data').value;
+        const descBase = document.getElementById('f-desc').value;
+        const valorVal = parseFloat(document.getElementById('f-valor').value);
+        const tipoVal = document.getElementById('f-tipo').value;
+        const numParc = parseInt(document.getElementById('f-parc').value) || 1;
+
+        if (!dataVal || isNaN(valorVal)) return alert("Preencha Data e Valor!");
+
+        if (editId) {
+            let idx = db.findIndex(x => x.id == editId);
+            db[idx] = { ...db[idx], data: dataVal, desc: descBase, valor: valorVal, tipo: tipoVal };
+        } else {
+            for(let i=0; i<numParc; i++) {
+                let d = new Date(dataVal + "T00:00:00");
+                d.setMonth(d.getMonth() + i);
+                db.push({ id: Date.now()+i, data: d.toISOString().split('T')[0], desc: descBase + (numParc>1?` [${i+1}/${numParc}]` : ""), valor: valorVal, tipo: tipoVal, pago: false, dataPagto: null });
+            }
+        }
+        salvarDB(); limpar();
+    }
+
+    function salvarSalario() {
+        const v5 = parseFloat(document.getElementById('sal-05').value) || 0;
+        const v20 = parseFloat(document.getElementById('sal-20').value) || 0;
+        const mesBase = document.getElementById('mes-foco').value + "-";
+        if(v5 > 0) db.push({ id: Date.now()+1, data: mesBase+"05", desc: "Salário", valor: v5, tipo: "Receita", pago: true, dataPagto: "Automático" });
+        if(v20 > 0) db.push({ id: Date.now()+2, data: mesBase+"20", desc: "Adiantamento", valor: v20, tipo: "Receita", pago: true, dataPagto: "Automático" });
+        salvarDB();
+    }
+
+    function editar(id) {
+        let item = db.find(x => x.id === id);
+        document.getElementById('edit-id').value = item.id;
+        document.getElementById('f-data').value = item.data;
+        document.getElementById('f-desc').value = item.desc;
+        document.getElementById('f-valor').value = item.valor;
+        document.getElementById('f-tipo').value = item.tipo;
+        document.getElementById('btn-main').innerText = "✏️ SALVAR";
+        window.scrollTo(0,0);
+    }
+
+    function togglePago(id) {
+        let item = db.find(x => x.id === id);
+        item.pago = !item.pago;
+        item.dataPagto = item.pago ? new Date().toLocaleString('pt-BR', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'}) : null;
+        salvarDB();
+    }
+
+    function deletar(id) { if(confirm("Excluir?")) { db = db.filter(x => x.id !== id); salvarDB(); } }
+    function limpar() { document.getElementById('edit-id').value = ""; document.getElementById('f-desc').value = ""; document.getElementById('f-valor').value = ""; document.getElementById('btn-main').innerText = "➕ INCLUIR"; }
+
+    function render() {
+        const mesFoco = document.getElementById('mes-foco').value;
+        const anoH = document.getElementById('filtro-ano-hist').value;
+        const semH = document.getElementById('filtro-semestre').value;
+        const corpoI = document.getElementById('corpo-itens');
+        const corpoH = document.getElementById('corpo-historia');
+        corpoI.innerHTML = ""; corpoH.innerHTML = "";
+        let rMes = 0, dMes = 0, hist = {}, totR = 0, totD = 0;
+
+        db.sort((a,b) => new Date(a.data) - new Date(b.data)).forEach(item => {
+            const mD = item.data.substring(0,7);
+            const aD = item.data.substring(0,4);
+            const mN = parseInt(item.data.substring(5,7));
+
+            if(aD === anoH) {
+                if(semH === "todos" || (semH === "1" && mN <= 6) || (semH === "2" && mN > 6)) {
+                    if(!hist[mD]) hist[mD] = {r:0, d:0};
+                    if(item.tipo === "Receita") hist[mD].r += item.valor; else hist[mD].d += item.valor;
+                }
+            }
+
+            if(mD === mesFoco) {
+                if(item.tipo === "Receita") rMes += item.valor; else dMes += item.valor;
+                corpoI.innerHTML += `<tr>
+                    <td style="width: 40px"><input type="checkbox" class="form-check-input" ${item.pago?'checked':''} onclick="togglePago(${item.id})"></td>
+                    <td><b>${item.data.split('-').reverse().join('/')}</b><br>${item.desc}</td>
+                    <td class="${item.tipo==='Receita'?'val-receita':'val-despesa'}">R$ ${item.valor.toFixed(2)}</td>
+                    <td>${item.pago ? `<span class="status-pago">✅</span><small class="data-pagamento">${item.dataPagto}</small>` : `<span class="status-pendente">⏳</span>`}</td>
+                    <td style="width: 70px"><button class="btn-edit" onclick="editar(${item.id})">✏️</button><button class="btn-del" onclick="deletar(${item.id})">🗑️</button></td>
+                </tr>`;
+            }
+        });
+
+        Object.keys(hist).sort().reverse().forEach(m => {
+            const s = hist[m]; totR += s.r; totD += s.d;
+            corpoH.innerHTML += `<tr><td>${m}</td><td class="val-receita">${s.r.toFixed(2)}</td><td class="val-despesa">${s.d.toFixed(2)}</td><td class="fw-bold">${(s.r-s.d).toFixed(2)}</td></tr>`;
+        });
+        document.getElementById('total-historia').innerHTML = `<tr><td>SOMA</td><td class="val-receita">${totR.toFixed(2)}</td><td class="val-despesa">${totD.toFixed(2)}</td><td class="bg-dark text-white">${(totR-totD).toFixed(2)}</td></tr>`;
+
+        document.getElementById('res-rec').innerText = "R$ " + rMes.toFixed(2);
+        document.getElementById('res-des').innerText = "R$ " + dMes.toFixed(2);
+        document.getElementById('res-sal').innerText = "R$ " + (rMes - dMes).toFixed(2);
+
+        if(chartH) chartH.destroy();
+        chartH = new Chart(document.getElementById('chartHist'), {
+            data: { labels: Object.keys(hist).sort(), datasets: [{ type: 'line', label: 'Saldo', data: Object.keys(hist).sort().map(l => hist[l].r - hist[l].d), borderColor: '#2c3e50' }, { type: 'bar', label: 'Receita', data: Object.keys(hist).sort().map(l => hist[l].r), backgroundColor: '#27ae60' }, { type: 'bar', label: 'Despesa', data: Object.keys(hist).sort().map(l => hist[l].d), backgroundColor: '#e74c3c' }] },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+    }
+
+    function exportarExcel() {
+        let csv = "Data;Descricao;Valor;Tipo;Status;Data Registro Pagamento\n";
+        db.forEach(i => csv += `${i.data};${i.desc};${i.valor.toFixed(2)};${i.tipo};${i.pago?'Pago':'Pendente'};${i.dataPagto||'-'}\n`);
+        const blob = new Blob(["\ufeff" + csv], { type: 'text/csv' });
+        const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "financeiro.csv"; a.click();
+    }
+    function exportarTXT() {
+        const blob = new Blob([JSON.stringify(db, null, 2)], { type: 'text/plain' });
+        const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "backup.txt"; a.click();
+    }
+
+    window.onload = () => { initFilters(); initMonthSelector(); };
+</script>
+</body>
+</html>
