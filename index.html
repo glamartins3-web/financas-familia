@@ -28,7 +28,6 @@
         .btn-month.active { background: #1a252f; color: white; border-color: #1a252f; }
         .tabela-totais { background-color: #f8f9fa; font-weight: bold; }
         .badge-user { font-size: 0.7rem; background: #e9ecef; color: #495057; padding: 2px 5px; border-radius: 4px; }
-        /* Tela de Login */
         #tela-login { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #1a252f; z-index: 9999; display: flex; align-items: center; justify-content: center; }
         .login-box { background: white; padding: 30px; border-radius: 15px; width: 90%; max-width: 350px; text-align: center; }
     </style>
@@ -80,21 +79,35 @@
 
     <div id="pg-lancamentos" class="container hidden">
         <div class="container-box">
-            <div class="d-flex flex-column gap-1">
-                <label>🔍 Selecionar Mês e Ano</label>
-                <select id="f-ano-lanc" class="form-select w-auto" onchange="initMonthSelector()"></select>
+            <div class="d-flex align-items-center gap-2">
+                <label class="mb-0">🔍 Selecionar Mês e Ano</label>
+                <select id="f-ano-lanc" class="form-select form-select-sm w-auto" onchange="initMonthSelector()"></select>
             </div>
             <div class="month-grid" id="month-selector"></div>
             <input type="hidden" id="mes-foco">
         </div>
 
-        <div class="container-box py-2 mb-3 bg-light">
-            <label class="d-block mb-2">💾 Manutenção de Dados (Backup)</label>
-            <div class="d-flex gap-2">
-                <button class="btn btn-primary btn-sm w-100 fw-bold" onclick="document.getElementById('inputImport').click()">📥 IMPORTAR</button>
-                <button class="btn btn-success btn-sm w-100 fw-bold" onclick="exportarExcel()">📗 EXCEL</button>
-                <button class="btn btn-secondary btn-sm w-100 fw-bold" onclick="exportarTXT()">📄 BACKUP</button>
-                <input type="file" id="inputImport" class="hidden" accept=".txt" onchange="importarDados(this)">
+        <div class="row g-3 mb-3">
+            <div class="col-md-6">
+                <div class="container-box py-2 h-100 bg-light mb-0">
+                    <label class="d-block mb-2">💾 Manutenção de Dados (Backup)</label>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-primary btn-sm w-100 fw-bold" onclick="document.getElementById('inputImport').click()">📥 IMPORTAR</button>
+                        <button class="btn btn-success btn-sm w-100 fw-bold" onclick="exportarExcel()">📗 EXCEL</button>
+                        <button class="btn btn-secondary btn-sm w-100 fw-bold" onclick="exportarTXT()">📄 BACKUP</button>
+                        <input type="file" id="inputImport" class="hidden" accept=".txt" onchange="importarDados(this)">
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="container-box py-2 h-100 bg-white border mb-0">
+                    <label class="d-block mb-1">📊 Status de Pagamentos</label>
+                    <div class="d-flex flex-column">
+                        <div class="fw-bold fs-5" id="stat-percent">📊 STATUS: 0%</div>
+                        <div class="small"><span class="text-success fw-bold">✅ Pago:</span> <span id="stat-pago">R$ 0.00</span></div>
+                        <div class="small"><span class="text-warning fw-bold">⏳ Falta:</span> <span id="stat-falta">R$ 0.00</span></div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -109,7 +122,7 @@
             <input type="hidden" id="edit-group">
             <div class="row g-2">
                 <div class="col-6 col-md-2"><label>📅 Data</label><input type="date" id="f-data" class="form-control"></div>
-                <div class="col-6 col-md-3"><label>📝 Descrição</label><input type="text" id="f-desc" class="form-control" placeholder="Ex: Mercado"></div>
+                <div class="col-6 col-md-3"><label>📝 Descrição</label><input type="text" id="f-desc" class="form-control" placeholder="Ex: IPVA"></div>
                 <div class="col-6 col-md-2"><label>💵 Valor</label><input type="number" id="f-valor" class="form-control" placeholder="0.00"></div>
                 <div class="col-6 col-md-2"><label>⚙️ Tipo</label>
                     <select id="f-tipo" class="form-select"><option value="Receita">Receita</option><option value="Despesa" selected>Despesa</option></select>
@@ -117,7 +130,7 @@
                 <div class="col-12 col-md-3 d-flex align-items-end"><button id="btn-main" class="btn btn-dark w-100 fw-bold" onclick="adicionar()">➕ INCLUIR</button></div>
                 <div class="col-12 mt-2">
                     <input type="checkbox" id="f-rec-check" onchange="document.getElementById('box-parc').classList.toggle('hidden', !this.checked)"> 🔁 Parcelar / Recorrente?
-                    <div id="box-parc" class="hidden mt-2 p-2 border rounded bg-light"><label>Quantidade de meses</label><input type="number" id="f-parc" class="form-control w-25" value="1"></div>
+                    <div id="box-parc" class="hidden mt-2 p-2 border rounded bg-light"><label>Quantidade total de parcelas</label><input type="number" id="f-parc" class="form-control w-25" value="1"></div>
                 </div>
                 <div class="col-12 mt-2"><button class="btn btn-outline-primary btn-sm w-100 fw-bold" data-bs-toggle="modal" data-bs-target="#modalSalario">💰 LANÇAR SALÁRIO / ADIANTAMENTO</button></div>
             </div>
@@ -156,7 +169,7 @@
             userNow = u; sessionStorage.setItem('user_fin', u);
             document.getElementById('tela-login').classList.add('hidden');
             document.getElementById('app-content').classList.remove('hidden');
-            render();
+            initFilters(); initMonthSelector(); render();
         } else { document.getElementById('login-error').classList.remove('hidden'); }
     }
     function logout() { sessionStorage.clear(); location.reload(); }
@@ -202,41 +215,56 @@
         const valor = parseFloat(document.getElementById('f-valor').value);
         const tipo = document.getElementById('f-tipo').value;
         const isRec = document.getElementById('f-rec-check').checked;
-        const qtd = parseInt(document.getElementById('f-parc').value) || 1;
+        const novaQtdTotal = parseInt(document.getElementById('f-parc').value) || 1;
 
         if (!data || isNaN(valor)) return alert("Preencha Data e Valor!");
 
-        if (id) {
-            if (gid && gid !== "null") {
-                if (confirm("Deseja reajustar todo este grupo recorrente? Isso atualizará/recriará as parcelas.")) {
-                    db = db.filter(x => x.groupId != gid);
-                    const newGid = "G" + Date.now();
-                    for(let i=0; i<qtd; i++){
-                        let d = new Date(data + "T00:00:00"); d.setMonth(d.getMonth() + i);
-                        db.push({ id: Date.now()+i, groupId: newGid, data: d.toISOString().split('T')[0], desc: desc + (qtd>1?` [${i+1}/${qtd}]`:""), valor, tipo, pago: false, user: userNow });
+        if (id && gid && gid !== "null") {
+            if (confirm("Deseja aplicar as mudanças ao grupo de parcelas futuras?")) {
+                let grupoCompleto = db.filter(x => x.groupId == gid).sort((a,b) => new Date(a.data) - new Date(b.data));
+                let indexAtualNoGrupo = grupoCompleto.findIndex(x => x.id == id);
+                let numeroParcelaAtual = indexAtualNoGrupo + 1;
+
+                if (novaQtdTotal < numeroParcelaAtual) { return alert("Quantidade total inválida!"); }
+
+                for (let i = 0; i < novaQtdTotal; i++) {
+                    let d = new Date(data + "T00:00:00");
+                    d.setMonth(d.getMonth() + (i - indexAtualNoGrupo));
+                    let dataString = d.toISOString().split('T')[0];
+                    let descFormat = desc + ` [${i+1}/${novaQtdTotal}]`;
+
+                    if (grupoCompleto[i]) {
+                        let idxNoDb = db.findIndex(x => x.id == grupoCompleto[i].id);
+                        db[idxNoDb] = { ...db[idxNoDb], data: dataString, desc: descFormat, valor, tipo, user: userNow };
+                    } else {
+                        db.push({ id: Date.now() + i, groupId: gid, data: dataString, desc: descFormat, valor, tipo, pago: false, user: userNow });
                     }
-                } else {
-                    let idx = db.findIndex(x => x.id == id);
-                    db[idx] = {...db[idx], data, desc, valor, tipo, user: userNow };
+                }
+                if (grupoCompleto.length > novaQtdTotal) {
+                    let idsParaRemover = grupoCompleto.slice(novaQtdTotal).map(x => x.id);
+                    db = db.filter(x => !idsParaRemover.includes(x.id));
                 }
             } else {
                 let idx = db.findIndex(x => x.id == id);
-                if (isRec) {
-                    db.splice(idx, 1);
-                    const newGid = "G" + Date.now();
-                    for(let i=0; i<qtd; i++){
-                        let d = new Date(data + "T00:00:00"); d.setMonth(d.getMonth() + i);
-                        db.push({ id: Date.now()+i, groupId: newGid, data: d.toISOString().split('T')[0], desc: desc + ` [${i+1}/${qtd}]`, valor, tipo, pago: false, user: userNow });
-                    }
-                } else {
-                    db[idx] = {...db[idx], data, desc, valor, tipo, user: userNow };
+                db[idx] = { ...db[idx], data, desc, valor, tipo, user: userNow };
+            }
+        } else if (id) {
+            let idx = db.findIndex(x => x.id == id);
+            if (isRec) {
+                db.splice(idx, 1);
+                const newGid = "G" + Date.now();
+                for(let i=0; i<novaQtdTotal; i++){
+                    let d = new Date(data + "T00:00:00"); d.setMonth(d.getMonth() + i);
+                    db.push({ id: Date.now()+i, groupId: newGid, data: d.toISOString().split('T')[0], desc: desc + ` [${i+1}/${novaQtdTotal}]`, valor, tipo, pago: false, user: userNow });
                 }
+            } else {
+                db[idx] = { ...db[idx], data, desc, valor, tipo, user: userNow };
             }
         } else {
             const newGid = isRec ? "G" + Date.now() : null;
-            for(let i=0; i<qtd; i++){
+            for(let i=0; i<novaQtdTotal; i++){
                 let d = new Date(data + "T00:00:00"); d.setMonth(d.getMonth() + i);
-                db.push({ id: Date.now()+i, groupId: newGid, data: d.toISOString().split('T')[0], desc: desc + (isRec?` [${i+1}/${qtd}]`:""), valor, tipo, pago: false, user: userNow });
+                db.push({ id: Date.now()+i, groupId: newGid, data: d.toISOString().split('T')[0], desc: desc + (isRec?` [${i+1}/${novaQtdTotal}]`:""), valor, tipo, pago: false, user: userNow });
             }
         }
         salvar(); limpar();
@@ -250,15 +278,15 @@
         document.getElementById('f-desc').value = it.desc.split(' [')[0];
         document.getElementById('f-valor').value = it.valor;
         document.getElementById('f-tipo').value = it.tipo;
-        
-        const bRec = document.getElementById('f-rec-check');
-        const bQtd = document.getElementById('f-parc');
         if (it.groupId) {
-            const count = db.filter(x => x.groupId == it.groupId).length;
-            bRec.checked = true; bQtd.value = count;
+            const grupo = db.filter(x => x.groupId == it.groupId);
+            document.getElementById('f-rec-check').checked = true;
+            document.getElementById('f-parc').value = grupo.length;
             document.getElementById('box-parc').classList.remove('hidden');
-        } else { bRec.checked = false; document.getElementById('box-parc').classList.add('hidden'); }
-
+        } else { 
+            document.getElementById('f-rec-check').checked = false; 
+            document.getElementById('box-parc').classList.add('hidden'); 
+        }
         const btn = document.getElementById('btn-main');
         btn.innerText = "✏️ SALVAR"; btn.classList.replace('btn-dark', 'btn-success');
         window.scrollTo(0,0);
@@ -305,6 +333,9 @@
         if(!cI) return;
         cI.innerHTML = ""; cH.innerHTML = "";
         let rM = 0, dM = 0, hist = {}, tR = 0, tD = 0;
+        
+        // Variaveis para o Status
+        let totalDespesaMes = 0, pagoMes = 0, qtdPagas = 0;
 
         db.sort((a,b) => new Date(a.data) - new Date(b.data)).forEach(it => {
             const mD = it.data.substring(0,7);
@@ -319,7 +350,16 @@
             }
 
             if(mD === mesF) {
-                if(it.tipo === "Receita") rM += it.valor; else dM += it.valor;
+                if(it.tipo === "Receita") {
+                    rM += it.valor;
+                } else {
+                    dM += it.valor;
+                    totalDespesaMes += it.valor;
+                    if(it.pago) { 
+                        pagoMes += it.valor; 
+                        qtdPagas++; 
+                    }
+                }
                 cI.innerHTML += `<tr>
                     <td><input type="checkbox" class="form-check-input" ${it.pago?'checked':''} onclick="togglePago(${it.id})"></td>
                     <td><b>${it.data.split('-').reverse().join('/')}</b><br>${it.desc}</td>
@@ -330,6 +370,12 @@
                 </tr>`;
             }
         });
+
+        // Atualiza UI de Status
+        const perc = totalDespesaMes > 0 ? Math.round((pagoMes / totalDespesaMes) * 100) : 0;
+        document.getElementById('stat-percent').innerText = `📊 STATUS: ${perc}%`;
+        document.getElementById('stat-pago').innerText = `R$ ${pagoMes.toFixed(2)} (${qtdPagas})`;
+        document.getElementById('stat-falta').innerText = `R$ ${(totalDespesaMes - pagoMes).toFixed(2)}`;
 
         Object.keys(hist).sort().reverse().forEach(m => {
             const s = hist[m]; tR += s.r; tD += s.d;
