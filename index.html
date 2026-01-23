@@ -93,7 +93,7 @@
     </div>
 
     <div class="container-box">
-        <input type="hidden" id="edit-id"><input type="hidden" id="edit-group">
+        <input type="hidden" id="edit-id">
         <div class="row g-2">
             <div class="col-6 col-md-2"><label>📅 Data</label><input type="date" id="f-data" class="form-control"></div>
             <div class="col-6 col-md-3"><label>📝 Descrição</label><input type="text" id="f-desc" class="form-control" placeholder="Ex: Mercado"></div>
@@ -218,16 +218,23 @@
         if (!dataVal || isNaN(valorVal)) return alert("Preencha Data e Valor!");
 
         if (editId) {
+            // Edição: Atualiza apenas o item específico selecionado
             let index = db.findIndex(x => x.id == editId);
-            db[index] = { ...db[index], data: dataVal, desc: descBase, valor: valorVal, tipo: tipoVal };
+            if (index !== -1) {
+                db[index].data = dataVal;
+                db[index].desc = descBase;
+                db[index].valor = valorVal;
+                db[index].tipo = tipoVal;
+            }
         } else {
+            // Novo lançamento (com ou sem recorrência)
             for(let i=0; i < numParc; i++) {
                 let d = new Date(dataVal + "T00:00:00");
                 d.setMonth(d.getMonth() + i);
                 db.push({ 
                     id: Date.now() + i, 
                     data: d.toISOString().split('T')[0], 
-                    desc: descBase + (isRec ? ` [${i+1}/${numParc}]` : ""), 
+                    desc: descBase + (numParc > 1 ? ` [${i+1}/${numParc}]` : ""), 
                     valor: valorVal, 
                     tipo: tipoVal, 
                     pago: false, 
@@ -254,7 +261,13 @@
         document.getElementById('f-desc').value = item.desc.split(' [')[0];
         document.getElementById('f-valor').value = item.valor;
         document.getElementById('f-tipo').value = item.tipo;
-        document.getElementById('btn-main').innerText = "✏️ SALVAR";
+        
+        // Mudar botão para VERDE na edição
+        const btn = document.getElementById('btn-main');
+        btn.innerText = "✏️ SALVAR ALTERAÇÃO";
+        btn.classList.remove('btn-dark');
+        btn.classList.add('btn-success');
+        
         window.scrollTo(0,0);
     }
 
@@ -271,7 +284,20 @@
         salvarNoDrive();
     }
 
-    function limpar() { document.getElementById('edit-id').value = ""; document.getElementById('f-desc').value = ""; document.getElementById('f-valor').value = ""; document.getElementById('btn-main').innerText = "➕ INCLUIR"; }
+    function limpar() { 
+        document.getElementById('edit-id').value = ""; 
+        document.getElementById('f-desc').value = ""; 
+        document.getElementById('f-valor').value = ""; 
+        
+        const btn = document.getElementById('btn-main');
+        btn.innerText = "➕ INCLUIR"; 
+        btn.classList.remove('btn-success');
+        btn.classList.add('btn-dark');
+        
+        document.getElementById('f-rec-check').checked = false;
+        document.getElementById('box-parc').classList.add('hidden');
+        document.getElementById('f-parc').value = 1;
+    }
     
     function deletar(id) { if(confirm("Excluir?")) { db = db.filter(x => x.id !== id); salvar(); } }
 
