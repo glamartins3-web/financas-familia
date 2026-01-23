@@ -28,7 +28,6 @@
         .btn-month.active { background: #1a252f; color: white; border-color: #1a252f; }
         .tabela-totais { background-color: #f8f9fa; font-weight: bold; }
         .filtro-ano-mini { width: auto; min-width: 80px; max-width: 100px; display: inline-block; height: 28px; font-size: 0.8rem; padding: 2px 5px; }
-        /* Indicador de Status Online */
         #status-nuvem { position: fixed; bottom: 10px; right: 10px; z-index: 2000; font-size: 0.7rem; padding: 4px 8px; border-radius: 10px; background: rgba(255,255,255,0.8); border: 1px solid #ccc; }
     </style>
 </head>
@@ -129,13 +128,11 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    // --- CONFIGURAÇÃO GOOGLE DRIVE ---
     const URL_GOOGLE_SCRIPT = "https://script.google.com/macros/s/AKfycbwAPPjSGWDTPtO1FEJgSYJ-dAZbXgDy61GeKuxUc5WxdhWgsL5QUDYbuR_7CrGscjsk/exec";
 
     let db = [];
     let chartH = null;
 
-    // Sincronização: Salvar no Google Sheets
     async function salvarNoDrive() {
         document.getElementById('status-nuvem').innerText = "⏳ Sincronizando...";
         try {
@@ -150,14 +147,16 @@
         }
     }
 
-    // Sincronização: Carregar do Google Sheets
     async function carregarDoDrive() {
         document.getElementById('status-nuvem').innerText = "⏳ Lendo Drive...";
         try {
             const res = await fetch(URL_GOOGLE_SCRIPT);
             const dados = await res.json();
             if (Array.isArray(dados)) {
-                db = dados;
+                db = dados.map(item => ({
+                    ...item,
+                    data: typeof item.data === 'string' ? item.data.split('T')[0] : item.data
+                }));
                 render();
             }
             document.getElementById('status-nuvem').innerText = "☁️ Online";
@@ -225,7 +224,15 @@
             for(let i=0; i < numParc; i++) {
                 let d = new Date(dataVal + "T00:00:00");
                 d.setMonth(d.getMonth() + i);
-                db.push({ id: Date.now() + i, data: d.toISOString().split('T')[0], desc: descBase + (isRec ? ` [${i+1}/${numParc}]` : ""), valor: valorVal, tipo: tipoVal, pago: false, dataPagto: null });
+                db.push({ 
+                    id: Date.now() + i, 
+                    data: d.toISOString().split('T')[0], 
+                    desc: descBase + (isRec ? ` [${i+1}/${numParc}]` : ""), 
+                    valor: valorVal, 
+                    tipo: tipoVal, 
+                    pago: false, 
+                    dataPagto: null 
+                });
             }
         }
         salvar(); limpar();
@@ -243,7 +250,7 @@
     function editar(id) {
         let item = db.find(x => x.id === id);
         document.getElementById('edit-id').value = item.id;
-        document.getElementById('f-data').value = item.data;
+        document.getElementById('f-data').value = item.data.split('T')[0];
         document.getElementById('f-desc').value = item.desc.split(' [')[0];
         document.getElementById('f-valor').value = item.valor;
         document.getElementById('f-tipo').value = item.tipo;
@@ -261,7 +268,7 @@
     function salvar() { 
         localStorage.setItem('financas_pro_v6', JSON.stringify(db)); 
         render(); 
-        salvarNoDrive(); // Envio para a planilha
+        salvarNoDrive();
     }
 
     function limpar() { document.getElementById('edit-id').value = ""; document.getElementById('f-desc').value = ""; document.getElementById('f-valor').value = ""; document.getElementById('btn-main').innerText = "➕ INCLUIR"; }
@@ -279,9 +286,10 @@
         let rMes = 0, dMes = 0, hist = {}, totR = 0, totD = 0;
 
         db.sort((a,b) => new Date(a.data) - new Date(b.data)).forEach(item => {
-            const mD = item.data.substring(0,7);
-            const aD = item.data.substring(0,4);
-            const mN = parseInt(item.data.substring(5,7));
+            const dataLimpa = item.data.split('T')[0];
+            const mD = dataLimpa.substring(0,7);
+            const aD = dataLimpa.substring(0,4);
+            const mN = parseInt(dataLimpa.substring(5,7));
 
             if(aD === anoH) {
                 if(semH === "todos" || (semH === "1" && mN <= 6) || (semH === "2" && mN > 6)) {
@@ -294,7 +302,7 @@
                 if(item.tipo === "Receita") rMes += item.valor; else dMes += item.valor;
                 corpoI.innerHTML += `<tr>
                     <td><input type="checkbox" class="form-check-input" ${item.pago?'checked':''} onclick="togglePago(${item.id})"></td>
-                    <td><b>${item.data.split('-').reverse().join('/')}</b><br>${item.desc}</td>
+                    <td><b>${dataLimpa.split('-').reverse().join('/')}</b><br>${item.desc}</td>
                     <td class="${item.tipo==='Receita'?'val-receita':'val-despesa'}">R$ ${item.valor.toFixed(2)}</td>
                     <td>${item.pago ? `<span class="status-pago">✅ PAGO</span><small class="data-pagamento">Em: ${item.dataPagto}</small>` : `<span class="status-pendente">⏳ PENDENTE</span>`}</td>
                     <td><button class="btn-edit" onclick="editar(${item.id})">✏️</button><button class="btn-del" onclick="deletar(${item.id})">🗑️</button></td>
@@ -304,7 +312,7 @@
 
         Object.keys(hist).sort().reverse().forEach(m => {
             const s = hist[m]; totR += s.r; totD += s.d;
-            corpoH.innerHTML += `<tr><td>🗓️ ${m}</td><td class="val-receita">R$ ${s.r.toFixed(2)}</td><td class="val-despesa">R$ ${s.d.toFixed(2)}</td><td class="fw-bold">R$ ${(s.r-s.d).toFixed(2)}</td></tr>`;
+            corpoH.innerHTML += `<tr><td>🗓️ ${m.split('-').reverse().join('/')}</td><td class="val-receita">R$ ${s.r.toFixed(2)}</td><td class="val-despesa">R$ ${s.d.toFixed(2)}</td><td class="fw-bold">R$ ${(s.r-s.d).toFixed(2)}</td></tr>`;
         });
         footH.innerHTML = `<tr><td>SOMA PERÍODO</td><td class="val-receita">R$ ${totR.toFixed(2)}</td><td class="val-despesa">R$ ${totD.toFixed(2)}</td><td class="bg-dark text-white">R$ ${(totR-totD).toFixed(2)}</td></tr>`;
 
@@ -326,10 +334,9 @@
         });
     }
 
-    // Funções de Backup Local (Mantidas conforme original)
     function exportarExcel() {
         let csv = "Data;Descricao;Valor;Tipo;Status;Data Registro Pagamento\n";
-        db.forEach(i => csv += `${i.data};${i.desc};${i.valor.toFixed(2)};${i.tipo};${i.pago?'Pago':'Pendente'};${i.dataPagto||'-'}\n`);
+        db.forEach(i => csv += `${i.data.split('T')[0]};${i.desc};${i.valor.toFixed(2)};${i.tipo};${i.pago?'Pago':'Pendente'};${i.dataPagto||'-'}\n`);
         const blob = new Blob(["\ufeff" + csv], { type: 'text/csv' });
         const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "financeiro_excel.csv"; a.click();
     }
@@ -360,7 +367,7 @@
     window.onload = () => { 
         initFilters(); 
         initMonthSelector(); 
-        carregarDoDrive(); // Puxa os dados da nuvem ao iniciar
+        carregarDoDrive();
     };
 </script>
 </body>
