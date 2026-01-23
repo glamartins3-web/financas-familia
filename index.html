@@ -30,6 +30,10 @@
         .badge-user { font-size: 0.7rem; background: #e9ecef; color: #495057; padding: 2px 5px; border-radius: 4px; }
         #tela-login { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #1a252f; z-index: 9999; display: flex; align-items: center; justify-content: center; }
         .login-box { background: white; padding: 30px; border-radius: 15px; width: 90%; max-width: 350px; text-align: center; }
+        
+        /* Estilos Novos para o Painel de Status */
+        .status-texto { font-size: 0.85rem; font-weight: bold; margin-bottom: 2px; }
+        .status-valor { font-size: 0.9rem; font-weight: normal; }
     </style>
 </head>
 <body>
@@ -87,13 +91,27 @@
             <input type="hidden" id="mes-foco">
         </div>
 
-        <div class="container-box py-2 mb-3 bg-light">
-            <label class="d-block mb-2">💾 Manutenção de Dados (Backup)</label>
-            <div class="d-flex gap-2">
-                <button class="btn btn-primary btn-sm w-100 fw-bold" onclick="document.getElementById('inputImport').click()">📥 IMPORTAR</button>
-                <button class="btn btn-success btn-sm w-100 fw-bold" onclick="exportarExcel()">📗 EXCEL</button>
-                <button class="btn btn-secondary btn-sm w-100 fw-bold" onclick="exportarTXT()">📄 BACKUP</button>
-                <input type="file" id="inputImport" class="hidden" accept=".txt" onchange="importarDados(this)">
+        <div class="row g-2 mb-3">
+            <div class="col-md-6">
+                <div class="container-box py-2 h-100 bg-light mb-0">
+                    <label class="d-block mb-2">💾 Manutenção de Dados (Backup)</label>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-primary btn-sm w-100 fw-bold" onclick="document.getElementById('inputImport').click()">📥 IMPORTAR</button>
+                        <button class="btn btn-success btn-sm w-100 fw-bold" onclick="exportarExcel()">📗 EXCEL</button>
+                        <button class="btn btn-secondary btn-sm w-100 fw-bold" onclick="exportarTXT()">📄 BACKUP</button>
+                        <input type="file" id="inputImport" class="hidden" accept=".txt" onchange="importarDados(this)">
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="container-box py-2 h-100 mb-0 border-start border-4 border-primary">
+                    <div class="status-texto">📊 STATUS: <span id="stat-porcent">0%</span></div>
+                    <div class="progress mb-2" style="height: 8px;">
+                        <div id="stat-bar" class="progress-bar bg-primary" role="progressbar" style="width: 0%"></div>
+                    </div>
+                    <div class="status-texto text-success">✅ Pago: <span id="stat-pago" class="status-valor">R$ 0.00 (0)</span></div>
+                    <div class="status-texto text-warning">⏳ Falta: <span id="stat-falta" class="status-valor">R$ 0.00</span></div>
+                </div>
             </div>
         </div>
 
@@ -141,7 +159,6 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    // URL CONFIGURADA CONFORME SOLICITADO
     const URL_GOOGLE_SCRIPT = "https://script.google.com/macros/s/AKfycbxfrfSxrBvOXPRdJWS7FKPPsqnznsM-Wsd2z-X6jRFS020h8L9MC_C1CpbRdFReDhYa/exec";
     const USUARIOS_PERMITIDOS = { "admin": "123", "glauber": "1912", "suelen": "1009" };
 
@@ -296,7 +313,6 @@
     function salvar() { 
         localStorage.setItem('financas_pro_v6', JSON.stringify(db)); 
         render(); 
-        // ENVIO PARA O GOOGLE SHEETS
         fetch(URL_GOOGLE_SCRIPT, { 
             method: 'POST', 
             mode: 'no-cors', 
@@ -323,20 +339,36 @@
         const fH = document.getElementById('total-historia');
         if(!cI) return;
         cI.innerHTML = ""; cH.innerHTML = "";
+        
         let rM = 0, dM = 0, hist = {}, tR = 0, tD = 0;
+        let vPagoMês = 0, vFaltaMês = 0, qtdPagoMês = 0;
 
         db.sort((a,b) => new Date(a.data) - new Date(b.data)).forEach(it => {
             const mD = it.data.substring(0,7);
             const aD = it.data.substring(0,4);
             const mN = parseInt(it.data.substring(5,7));
+            
             if(aD === anoH) {
                 if(semH === "todos" || (semH === "1" && mN <= 6) || (semH === "2" && mN > 6)) {
                     if(!hist[mD]) hist[mD] = {r:0, d:0};
                     if(it.tipo === "Receita") hist[mD].r += it.valor; else hist[mD].d += it.valor;
                 }
             }
+            
             if(mD === mesF) {
-                if(it.tipo === "Receita") rM += it.valor; else dM += it.valor;
+                if(it.tipo === "Receita") {
+                    rM += it.valor;
+                } else {
+                    dM += it.valor;
+                    // Cálculo para o painel de Status (Somente Despesas)
+                    if(it.pago) {
+                        vPagoMês += it.valor;
+                        qtdPagoMês++;
+                    } else {
+                        vFaltaMês += it.valor;
+                    }
+                }
+                
                 cI.innerHTML += `<tr>
                     <td><input type="checkbox" class="form-check-input" ${it.pago?'checked':''} onclick="togglePago(${it.id})"></td>
                     <td><b>${it.data.split('-').reverse().join('/')}</b><br>${it.desc}</td>
@@ -348,11 +380,20 @@
             }
         });
 
+        // Atualizar painel de Status
+        const perc = dM > 0 ? (vPagoMês / dM) * 100 : 0;
+        document.getElementById('stat-porcent').innerText = Math.round(perc) + "%";
+        document.getElementById('stat-bar').style.width = perc + "%";
+        document.getElementById('stat-pago').innerText = `R$ ${vPagoMês.toFixed(2)} (${qtdPagoMês})`;
+        document.getElementById('stat-falta').innerText = `R$ ${vFaltaMês.toFixed(2)}`;
+
         Object.keys(hist).sort().reverse().forEach(m => {
             const s = hist[m]; tR += s.r; tD += s.d;
             cH.innerHTML += `<tr><td>🗓️ ${m}</td><td class="val-receita">R$ ${s.r.toFixed(2)}</td><td class="val-despesa">R$ ${s.d.toFixed(2)}</td><td class="fw-bold">R$ ${(s.r-s.d).toFixed(2)}</td></tr>`;
         });
+        
         if(fH) fH.innerHTML = `<tr><td>SOMA PERÍODO</td><td class="val-receita">R$ ${tR.toFixed(2)}</td><td class="val-despesa">R$ ${tD.toFixed(2)}</td><td class="bg-dark text-white">R$ ${(tR-tD).toFixed(2)}</td></tr>`;
+        
         document.getElementById('res-rec').innerText = "R$ " + rM.toFixed(2);
         document.getElementById('res-des').innerText = "R$ " + dM.toFixed(2);
         document.getElementById('res-sal').innerText = "R$ " + (rM - dM).toFixed(2);
