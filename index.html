@@ -403,7 +403,10 @@ function salvarServidor() {
                 
                 cI.innerHTML += `<tr>
                     <td><input type="checkbox" class="form-check-input" ${it.pago?'checked':''} onclick="togglePago(${it.id})"></td>
-                    <td><b>${it.data.split('-').reverse().join('/')}</b><br>${it.desc}</td>
+                    <td><b>${(() => {
+  const d = new Date(it.data);
+  return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit' });
+})()}</b><br>${it.desc}</td>
                     <td class="${it.tipo==='Receita'?'val-receita':'val-despesa'}">R$ ${it.valor.toFixed(2)}</td>
                     <td><span class="badge-user">${it.user || '---'}</span></td>
                     <td>${it.pago ? `<span class="status-pago">✅ PAGO</span><small class="data-pagamento">${it.dataPagto}</small>` : `<span class="status-pendente">⏳ PENDENTE</span>`}</td>
