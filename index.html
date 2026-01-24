@@ -159,12 +159,48 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    const URL_GOOGLE_SCRIPT = "https://script.google.com/macros/s/AKfycbxfrfSxrBvOXPRdJWS7FKPPsqnznsM-Wsd2z-X6jRFS020h8L9MC_C1CpbRdFReDhYa/exec";
+    const URL_GOOGLE_SCRIPT = "https://script.google.com/macros/s/AKfycbzBBAHHLNF70jc0B4gDXo6hkpMAEB36HCO2Mohf9ZwQCvVWnEa_6ZtIRuN7Tc0P0B_9hQ/exec";
     const USUARIOS_PERMITIDOS = { "admin": "123", "glauber": "1912", "suelen": "1009" };
 
-    let db = JSON.parse(localStorage.getItem('financas_pro_v6')) || [];
+    let db = [];
     let chartH = null;
     let userNow = "";
+	/* ===================== SINCRONIZAÇÃO ===================== */
+
+async function carregarDadosServidor() {
+    try {
+        const resp = await fetch(URL_GOOGLE_SCRIPT);
+        const dados = await resp.json();
+
+        db = dados.slice(1).map(l => ({
+            id: Number(l[0]),
+            groupId: l[1] || null,
+            data: l[2],
+            desc: l[3],
+            valor: Number(l[4]),
+            tipo: l[5],
+            pago: l[6] === true || l[6] === "TRUE",
+            user: l[7],
+            dataPagto: l[8] || null
+        }));
+
+        localStorage.setItem('financas_pro_v6', JSON.stringify(db));
+        render();
+    } catch (e) {
+        console.warn("Falha ao buscar servidor, usando cache local");
+        db = JSON.parse(localStorage.getItem('financas_pro_v6')) || [];
+        render();
+    }
+}
+
+function salvarServidor() {
+    localStorage.setItem('financas_pro_v6', JSON.stringify(db));
+    fetch(URL_GOOGLE_SCRIPT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(db)
+    }).catch(() => console.warn("Erro ao salvar no servidor"));
+}
 
     function fazerLogin() {
         const u = document.getElementById('user-input').value.toLowerCase();
@@ -173,7 +209,9 @@
             userNow = u; sessionStorage.setItem('user_fin', u);
             document.getElementById('tela-login').classList.add('hidden');
             document.getElementById('app-content').classList.remove('hidden');
-            initFilters(); initMonthSelector(); render();
+            initFilters();
+			initMonthSelector();
+			carregarDadosServidor(); // 🔄 BUSCA CENTRAL
         } else { document.getElementById('login-error').classList.remove('hidden'); }
     }
     function logout() { sessionStorage.clear(); location.reload(); }
@@ -311,15 +349,9 @@
     }
 
     function salvar() { 
-        localStorage.setItem('financas_pro_v6', JSON.stringify(db)); 
-        render(); 
-        fetch(URL_GOOGLE_SCRIPT, { 
-            method: 'POST', 
-            mode: 'no-cors', 
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(db) 
-        }).catch(err => console.log("Erro ao sincronizar planilha"));
-    }
+    salvarServidor(); // ☁️ + cache
+    render();
+}
 
     function limpar() { 
         document.getElementById('edit-id').value = ""; document.getElementById('edit-group').value = "";
@@ -432,10 +464,17 @@
     }
 
     window.onload = () => { 
-        initFilters(); initMonthSelector(); 
-        const s = sessionStorage.getItem('user_fin');
-        if(s) { userNow = s; document.getElementById('tela-login').classList.add('hidden'); document.getElementById('app-content').classList.remove('hidden'); render(); }
-    };
+    const s = sessionStorage.getItem('user_fin');
+    if (s) { 
+        userNow = s; 
+        document.getElementById('tela-login').classList.add('hidden'); 
+        document.getElementById('app-content').classList.remove('hidden'); 
+        initFilters();
+        initMonthSelector();
+        carregarDadosServidor(); // 🔄 sincroniza
+    }
+};
+
 </script>
 </body>
 </html>
