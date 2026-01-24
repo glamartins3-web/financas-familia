@@ -192,7 +192,21 @@ async function carregarDadosServidor() {
         render();
     }
 }
+function mergeDbRemotoComLocal(remoto, local) {
+    const map = new Map();
 
+    // prioridade: remoto
+    remoto.forEach(it => map.set(it.id, it));
+
+    // local só entra se não existir ou for mais novo
+    local.forEach(it => {
+        if (!map.has(it.id)) {
+            map.set(it.id, it);
+        }
+    });
+
+    return Array.from(map.values());
+}
 async function salvarServidor() {
     try {
         // 1️⃣ Busca estado mais recente do servidor
@@ -377,8 +391,9 @@ async function salvarServidor() {
         salvar();
     }
 
-    function salvar() { 
-    salvarServidor(); // ☁️ + cache
+    function salvar() {
+    localStorage.setItem('financas_pro_v6', JSON.stringify(db));
+    salvarServidor(); // ☁️
     render();
 }
 
@@ -494,22 +509,7 @@ async function salvarServidor() {
         reader.onload = (e) => { try { db = JSON.parse(e.target.result); salvar(); alert("Importado!"); } catch(e){alert("Erro!");} };
         reader.readAsText(input.files[0]);
     }
-	function mergeDbRemotoComLocal(remoto, local) {
-    const map = new Map();
-
-    // prioridade: remoto
-    remoto.forEach(it => map.set(it.id, it));
-
-    // local só entra se não existir ou for mais novo
-    local.forEach(it => {
-        if (!map.has(it.id)) {
-            map.set(it.id, it);
-        }
-    });
-
-    return Array.from(map.values());
-}
-
+	
     window.onload = () => { 
     const s = sessionStorage.getItem('user_fin');
     if (s) { 
