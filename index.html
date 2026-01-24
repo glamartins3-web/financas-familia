@@ -465,6 +465,21 @@ function salvarServidor() {
         reader.onload = (e) => { try { db = JSON.parse(e.target.result); salvar(); alert("Importado!"); } catch(e){alert("Erro!");} };
         reader.readAsText(input.files[0]);
     }
+	function mergeDbRemotoComLocal(remoto, local) {
+    const map = new Map();
+
+    // prioridade: remoto
+    remoto.forEach(it => map.set(it.id, it));
+
+    // local só entra se não existir ou for mais novo
+    local.forEach(it => {
+        if (!map.has(it.id)) {
+            map.set(it.id, it);
+        }
+    });
+
+    return Array.from(map.values());
+}
 
     window.onload = () => { 
     const s = sessionStorage.getItem('user_fin');
