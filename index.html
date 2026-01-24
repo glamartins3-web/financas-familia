@@ -193,13 +193,42 @@ async function carregarDadosServidor() {
     }
 }
 
-function salvarServidor() {
-    localStorage.setItem('financas_pro_v6', JSON.stringify(db));
-    fetch(URL_GOOGLE_SCRIPT, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(db)
-    }).catch(() => console.warn("Erro ao salvar no servidor"));
+async function salvarServidor() {
+    try {
+        // 1️⃣ Busca estado mais recente do servidor
+        const resp = await fetch(URL_GOOGLE_SCRIPT);
+        const dados = await resp.json();
+
+        const remoto = dados.slice(1).map(l => ({
+            id: Number(l[0]),
+            groupId: l[1] || null,
+            data: l[2],
+            desc: l[3],
+            valor: Number(l[4]),
+            tipo: l[5],
+            pago: l[6] === true || l[6] === "TRUE",
+            user: l[7],
+            dataPagto: l[8] || null
+        }));
+
+        // 2️⃣ Merge seguro
+        const merged = mergeDbRemotoComLocal(remoto, db);
+
+        // 3️⃣ Atualiza local
+        db = merged;
+        localStorage.setItem('financas_pro_v6', JSON.stringify(db));
+
+        // 4️⃣ Salva versão consolidada
+        await fetch(URL_GOOGLE_SCRIPT, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(db)
+        });
+
+    } catch (e) {
+        console.warn("Falha no merge remoto, salvando local");
+        localStorage.setItem('financas_pro_v6', JSON.stringify(db));
+    }
 }
 
     function fazerLogin() {
