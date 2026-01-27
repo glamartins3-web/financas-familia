@@ -9,97 +9,23 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-body {
-  background:#f0f2f5;
-  font-family: 'Segoe UI', Tahoma, sans-serif;
-  padding-top:70px;
-}
-
-/* NAVBAR */
-.nav-top {
-  position:fixed;
-  top:0;
-  width:100%;
-  background:#1a252f;
-  padding:12px;
-  display:flex;
-  justify-content:center;
-  gap:10px;
-  z-index:1000;
-  box-shadow:0 2px 10px rgba(0,0,0,.25);
-}
-
-/* BOX */
-.container-box {
-  background:#fff;
-  border-radius:16px;
-  padding:20px;
-  box-shadow:0 6px 18px rgba(0,0,0,.08);
-  margin-bottom:20px;
-}
-
-/* LOGIN */
-#tela-login {
-  position:fixed;
-  inset:0;
-  background:#1a252f;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  z-index:9999;
-}
-.login-box {
-  background:#fff;
-  padding:30px;
-  border-radius:18px;
-  width:100%;
-  max-width:360px;
-  text-align:center;
-}
-
-/* CARDS */
-.card-resumo {
-  border-radius:16px;
-  padding:18px;
-  color:#fff;
-  text-align:center;
-  font-weight:bold;
-}
-.bg-receita {
-  background:linear-gradient(135deg,#2ecc71,#27ae60);
-}
-.bg-despesa {
-  background:linear-gradient(135deg,#ff7675,#e74c3c);
-}
-.bg-saldo {
-  background:linear-gradient(135deg,#6c5ce7,#341f97);
-}
-
-.val-receita { color:#27ae60; font-weight:bold; }
-.val-despesa { color:#e74c3c; font-weight:bold; }
-
-.status-pago { color:#27ae60; font-weight:bold; }
-.status-pendente { color:#f39c12; font-weight:bold; }
-
-.hidden { display:none!important; }
-
-/* MONTH GRID */
-.month-grid {
-  display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(70px,1fr));
-  gap:8px;
-}
-.btn-month {
-  border:1px solid #ddd;
-  border-radius:10px;
-  padding:8px;
-  background:#fff;
-  font-weight:bold;
-}
-.btn-month.active {
-  background:#1a252f;
-  color:#fff;
-}
+body{background:#f0f2f5;font-family:'Segoe UI',Tahoma,sans-serif;padding-top:70px}
+.hidden{display:none!important}
+.nav-top{position:fixed;top:0;width:100%;background:#1a252f;padding:12px;display:flex;justify-content:center;gap:10px;z-index:1000}
+.container-box{background:#fff;border-radius:16px;padding:20px;box-shadow:0 6px 18px rgba(0,0,0,.08);margin-bottom:20px}
+#tela-login{position:fixed;inset:0;background:#1a252f;display:flex;align-items:center;justify-content:center;z-index:9999}
+.login-box{background:#fff;padding:30px;border-radius:18px;max-width:360px;width:100%}
+.card-resumo{border-radius:16px;padding:18px;color:#fff;text-align:center;font-weight:bold}
+.bg-receita{background:linear-gradient(135deg,#2ecc71,#27ae60)}
+.bg-despesa{background:linear-gradient(135deg,#ff7675,#e74c3c)}
+.bg-saldo{background:linear-gradient(135deg,#6c5ce7,#341f97)}
+.val-receita{color:#27ae60;font-weight:bold}
+.val-despesa{color:#e74c3c;font-weight:bold}
+.status-pago{color:#27ae60;font-weight:bold}
+.status-pendente{color:#f39c12;font-weight:bold}
+.month-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(70px,1fr));gap:8px}
+.btn-month{border:1px solid #ddd;border-radius:10px;padding:8px;background:#fff;font-weight:bold}
+.btn-month.active{background:#1a252f;color:#fff}
 </style>
 </head>
 
@@ -107,85 +33,43 @@ body {
 
 <!-- LOGIN -->
 <div id="tela-login">
-  <div class="login-box">
+  <div class="login-box text-center">
     <h4 class="fw-bold mb-3">ACESSO RESTRITO</h4>
-    <input id="user-input" class="form-control mb-2" placeholder="Usuário">
-    <input id="pass-input" type="password" class="form-control mb-3" placeholder="Senha">
+    <input id="userInput" class="form-control mb-2" placeholder="Usuário">
+    <input id="passInput" type="password" class="form-control mb-3" placeholder="Senha">
     <button class="btn btn-dark w-100 fw-bold" onclick="fazerLogin()">ENTRAR</button>
-    <div id="login-error" class="text-danger mt-2 small hidden">Dados inválidos</div>
+    <div id="loginError" class="text-danger mt-2 small hidden">Dados inválidos</div>
   </div>
 </div>
 
 <!-- APP -->
-<div id="app-content" class="hidden">
+<div id="appContent" class="hidden">
 
 <nav class="nav-top">
-  <button class="btn btn-light btn-sm fw-bold" onclick="showPage('hist')">📊 HISTÓRICO</button>
   <button class="btn btn-light btn-sm fw-bold" onclick="showPage('lan')">💸 LANÇAMENTOS</button>
   <button class="btn btn-outline-danger btn-sm" onclick="logout()">Logout</button>
 </nav>
 
-<!-- HISTÓRICO -->
-<div id="pg-hist" class="container">
-  <div class="container-box">
-    <h5 class="fw-bold mb-3">Análise de Evolução Mensal</h5>
-    <div style="height:280px">
-      <canvas id="chartHist"></canvas>
-    </div>
-  </div>
-
-  <div class="container-box table-responsive">
-    <table class="table table-hover align-middle">
-      <thead class="table-dark">
-        <tr>
-          <th>Mês/Ano</th>
-          <th>Receita</th>
-          <th>Despesa</th>
-          <th>Saldo</th>
-        </tr>
-      </thead>
-      <tbody id="corpo-hist"></tbody>
-    </table>
-  </div>
-</div>
-
-<!-- LANÇAMENTOS -->
-<div id="pg-lan" class="container hidden">
+<div id="pg-lan" class="container">
 
   <div class="container-box">
-    <div class="month-grid" id="month-selector"></div>
-    <input type="hidden" id="mes-foco">
+    <div id="monthSelector" class="month-grid"></div>
+    <input type="hidden" id="mesFoco">
   </div>
 
   <div class="row g-2 mb-3">
-    <div class="col-4">
-      <div class="card-resumo bg-receita">Receitas<br><span id="res-rec">R$0</span></div>
-    </div>
-    <div class="col-4">
-      <div class="card-resumo bg-despesa">Despesas<br><span id="res-des">R$0</span></div>
-    </div>
-    <div class="col-4">
-      <div class="card-resumo bg-saldo">Saldo<br><span id="res-sal">R$0</span></div>
-    </div>
+    <div class="col-4"><div class="card-resumo bg-receita">Receitas<br><span id="resRec">R$0</span></div></div>
+    <div class="col-4"><div class="card-resumo bg-despesa">Despesas<br><span id="resDes">R$0</span></div></div>
+    <div class="col-4"><div class="card-resumo bg-saldo">Saldo<br><span id="resSal">R$0</span></div></div>
   </div>
 
   <div class="container-box">
     <div class="row g-2">
+      <div class="col-md-3"><input id="fData" type="date" class="form-control"></div>
+      <div class="col-md-4"><input id="fDesc" class="form-control" placeholder="Descrição"></div>
+      <div class="col-md-2"><input id="fValor" type="number" class="form-control" placeholder="Valor"></div>
       <div class="col-md-3">
-        <label>Data</label>
-        <input id="f-data" type="date" class="form-control">
-      </div>
-      <div class="col-md-4">
-        <label>Descrição</label>
-        <input id="f-desc" class="form-control">
-      </div>
-      <div class="col-md-2">
-        <label>Valor</label>
-        <input id="f-valor" type="number" class="form-control">
-      </div>
-      <div class="col-md-3">
-        <label>Tipo</label>
-        <select id="f-tipo" class="form-select">
+        <select id="fTipo" class="form-select">
           <option>Receita</option>
           <option>Despesa</option>
         </select>
@@ -198,15 +82,8 @@ body {
 
   <div class="container-box table-responsive">
     <table class="table table-sm table-hover">
-      <thead>
-        <tr>
-          <th>Pago</th>
-          <th>Descrição</th>
-          <th>Valor</th>
-          <th>Status</th>
-        </tr>
-      </thead>
-      <tbody id="corpo-itens"></tbody>
+      <thead><tr><th>Pago</th><th>Descrição</th><th>Valor</th><th>Status</th></tr></thead>
+      <tbody id="corpoItens"></tbody>
     </table>
   </div>
 
@@ -215,67 +92,72 @@ body {
 
 <script>
 const URL_API = "https://script.google.com/macros/s/AKfycbxHjTzh9gF0yfw9LW7EGYTAshfKQJyRV7TCmhmJIQr9pVw4f00bmnZpwbhvtO2e7Fon5Q/exec";
+
+const userInput = document.getElementById("userInput");
+const passInput = document.getElementById("passInput");
+const telaLogin = document.getElementById("tela-login");
+const appContent = document.getElementById("appContent");
+const loginError = document.getElementById("loginError");
+
+const monthSelector = document.getElementById("monthSelector");
+const mesFoco = document.getElementById("mesFoco");
+
+const fData = document.getElementById("fData");
+const fDesc = document.getElementById("fDesc");
+const fValor = document.getElementById("fValor");
+const fTipo = document.getElementById("fTipo");
+
+const corpoItens = document.getElementById("corpoItens");
+const resRec = document.getElementById("resRec");
+const resDes = document.getElementById("resDes");
+const resSal = document.getElementById("resSal");
+
 let db = [];
 let userNow = "";
-let chart;
 
-function showPage(p){
-  pg-hist.classList.toggle("hidden", p!=="hist");
-  pg-lan.classList.toggle("hidden", p!=="lan");
-}
+function showPage(){}
 
 async function fazerLogin(){
-  const r = await fetch(`${URL_API}?action=login&user=${user-input.value}&pass=${pass-input.value}`);
+  loginError.classList.add("hidden");
+  const r = await fetch(`${URL_API}?action=login&user=${userInput.value}&pass=${passInput.value}`);
   const j = await r.json();
   if(j.ok){
     userNow = j.usuario;
-    tela-login.classList.add("hidden");
-    app-content.classList.remove("hidden");
+    telaLogin.classList.add("hidden");
+    appContent.classList.remove("hidden");
     initMonths();
     carregar();
-  } else login-error.classList.remove("hidden");
+  } else loginError.classList.remove("hidden");
 }
 
-function logout(){ location.reload(); }
+function logout(){location.reload();}
 
 function initMonths(){
-  const g = month-selector;
-  g.innerHTML="";
-  const y = new Date().getFullYear();
-  const m = new Date().getMonth();
+  monthSelector.innerHTML="";
+  const d=new Date(),y=d.getFullYear(),m=d.getMonth();
   for(let i=0;i<12;i++){
-    const v = `${y}-${String(i+1).padStart(2,"0")}`;
-    g.innerHTML += `<button class="btn-month ${i===m?'active':''}" onclick="setMes('${v}',this)">${i+1}</button>`;
+    const v=`${y}-${String(i+1).padStart(2,"0")}`;
+    monthSelector.innerHTML+=`<button class="btn-month ${i===m?'active':''}" onclick="setMes('${v}',this)">${i+1}</button>`;
   }
-  mes-foco.value = `${y}-${String(m+1).padStart(2,"0")}`;
+  mesFoco.value=`${y}-${String(m+1).padStart(2,"0")}`;
 }
 
 function setMes(v,b){
   document.querySelectorAll(".btn-month").forEach(x=>x.classList.remove("active"));
   b.classList.add("active");
-  mes-foco.value=v;
+  mesFoco.value=v;
   render();
 }
 
 async function carregar(){
-  const r = await fetch(`${URL_API}?action=listar`);
-  const d = await r.json();
-  db = d.map(l=>({
-    id:l[0],data:l[2],desc:l[3],valor:+l[4],tipo:l[5],pago:l[6]==="PAGO"
-  }));
+  const r=await fetch(`${URL_API}?action=listar`);
+  const d=await r.json();
+  db=d.map(l=>({id:l[0],data:l[2],desc:l[3],valor:+l[4],tipo:l[5],pago:l[6]==="PAGO"}));
   render();
 }
 
 function adicionar(){
-  db.push({
-    id:Date.now(),
-    data:f-data.value,
-    desc:f-desc.value,
-    valor:+f-valor.value,
-    tipo:f-tipo.value,
-    pago:false,
-    user:userNow
-  });
+  db.push({id:Date.now(),data:fData.value,desc:fDesc.value,valor:+fValor.value,tipo:fTipo.value,pago:false,user:userNow});
   salvar();
 }
 
@@ -285,22 +167,21 @@ async function salvar(){
 }
 
 function render(){
-  corpo-itens.innerHTML="";
+  corpoItens.innerHTML="";
   let r=0,d=0;
-  db.filter(x=>x.data.startsWith(mes-foco.value)).forEach(i=>{
-    if(i.tipo==="Receita") r+=i.valor;
-    else d+=i.valor;
-    corpo-itens.innerHTML+=`
-      <tr>
-        <td><input type="checkbox" ${i.pago?'checked':''}></td>
-        <td>${i.desc}</td>
-        <td class="${i.tipo==='Receita'?'val-receita':'val-despesa'}">R$ ${i.valor.toFixed(2)}</td>
-        <td>${i.pago?'<span class="status-pago">PAGO</span>':'<span class="status-pendente">PENDENTE</span>'}</td>
-      </tr>`;
+  db.filter(x=>x.data&&x.data.startsWith(mesFoco.value)).forEach(i=>{
+    i.tipo==="Receita"?r+=i.valor:d+=i.valor;
+    corpoItens.innerHTML+=`
+    <tr>
+      <td><input type="checkbox" ${i.pago?'checked':''}></td>
+      <td>${i.desc}</td>
+      <td class="${i.tipo==='Receita'?'val-receita':'val-despesa'}">R$ ${i.valor.toFixed(2)}</td>
+      <td>${i.pago?'<span class="status-pago">PAGO</span>':'<span class="status-pendente">PENDENTE</span>'}</td>
+    </tr>`;
   });
-  res-rec.innerText=`R$ ${r.toFixed(2)}`;
-  res-des.innerText=`R$ ${d.toFixed(2)}`;
-  res-sal.innerText=`R$ ${(r-d).toFixed(2)}`;
+  resRec.innerText=`R$ ${r.toFixed(2)}`;
+  resDes.innerText=`R$ ${d.toFixed(2)}`;
+  resSal.innerText=`R$ ${(r-d).toFixed(2)}`;
 }
 </script>
 
