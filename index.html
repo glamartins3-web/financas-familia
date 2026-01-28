@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <title>Controle Financeiro</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
@@ -31,48 +30,25 @@ body{
 .hidden{display:none}
 header{
   background:var(--card);
-  padding:12px;
+  padding:12px 16px;
   display:flex;
   justify-content:space-between;
   align-items:center;
   box-shadow:0 2px 8px rgba(0,0,0,.1);
 }
-nav button{
-  background:none;
-  border:none;
-  font-size:14px;
-  cursor:pointer;
-  margin-left:10px;
+header strong{font-size:14px}
+nav{
+  display:flex;
+  align-items:center;
+  gap:10px;
 }
 main{padding:16px}
 .card{
   background:var(--card);
-  border-radius:12px;
+  border-radius:14px;
   padding:14px;
   margin-bottom:16px;
 }
-input,select,button{
-  width:100%;
-  padding:10px;
-  margin-bottom:8px;
-}
-button.primary{
-  background:var(--primary);
-  color:#fff;
-  border:none;
-  border-radius:6px;
-}
-table{
-  width:100%;
-  border-collapse:collapse;
-}
-td,th{
-  padding:8px;
-  border-bottom:1px solid #ddd;
-  font-size:14px;
-}
-.status-pago{color:var(--ok);font-weight:bold}
-.status-pendente{color:var(--warn);font-weight:bold}
 .resumo{
   display:grid;
   grid-template-columns:1fr 1fr 1fr;
@@ -80,12 +56,25 @@ td,th{
   text-align:center;
 }
 .resumo div{
-  padding:10px;
-  border-radius:8px;
+  padding:12px;
+  border-radius:10px;
 }
 .rec{background:#dcfce7;color:var(--ok)}
 .desp{background:#fee2e2;color:var(--bad)}
 .saldo{background:#e0e7ff;color:var(--primary)}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+}
+th,td{
+  padding:8px;
+  border-bottom:1px solid #ddd;
+  font-size:13px;
+}
+.status-pago{color:var(--ok);font-weight:bold}
+.status-pendente{color:var(--warn);font-weight:bold}
+
 .toggle-dark{
   position:fixed;
   right:14px;
@@ -102,18 +91,19 @@ td,th{
 <body>
 
 <!-- LOGIN -->
-<div id="loginView" class="card">
+<div id="loginView" class="card" style="max-width:360px;margin:60px auto">
   <h3>🔐 Login</h3>
   <input id="user" placeholder="Usuário">
   <input id="pass" type="password" placeholder="Senha">
-  <button class="primary" onclick="login()">Entrar</button>
+  <button onclick="login()" style="background:var(--primary);color:#fff;border:none;padding:10px;border-radius:8px;width:100%">Entrar</button>
   <p id="loginErro" style="color:red"></p>
 </div>
 
 <!-- APP -->
 <div id="appView" class="hidden">
+
 <header>
-  <strong id="userName"></strong>
+  <strong>👤 <span id="userName"></span></strong>
   <nav>
     <select id="mesFiltro" onchange="render()"></select>
     <button onclick="logout()">⏻</button>
@@ -129,17 +119,29 @@ td,th{
 </div>
 
 <div class="card">
-  <canvas id="grafico"></canvas>
+  <canvas id="graficoMes"></canvas>
 </div>
 
-<!-- HISTÓRICO -->
-<div id="pg-hist" class="container hidden">
+<div class="card">
+  <h4>📋 Detalhamento Financeiro</h4>
+  <table>
+    <thead>
+      <tr>
+        <th>Pago</th>
+        <th>Data</th>
+        <th>Descrição</th>
+        <th>Valor</th>
+        <th>Status</th>
+        <th>Usuário</th>
+      </tr>
+    </thead>
+    <tbody id="lista"></tbody>
+  </table>
+</div>
 
-  <div class="container-box mb-3">
-    <h6 class="fw-bold mb-2">📈 Evolução Financeira Mensal</h6>
-    <canvas id="graficoEvolucao" height="160"></canvas>
-  </div>
-
+<div class="card">
+  <h4>📈 Histórico Mensal</h4>
+  <canvas id="graficoEvolucao"></canvas>
 </div>
 
 </main>
@@ -149,77 +151,135 @@ td,th{
 
 <script>
 const API="https://script.google.com/macros/s/AKfycbxHjTzh9gF0yfw9LW7EGYTAshfKQJyRV7TCmhmJIQr9pVw4f00bmnZpwbhvtO2e7Fon5Q/exec";
-let DB=[],USER="",chart;
+let DB=[],USER="",chartMes,chartHist;
 
-/* LOGIN */
+/* ===== LOGIN ===== */
 function login(){
  fetch(`${API}?action=login&user=${user.value}&pass=${pass.value}`)
  .then(r=>r.json()).then(j=>{
-  if(!j.ok)return loginErro.innerText="Erro no login";
+  if(!j.ok)return loginErro.innerText="Usuário ou senha inválidos";
   USER=j.usuario;
   localStorage.user=USER;
-  loginView.classList.add("hidden");
-  appView.classList.remove("hidden");
-  userName.innerText=USER;
-  load();
+  localStorage.exp=Date.now()+600000; // 10 min
+  iniciar();
  })
 }
-function logout(){localStorage.clear();location.reload()}
 
-/* LOAD */
+function iniciar(){
+ loginView.classList.add("hidden");
+ appView.classList.remove("hidden");
+ userName.innerText=USER;
+ load();
+}
+
+function logout(){
+ localStorage.clear();
+ location.reload();
+}
+
+/* ===== AUTO LOGIN ===== */
+if(localStorage.user && Date.now()<localStorage.exp){
+ USER=localStorage.user;
+ iniciar();
+}
+
+/* ===== LOAD ===== */
 function load(){
  fetch(`${API}?action=listar`)
  .then(r=>r.json()).then(d=>{
-  DB=d;
+  DB=d.map(l=>({
+    id:l[0],
+    user:l[1],
+    data:l[2],
+    desc:l[3],
+    valor:Number(l[4]),
+    tipo:l[5],
+    pago:l[6]==="PAGO",
+    cat:l[7]||"",
+    recorrente:l[9]==="S",
+    inicio:l[2]
+  }));
   populaMeses();
   render();
+  renderGrafico();
  })
 }
 
-/* MESES */
+/* ===== MESES ===== */
 function populaMeses(){
  const meses=[...new Set(DB.map(i=>i.data.slice(0,7)))].sort();
  mesFiltro.innerHTML=meses.map(m=>`<option>${m}</option>`).join("");
 }
 
-/* RENDER */
+/* ===== RENDER ===== */
 function render(){
  const mes=mesFiltro.value;
- const dados=DB.filter(i=>i.data.startsWith(mes));
  let rec=0,desp=0;
-
  lista.innerHTML="";
- dados.forEach(i=>{
+
+ DB.filter(i=>{
+  if(i.recorrente) return mes>=i.inicio.slice(0,7);
+  return i.data.startsWith(mes);
+ }).forEach(i=>{
   i.tipo==="Receita"?rec+=i.valor:desp+=i.valor;
   lista.innerHTML+=`
-  <tr>
-   <td><input type="checkbox" ${i.pago?"checked":""} onchange="togglePago(${i.id})"></td>
-   <td>${i.desc}<br><small>${i.cat}</small></td>
-   <td>R$ ${i.valor.toFixed(2)}</td>
-   <td class="${i.pago?"status-pago":"status-pendente"}">${i.pago?"Pago":"Pendente"}</td>
-  </tr>`;
+   <tr>
+    <td><input type="checkbox" ${i.pago?"checked":""} onchange="togglePago(${i.id})"></td>
+    <td>${i.data.split("-").reverse().join("/")}</td>
+    <td>${i.desc}</td>
+    <td>R$ ${i.valor.toFixed(2)}</td>
+    <td class="${i.pago?"status-pago":"status-pendente"}">${i.pago?"Pago":"Pendente"}</td>
+    <td>${i.user}</td>
+   </tr>`;
  });
 
  totRec.innerText=`R$ ${rec.toFixed(2)}`;
  totDesp.innerText=`R$ ${desp.toFixed(2)}`;
  saldo.innerText=`R$ ${(rec-desp).toFixed(2)}`;
 
- graficoMes(rec,desp);
+ renderGraficoMes(rec,desp);
 }
 
-/* GRAFICO */
-function graficoMes(r,d){
- if(chart)chart.destroy();
- chart=new Chart(grafico,{
+/* ===== GRAFICOS ===== */
+function renderGraficoMes(r,d){
+ if(chartMes)chartMes.destroy();
+ chartMes=new Chart(graficoMes,{
   type:"doughnut",
+  data:{labels:["Receita","Despesa"],datasets:[{data:[r,d]}]}
+ });
+}
+
+function renderGrafico(){
+ const map={};
+ DB.forEach(i=>{
+  const m=i.data.slice(0,7);
+  map[m]=map[m]||{r:0,d:0};
+  i.tipo==="Receita"?map[m].r+=i.valor:map[m].d+=i.valor;
+ });
+ const meses=Object.keys(map).sort();
+ let saldo=0;
+ const r=[],d=[],s=[];
+ meses.forEach(m=>{
+  r.push(map[m].r);
+  d.push(map[m].d);
+  saldo+=map[m].r-map[m].d;
+  s.push(saldo);
+ });
+ if(chartHist)chartHist.destroy();
+ chartHist=new Chart(graficoEvolucao,{
+  type:"bar",
   data:{
-   labels:["Receitas","Despesas"],
-   datasets:[{data:[r,d]}]
+   labels:meses,
+   datasets:[
+    {label:"Receita",data:r},
+    {label:"Despesa",data:d},
+    {label:"Saldo",data:s,type:"line"}
+   ]
   }
  });
 }
 
-/* PAGO */
+/* ===== PAGO ===== */
 function togglePago(id){
  const i=DB.find(x=>x.id===id);
  if(i){i.pago=!i.pago; save();}
@@ -227,9 +287,10 @@ function togglePago(id){
 function save(){
  fetch(API,{method:"POST",body:JSON.stringify(DB)});
  render();
+ renderGrafico();
 }
 
-/* UI */
+/* ===== UI ===== */
 function toggleDark(){
  document.body.classList.toggle("dark");
  localStorage.dark=document.body.classList.contains("dark");
@@ -237,72 +298,5 @@ function toggleDark(){
 if(localStorage.dark==="true")document.body.classList.add("dark");
 </script>
 
-<script>
-let graficoEvolucao;
-
-function renderGrafico(){
-  const mapa = {};
-
-  // Agrupa por mês
-  db.forEach(i=>{
-    const mes = i.data.slice(0,7);
-    if(!mapa[mes]) mapa[mes] = { r:0, d:0 };
-    if(i.tipo === "Receita") mapa[mes].r += i.valor;
-    else mapa[mes].d += i.valor;
-  });
-
-  const meses = Object.keys(mapa).sort();
-  let saldoAcumulado = 0;
-
-  const receitas = [];
-  const despesas = [];
-  const saldos   = [];
-
-  meses.forEach(m=>{
-    receitas.push(mapa[m].r);
-    despesas.push(mapa[m].d);
-    saldoAcumulado += (mapa[m].r - mapa[m].d);
-    saldos.push(saldoAcumulado);
-  });
-
-  const ctx = document.getElementById("graficoEvolucao").getContext("2d");
-  if(graficoEvolucao) graficoEvolucao.destroy();
-
-  graficoEvolucao = new Chart(ctx,{
-    type:"line",
-    data:{
-      labels: meses,
-      datasets:[
-        {
-          label:"Receita",
-          data: receitas,
-          borderWidth:3,
-          tension:.35
-        },
-        {
-          label:"Despesa",
-          data: despesas,
-          borderWidth:3,
-          tension:.35
-        },
-        {
-          label:"Saldo Acumulado",
-          data: saldos,
-          borderWidth:4,
-          tension:.35
-        }
-      ]
-    },
-    options:{
-      responsive:true,
-      plugins:{
-        legend:{ position:"bottom" }
-      }
-    }
-  });
-}
-</script>
-
-  
 </body>
 </html>
