@@ -5,6 +5,8 @@
 <title>Controle Financeiro</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <style>
 :root{
   --bg:#f1f5f9;
@@ -13,6 +15,7 @@
   --primary:#2563eb;
   --ok:#16a34a;
   --warn:#f59e0b;
+  --bad:#dc2626;
 }
 body.dark{
   --bg:#020617;
@@ -70,6 +73,19 @@ td,th{
 }
 .status-pago{color:var(--ok);font-weight:bold}
 .status-pendente{color:var(--warn);font-weight:bold}
+.resumo{
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr;
+  gap:10px;
+  text-align:center;
+}
+.resumo div{
+  padding:10px;
+  border-radius:8px;
+}
+.rec{background:#dcfce7;color:var(--ok)}
+.desp{background:#fee2e2;color:var(--bad)}
+.saldo{background:#e0e7ff;color:var(--primary)}
 .toggle-dark{
   position:fixed;
   right:14px;
@@ -99,40 +115,21 @@ td,th{
 <header>
   <strong id="userName"></strong>
   <nav>
-    <button onclick="showTab('lanc')">💸 Lançamentos</button>
+    <select id="mesFiltro" onchange="render()"></select>
     <button onclick="logout()">⏻</button>
   </nav>
 </header>
 
 <main>
 
-<div id="lanc" class="card">
-<h3>Novo Lançamento</h3>
+<div class="card resumo">
+  <div class="rec">Receitas<br><strong id="totRec">R$ 0</strong></div>
+  <div class="desp">Despesas<br><strong id="totDesp">R$ 0</strong></div>
+  <div class="saldo">Saldo<br><strong id="saldo">R$ 0</strong></div>
+</div>
 
-<input type="date" id="data">
-<input placeholder="Descrição" id="desc">
-<input placeholder="Categoria" id="cat">
-<input type="number" placeholder="Valor" id="valor">
-
-<select id="tipo">
-  <option>Receita</option>
-  <option>Despesa</option>
-</select>
-
-<select id="rec">
-  <option value="N">Único</option>
-  <option value="S">Recorrente</option>
-</select>
-
-<select id="parcelas">
-  <option value="1">1x</option>
-  <option value="2">2x</option>
-  <option value="3">3x</option>
-  <option value="6">6x</option>
-  <option value="12">12x</option>
-</select>
-
-<button class="primary" onclick="add()">Salvar</button>
+<div class="card">
+  <canvas id="grafico"></canvas>
 </div>
 
 <div class="card">
@@ -157,7 +154,7 @@ td,th{
 
 <script>
 const API="https://script.google.com/macros/s/AKfycbxHjTzh9gF0yfw9LW7EGYTAshfKQJyRV7TCmhmJIQr9pVw4f00bmnZpwbhvtO2e7Fon5Q/exec";
-let DB=[],USER="";
+let DB=[],USER="",chart;
 
 /* LOGIN */
 function login(){
@@ -172,65 +169,72 @@ function login(){
   load();
  })
 }
-
 function logout(){localStorage.clear();location.reload()}
 
-/* CRUD */
+/* LOAD */
 function load(){
  fetch(`${API}?action=listar`)
  .then(r=>r.json()).then(d=>{
-  DB=d; render();
+  DB=d;
+  populaMeses();
+  render();
  })
 }
 
-function add(){
- const p=+parcelas.value;
- for(let i=0;i<p;i++){
-  const dt=new Date(data.value);
-  dt.setMonth(dt.getMonth()+i);
-  DB.push({
-   id:Date.now()+i,
-   data:dt.toISOString().slice(0,10),
-   desc:desc.value,
-   cat:cat.value,
-   valor:+valor.value/p,
-   tipo:tipo.value,
-   pago:false,
-   rec:rec.value==="S",
-   user:USER
-  });
- }
- save();
-}
-
-function togglePago(id){
- const i=DB.find(x=>x.id===id);
- if(i){i.pago=!i.pago; save();}
-}
-
-function save(){
- fetch(API,{method:"POST",body:JSON.stringify(DB)})
- render();
+/* MESES */
+function populaMeses(){
+ const meses=[...new Set(DB.map(i=>i.data.slice(0,7)))].sort();
+ mesFiltro.innerHTML=meses.map(m=>`<option>${m}</option>`).join("");
 }
 
 /* RENDER */
 function render(){
+ const mes=mesFiltro.value;
+ const dados=DB.filter(i=>i.data.startsWith(mes));
+ let rec=0,desp=0;
+
  lista.innerHTML="";
- DB.forEach(i=>{
+ dados.forEach(i=>{
+  i.tipo==="Receita"?rec+=i.valor:desp+=i.valor;
   lista.innerHTML+=`
-   <tr>
-    <td><input type="checkbox" ${i.pago?"checked":""} onchange="togglePago(${i.id})"></td>
-    <td>${i.desc}<br><small>${i.cat}</small></td>
-    <td>R$ ${i.valor.toFixed(2)}</td>
-    <td class="${i.pago?"status-pago":"status-pendente"}">
-      ${i.pago?"Pago":"Pendente"}
-    </td>
-   </tr>`;
- })
+  <tr>
+   <td><input type="checkbox" ${i.pago?"checked":""} onchange="togglePago(${i.id})"></td>
+   <td>${i.desc}<br><small>${i.cat}</small></td>
+   <td>R$ ${i.valor.toFixed(2)}</td>
+   <td class="${i.pago?"status-pago":"status-pendente"}">${i.pago?"Pago":"Pendente"}</td>
+  </tr>`;
+ });
+
+ totRec.innerText=`R$ ${rec.toFixed(2)}`;
+ totDesp.innerText=`R$ ${desp.toFixed(2)}`;
+ saldo.innerText=`R$ ${(rec-desp).toFixed(2)}`;
+
+ graficoMes(rec,desp);
+}
+
+/* GRAFICO */
+function graficoMes(r,d){
+ if(chart)chart.destroy();
+ chart=new Chart(grafico,{
+  type:"doughnut",
+  data:{
+   labels:["Receitas","Despesas"],
+   datasets:[{data:[r,d]}]
+  }
+ });
+}
+
+/* PAGO */
+function togglePago(id){
+ const i=DB.find(x=>x.id===id);
+ if(i){i.pago=!i.pago; save();}
+}
+function save(){
+ fetch(API,{method:"POST",body:JSON.stringify(DB)});
+ render();
 }
 
 /* UI */
-function showTab(){}
 function toggleDark(){
  document.body.classList.toggle("dark");
  localStorage.dark=document.body.classList.contains("dark");
