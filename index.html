@@ -47,9 +47,11 @@ body{background:#f0f2f5;font-family:'Segoe UI',Tahoma,sans-serif;padding-top:70p
 
 <nav class="nav-top">
   <button class="btn btn-light btn-sm fw-bold" onclick="showPage('lan')">💸 LANÇAMENTOS</button>
+  <button class="btn btn-light btn-sm fw-bold" onclick="showPage('hist')">📊 HISTÓRICO</button>
   <button class="btn btn-outline-danger btn-sm" onclick="logout()">Logout</button>
 </nav>
 
+<!-- LANÇAMENTOS -->
 <div id="pg-lan" class="container">
 
   <div class="container-box">
@@ -86,51 +88,57 @@ body{background:#f0f2f5;font-family:'Segoe UI',Tahoma,sans-serif;padding-top:70p
       <tbody id="corpoItens"></tbody>
     </table>
   </div>
-
 </div>
+
+<!-- HISTÓRICO -->
+<div id="pg-hist" class="container hidden">
+
+  <div class="container-box">
+    <h5 class="fw-bold mb-3">Histórico Mensal</h5>
+    <div style="height:300px">
+      <canvas id="chartHist"></canvas>
+    </div>
+  </div>
+
+  <div class="container-box table-responsive">
+    <table class="table table-hover">
+      <thead class="table-dark">
+        <tr>
+          <th>Mês/Ano</th>
+          <th>Receita</th>
+          <th>Despesa</th>
+          <th>Saldo</th>
+        </tr>
+      </thead>
+      <tbody id="corpoHist"></tbody>
+    </table>
+  </div>
+</div>
+
 </div>
 
 <script>
-const URL_API = "https://script.google.com/macros/s/AKfycbxHjTzh9gF0yfw9LW7EGYTAshfKQJyRV7TCmhmJIQr9pVw4f00bmnZpwbhvtO2e7Fon5Q/exec";
+const URL_API="https://script.google.com/macros/s/AKfycbxHjTzh9gF0yfw9LW7EGYTAshfKQJyRV7TCmhmJIQr9pVw4f00bmnZpwbhvtO2e7Fon5Q/exec";
 
-const userInput = document.getElementById("userInput");
-const passInput = document.getElementById("passInput");
-const telaLogin = document.getElementById("tela-login");
-const appContent = document.getElementById("appContent");
-const loginError = document.getElementById("loginError");
+let db=[],userNow="",chart;
 
-const monthSelector = document.getElementById("monthSelector");
-const mesFoco = document.getElementById("mesFoco");
-
-const fData = document.getElementById("fData");
-const fDesc = document.getElementById("fDesc");
-const fValor = document.getElementById("fValor");
-const fTipo = document.getElementById("fTipo");
-
-const corpoItens = document.getElementById("corpoItens");
-const resRec = document.getElementById("resRec");
-const resDes = document.getElementById("resDes");
-const resSal = document.getElementById("resSal");
-
-let db = [];
-let userNow = "";
-
-function showPage(){}
+function showPage(p){
+  document.getElementById("pg-lan").classList.toggle("hidden",p!=="lan");
+  document.getElementById("pg-hist").classList.toggle("hidden",p!=="hist");
+}
 
 async function fazerLogin(){
   loginError.classList.add("hidden");
-  const r = await fetch(`${URL_API}?action=login&user=${userInput.value}&pass=${passInput.value}`);
-  const j = await r.json();
+  const r=await fetch(`${URL_API}?action=login&user=${userInput.value}&pass=${passInput.value}`);
+  const j=await r.json();
   if(j.ok){
-    userNow = j.usuario;
+    userNow=j.usuario;
     telaLogin.classList.add("hidden");
     appContent.classList.remove("hidden");
     initMonths();
     carregar();
   } else loginError.classList.remove("hidden");
 }
-
-function logout(){location.reload();}
 
 function initMonths(){
   monthSelector.innerHTML="";
@@ -152,18 +160,9 @@ function setMes(v,b){
 async function carregar(){
   const r=await fetch(`${URL_API}?action=listar`);
   const d=await r.json();
-  db=d.map(l=>({id:l[0],data:l[2],desc:l[3],valor:+l[4],tipo:l[5],pago:l[6]==="PAGO"}));
+  db=d.map(l=>({data:l[2],desc:l[3],valor:+l[4],tipo:l[5],pago:l[6]==="PAGO"}));
   render();
-}
-
-function adicionar(){
-  db.push({id:Date.now(),data:fData.value,desc:fDesc.value,valor:+fValor.value,tipo:fTipo.value,pago:false,user:userNow});
-  salvar();
-}
-
-async function salvar(){
-  await fetch(URL_API,{method:"POST",body:JSON.stringify(db)});
-  render();
+  renderHistorico();
 }
 
 function render(){
@@ -182,6 +181,45 @@ function render(){
   resRec.innerText=`R$ ${r.toFixed(2)}`;
   resDes.innerText=`R$ ${d.toFixed(2)}`;
   resSal.innerText=`R$ ${(r-d).toFixed(2)}`;
+}
+
+function renderHistorico(){
+  const hist={},corpo=document.getElementById("corpoHist");
+  corpo.innerHTML="";
+  db.forEach(l=>{
+    if(!l.data)return;
+    const m=l.data.substring(0,7);
+    hist[m]=hist[m]||{r:0,d:0};
+    l.tipo==="Receita"?hist[m].r+=l.valor:hist[m].d+=l.valor;
+  });
+  const meses=Object.keys(hist).sort();
+  meses.forEach(m=>{
+    const s=hist[m].r-hist[m].d;
+    corpo.innerHTML+=`
+    <tr>
+      <td>${m.substring(5,7)}/${m.substring(0,4)}</td>
+      <td class="val-receita">R$ ${hist[m].r.toFixed(2)}</td>
+      <td class="val-despesa">R$ ${hist[m].d.toFixed(2)}</td>
+      <td class="${s>=0?'val-receita':'val-despesa'}">R$ ${s.toFixed(2)}</td>
+    </tr>`;
+  });
+  renderGrafico(hist,meses);
+}
+
+function renderGrafico(hist,meses){
+  if(chart)chart.destroy();
+  chart=new Chart(document.getElementById("chartHist"),{
+    type:"line",
+    data:{
+      labels:meses.map(m=>m.substring(5,7)+"/"+m.substring(0,4)),
+      datasets:[
+        {label:"Receita",data:meses.map(m=>hist[m].r),borderWidth:3},
+        {label:"Despesa",data:meses.map(m=>hist[m].d),borderWidth:3},
+        {label:"Saldo",data:meses.map(m=>hist[m].r-hist[m].d),borderWidth:4}
+      ]
+    },
+    options:{plugins:{legend:{position:"bottom"}}}
+  });
 }
 </script>
 
