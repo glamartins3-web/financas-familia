@@ -153,7 +153,33 @@ body{
 <script>
 const URL_API="https://script.google.com/macros/s/AKfycbxHjTzh9gF0yfw9LW7EGYTAshfKQJyRV7TCmhmJIQr9pVw4f00bmnZpwbhvtO2e7Fon5Q/exec";
 let db=[],userNow="",grafico;
+/* ===== DOM ===== */
+const userInput     = document.getElementById("userInput");
+const passInput     = document.getElementById("passInput");
+const loginError    = document.getElementById("loginError");
+const telaLogin     = document.getElementById("tela-login");
+const appContent    = document.getElementById("appContent");
 
+const pgLan         = document.getElementById("pg-lan");
+const pgHist        = document.getElementById("pg-hist");
+
+const monthSelector = document.getElementById("monthSelector");
+const mesFoco       = document.getElementById("mesFoco");
+
+const corpoItens    = document.getElementById("corpoItens");
+const resRec        = document.getElementById("resRec");
+const resDes        = document.getElementById("resDes");
+const resSal        = document.getElementById("resSal");
+
+const fData         = document.getElementById("fData");
+const fDesc         = document.getElementById("fDesc");
+const fCategoria    = document.getElementById("fCategoria");
+const fValor        = document.getElementById("fValor");
+const fTipo         = document.getElementById("fTipo");
+const fRecorrente   = document.getElementById("fRecorrente");
+
+const graficoMensal = document.getElementById("graficoMensal");
+  
 /* ===== Dark Mode ===== */
 function toggleDark(){
   document.body.classList.toggle("dark");
@@ -177,8 +203,8 @@ function logout(){location.reload()}
 
 /* ===== Navegação ===== */
 function showPage(p){
-  pg-lan.classList.toggle("hidden",p!=="lan");
-  pg-hist.classList.toggle("hidden",p!=="hist");
+  pgLan.classList.toggle("hidden", p !== "lan");
+  pgHist.classList.toggle("hidden", p !== "hist");
 }
 
 /* ===== Meses ===== */
