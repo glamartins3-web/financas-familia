@@ -8,61 +8,82 @@
 
 <style>
 :root{
-  --bg:#f1f5f9;
-  --card:#ffffff;
-  --text:#1e293b;
-  --primary:#2563eb;
-  --ok:#16a34a;
-  --warn:#f59e0b;
-  --bad:#dc2626;
+ --bg:#f1f5f9;
+ --card:#ffffff;
+ --text:#0f172a;
+ --primary:#2563eb;
+ --ok:#16a34a;
+ --bad:#dc2626;
+ --warn:#f59e0b;
 }
 body.dark{
-  --bg:#020617;
-  --card:#020617;
-  --text:#e5e7eb;
+ --bg:#020617;
+ --card:#020617;
+ --text:#e5e7eb;
 }
-body{margin:0;font-family:Segoe UI,Arial;background:var(--bg);color:var(--text)}
+*{box-sizing:border-box}
+body{
+ margin:0;
+ font-family:Segoe UI,Arial;
+ background:var(--bg);
+ color:var(--text);
+}
+input,select,button,table,th,td{
+ background:var(--card);
+ color:var(--text);
+}
+input,select{
+ padding:8px;
+ border-radius:8px;
+ border:1px solid #999;
+ width:100%;
+}
+button{
+ padding:10px;
+ border:none;
+ border-radius:10px;
+ background:var(--primary);
+ color:#fff;
+ cursor:pointer;
+}
 .hidden{display:none}
 header{
-  background:var(--card);
-  padding:12px 16px;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  box-shadow:0 2px 8px rgba(0,0,0,.1);
+ padding:12px;
+ background:var(--card);
+ display:flex;
+ justify-content:space-between;
+ box-shadow:0 2px 6px rgba(0,0,0,.15);
 }
 nav button{
-  border:none;
-  background:none;
-  font-size:14px;
-  cursor:pointer;
+ background:none;
+ color:var(--text);
 }
-main{padding:16px}
 .card{
-  background:var(--card);
-  border-radius:14px;
-  padding:14px;
-  margin-bottom:16px;
+ background:var(--card);
+ border-radius:16px;
+ padding:16px;
+ margin-bottom:16px;
 }
 .resumo{
-  display:grid;
-  grid-template-columns:1fr 1fr 1fr;
-  gap:10px;
-  text-align:center;
+ display:grid;
+ grid-template-columns:repeat(3,1fr);
+ gap:10px;
+ text-align:center;
 }
-.rec{background:#dcfce7;color:var(--ok)}
-.desp{background:#fee2e2;color:var(--bad)}
-.saldo{background:#e0e7ff;color:var(--primary)}
+.rec{color:var(--ok)}
+.desp{color:var(--bad)}
+.saldo{color:var(--primary)}
 table{width:100%;border-collapse:collapse}
-th,td{padding:8px;border-bottom:1px solid #ddd;font-size:13px}
+th,td{padding:8px;border-bottom:1px solid #888;font-size:13px}
 .status-pago{color:var(--ok);font-weight:bold}
 .status-pendente{color:var(--warn);font-weight:bold}
 .toggle-dark{
-  position:fixed;right:14px;bottom:14px;
-  background:var(--primary);color:#fff;
-  border-radius:50%;padding:12px;cursor:pointer;
+ position:fixed;bottom:14px;right:14px;
+ background:var(--primary);
+ color:#fff;
+ padding:12px;
+ border-radius:50%;
 }
-.alerta{background:#fff7ed;color:var(--warn);padding:8px;border-radius:8px}
 </style>
 </head>
 
@@ -70,192 +91,185 @@ th,td{padding:8px;border-bottom:1px solid #ddd;font-size:13px}
 
 <!-- LOGIN -->
 <div id="loginView" class="card" style="max-width:360px;margin:60px auto">
-  <h3>🔐 Login</h3>
-  <input id="user" placeholder="Usuário">
-  <input id="pass" type="password" placeholder="Senha">
-  <button onclick="login()" style="background:var(--primary);color:#fff;padding:10px;border:none;border-radius:8px;width:100%">Entrar</button>
-  <p id="loginErro" style="color:red"></p>
+ <h3>🔐 Login</h3>
+ <input id="user" placeholder="Usuário">
+ <input id="pass" type="password" placeholder="Senha">
+ <button onclick="login()">Entrar</button>
+ <p id="loginErro" style="color:red"></p>
 </div>
 
 <!-- APP -->
 <div id="appView" class="hidden">
 <header>
-  <strong>👤 <span id="userName"></span></strong>
-  <nav>
-    <button onclick="showTab('lan')">🧾 Lançamentos</button>
-    <button onclick="showTab('hist')">📊 Histórico</button>
-    <button onclick="logout()">⏻</button>
-  </nav>
+ <strong>👤 <span id="userName"></span></strong>
+ <nav>
+  <button onclick="tab('lan')">🧾 Lançamentos</button>
+  <button onclick="tab('hist')">📊 Histórico</button>
+  <button onclick="logout()">⏻</button>
+ </nav>
 </header>
 
-<main>
+<main style="padding:16px">
 
 <!-- LANÇAMENTOS -->
-<div id="tab-lan">
-  <div class="card resumo">
-    <div class="rec">Receitas<br><strong id="totRec">R$0</strong></div>
-    <div class="desp">Despesas<br><strong id="totDesp">R$0</strong></div>
-    <div class="saldo">Saldo<br><strong id="saldo">R$0</strong></div>
-  </div>
+<section id="lan">
 
-  <div id="alertas"></div>
-
-  <div class="card">
-    <h4>📋 Detalhamento Financeiro</h4>
-    <table>
-      <thead>
-        <tr>
-          <th>Pago</th><th>Data</th><th>Descrição</th>
-          <th>Valor</th><th>Status</th><th>Usuário</th>
-        </tr>
-      </thead>
-      <tbody id="lista"></tbody>
-    </table>
-  </div>
+<div class="card">
+ <h4>➕ Novo Lançamento</h4>
+ <div style="display:grid;gap:8px">
+  <select id="tipo">
+   <option>Receita</option>
+   <option>Despesa</option>
+  </select>
+  <input type="date" id="data">
+  <input id="desc" placeholder="Descrição">
+  <input type="number" id="valor" placeholder="Valor">
+  <label><input type="checkbox" id="pago"> Pago</label>
+  <button onclick="salvar()">Salvar</button>
+ </div>
 </div>
+
+<div class="card resumo">
+ <div class="rec">Receitas<br><b id="r">0</b></div>
+ <div class="desp">Despesas<br><b id="d">0</b></div>
+ <div class="saldo">Saldo<br><b id="s">0</b></div>
+</div>
+
+<div class="card">
+ <h4>📋 Lançamentos</h4>
+ <table>
+  <thead>
+   <tr><th>Data</th><th>Descrição</th><th>Valor</th><th>Status</th></tr>
+  </thead>
+  <tbody id="lista"></tbody>
+ </table>
+</div>
+</section>
 
 <!-- HISTÓRICO -->
-<div id="tab-hist" class="hidden">
-  <div class="card">
-    <h4>📈 Gráfico Multi-Meses</h4>
-    <canvas id="graficoHistorico"></canvas>
-  </div>
-  <div class="card">
-    <button onclick="exportCSV()">⬇️ Exportar CSV</button>
-  </div>
-</div>
+<section id="hist" class="hidden">
+ <div class="card">
+  <canvas id="grafico"></canvas>
+ </div>
+ <div class="card">
+  <h4>📜 Histórico Completo</h4>
+  <table>
+   <thead>
+    <tr><th>Data</th><th>Descrição</th><th>Valor</th><th>Tipo</th></tr>
+   </thead>
+   <tbody id="histLista"></tbody>
+  </table>
+ </div>
+</section>
 
 </main>
 </div>
 
-<div class="toggle-dark" onclick="toggleDark()">🌙</div>
+<div class="toggle-dark" onclick="dark()">🌙</div>
 
 <script>
-const API="https://script.google.com/macros/s/AKfycbxHjTzh9gF0yfw9LW7EGYTAshfKQJyRV7TCmhmJIQr9pVw4f00bmnZpwbhvtO2e7Fon5Q/exec";
-let DB=[],USER="",grafico;
+const API="COLE_AQUI_SUA_URL_GAS";
+let DB=[],USER="",chart;
+
+/* UTIL */
+const fmt=d=>{
+ if(!d)return "";
+ if(d instanceof Date)return d.toLocaleDateString("pt-BR");
+ if(d.includes("-"))return d.split("-").reverse().join("/");
+ return d;
+}
 
 /* LOGIN */
 function login(){
  fetch(`${API}?action=login&user=${user.value}&pass=${pass.value}`)
  .then(r=>r.json()).then(j=>{
-  if(!j.ok)return loginErro.innerText="Login inválido";
+  if(!j.ok)return loginErro.innerText="Erro login";
   USER=j.usuario;
-  localStorage.user=USER;
-  localStorage.exp=Date.now()+600000;
-  init();
+  loginView.classList.add("hidden");
+  appView.classList.remove("hidden");
+  userName.innerText=USER;
+  load();
  })
 }
-function init(){
- loginView.classList.add("hidden");
- appView.classList.remove("hidden");
- userName.innerText=USER;
- load();
-}
-function logout(){localStorage.clear();location.reload()}
-if(localStorage.user && Date.now()<localStorage.exp){
- USER=localStorage.user;init();
-}
+function logout(){location.reload()}
 
-/* NAVEGAÇÃO */
-function showTab(t){
- document.getElementById("tab-lan").classList.toggle("hidden",t!=="lan");
- document.getElementById("tab-hist").classList.toggle("hidden",t!=="hist");
- if(t==="hist")renderGrafico();
+/* TABS */
+function tab(t){
+ lan.classList.toggle("hidden",t!=="lan");
+ hist.classList.toggle("hidden",t!=="hist");
+ if(t==="hist")graf();
 }
 
 /* LOAD */
 function load(){
- fetch(`${API}?action=listar`).then(r=>r.json()).then(d=>{
-  DB=d.map(l=>({
-    id:l[0],user:l[1],data:l[2],desc:l[3],
-    valor:+l[4],tipo:l[5],pago:l[6]==="PAGO",
-    recorrente:l[9]==="S",inicio:l[2]
-  }));
+ fetch(`${API}?action=listar`)
+ .then(r=>r.json()).then(d=>{
+  DB=d;
   render();
- });
+ })
 }
 
-/* RENDER + RECORRÊNCIA */
+/* SALVAR */
+function salvar(){
+ fetch(API,{
+  method:"POST",
+  body:JSON.stringify({
+   data:data.value,
+   desc:desc.value,
+   valor:+valor.value,
+   tipo:tipo.value,
+   pago:pago.checked,
+   user:USER
+  })
+ }).then(()=>load());
+}
+
+/* RENDER */
 function render(){
- lista.innerHTML="";
  let r=0,d=0;
- const hoje=new Date().toISOString().slice(0,7);
- let alertas=[];
- DB.forEach(i=>{
-  const ativo=i.recorrente?hoje>=i.inicio.slice(0,7):true;
-  if(!ativo)return;
-  i.tipo==="Receita"?r+=i.valor:d+=i.valor;
-  if(!i.pago && i.tipo==="Despesa") alertas.push(i);
+ lista.innerHTML="";
+ histLista.innerHTML="";
+ DB.forEach(l=>{
+  if(l.tipo==="Receita")r+=l.valor; else d+=l.valor;
   lista.innerHTML+=`
    <tr>
-    <td><input type="checkbox" ${i.pago?"checked":""}></td>
-    <td>${i.data.split("-").reverse().join("/")}</td>
-    <td>${i.desc}</td>
-    <td>R$ ${i.valor.toFixed(2)}</td>
-    <td class="${i.pago?"status-pago":"status-pendente"}">${i.pago?"Pago":"Pendente"}</td>
-    <td>${i.user}</td>
+    <td>${fmt(l.data)}</td>
+    <td>${l.desc}</td>
+    <td>R$ ${l.valor.toFixed(2)}</td>
+    <td class="${l.pago?"status-pago":"status-pendente"}">${l.pago?"Pago":"Pendente"}</td>
+   </tr>`;
+  histLista.innerHTML+=`
+   <tr>
+    <td>${fmt(l.data)}</td>
+    <td>${l.desc}</td>
+    <td>R$ ${l.valor.toFixed(2)}</td>
+    <td>${l.tipo}</td>
    </tr>`;
  });
- totRec.innerText=`R$ ${r.toFixed(2)}`;
- totDesp.innerText=`R$ ${d.toFixed(2)}`;
- saldo.innerText=`R$ ${(r-d).toFixed(2)}`;
- alertasDiv(alertas);
+ rEl.innerText=r; dEl.innerText=d; sEl.innerText=r-d;
 }
 
-/* ALERTAS */
-function alertasDiv(a){
- alertas.innerHTML="";
- if(!a.length)return;
- alertas.innerHTML=`<div class="alerta">⚠️ ${a.length} despesas pendentes este mês</div>`;
-}
-
-/* GRÁFICO MULTI-MESES */
-function renderGrafico(){
- const map={};
- DB.forEach(i=>{
-  const m=i.data.slice(0,7);
-  map[m]=map[m]||{r:0,d:0};
-  i.tipo==="Receita"?map[m].r+=i.valor:map[m].d+=i.valor;
+/* GRÁFICO */
+function graf(){
+ const m={};
+ DB.forEach(l=>{
+  const k=l.data.slice(0,7);
+  m[k]=m[k]||0;
+  m[k]+=l.tipo==="Receita"?l.valor:-l.valor;
  });
- const meses=Object.keys(map).sort();
- let saldo=0;
- const r=[],d=[],s=[];
- meses.forEach(m=>{
-  r.push(map[m].r);d.push(map[m].d);
-  saldo+=map[m].r-map[m].d;s.push(saldo);
+ const labels=Object.keys(m);
+ const data=Object.values(m);
+ if(chart)chart.destroy();
+ chart=new Chart(grafico,{
+  type:"bar",
+  data:{labels,datasets:[{label:"Saldo",data}]}
  });
- if(grafico)grafico.destroy();
- grafico=new Chart(graficoHistorico,{
-  data:{
-   labels:meses,
-   datasets:[
-    {type:"bar",label:"Receita",data:r},
-    {type:"bar",label:"Despesa",data:d},
-    {type:"line",label:"Saldo",data:s}
-   ]
-  }
- });
-}
-
-/* EXPORT */
-function exportCSV(){
- let csv="Data,Descrição,Valor,Tipo,Status\n";
- DB.forEach(i=>{
-  csv+=`${i.data},${i.desc},${i.valor},${i.tipo},${i.pago?"Pago":"Pendente"}\n`;
- });
- const blob=new Blob([csv],{type:"text/csv"});
- const a=document.createElement("a");
- a.href=URL.createObjectURL(blob);
- a.download="financeiro.csv";
- a.click();
 }
 
 /* UI */
-function toggleDark(){
+function dark(){
  document.body.classList.toggle("dark");
- localStorage.dark=document.body.classList.contains("dark");
 }
-if(localStorage.dark==="true")document.body.classList.add("dark");
 </script>
 
 </body>
