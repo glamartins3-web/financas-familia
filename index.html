@@ -90,6 +90,11 @@ body{background:#f0f2f5;font-family:'Segoe UI',Tahoma,sans-serif;padding-top:70p
   </div>
 </div>
 
+  <!-- NOVOS CAMPOS NO FORMULÁRIO -->
+<div class="col-md-2">
+  <input id="fParcelas" type="number" class="form-control" placeholder="Parcelas" min="1">
+</div> 
+  
 <!-- HISTÓRICO -->
 <div id="pg-hist" class="container hidden">
 
@@ -194,7 +199,27 @@ async function carregar(){
 }
 
 function adicionar(){
-  db.push({id:Date.now(),data:fData.value,desc:fDesc.value,valor:+fValor.value,tipo:fTipo.value,pago:false,user:userNow});
+  const parcelas = parseInt(document.getElementById("fParcelas").value) || 1;
+  const groupId = Date.now();
+
+  for(let i=0;i<parcelas;i++){
+    const d = new Date(fData.value);
+    d.setMonth(d.getMonth() + i);
+
+    db.push({
+      id: Date.now() + i,
+      groupId: parcelas > 1 ? groupId : "",
+      data: d.toISOString().slice(0,10),
+      desc: parcelas > 1 
+        ? `${fDesc.value} (${i+1}/${parcelas})`
+        : fDesc.value,
+      valor: +fValor.value,
+      tipo: fTipo.value,
+      pago: false,
+      user: userNow
+    });
+  }
+
   salvar();
 }
 
@@ -205,8 +230,10 @@ async function salvar(){
 }
   
 /* ========= Caixa de Seleção pago ========= */
-function togglePago(index){
-  db[index].pago = !db[index].pago;
+function togglePago(id){
+  const item = db.find(x => x.id === id);
+  if(!item) return;
+  item.pago = !item.pago;
   salvar();
 }
 
@@ -215,37 +242,33 @@ function render(){
   corpoItens.innerHTML="";
   let r=0,d=0;
 
-  const listaMes = db
-    .map((item,idx)=>({...item,idx}))
-    .filter(x=>x.data && x.data.startsWith(mesFoco.value));
+  db.filter(x=>x.data && x.data.startsWith(mesFoco.value))
+    .forEach(i=>{
+      i.tipo==="Receita" ? r+=i.valor : d+=i.valor;
 
-  listaMes.forEach(i=>{
-    i.tipo==="Receita" ? r+=i.valor : d+=i.valor;
-
-    corpoItens.innerHTML+=`
-    <tr>
-      <td>
-        <input type="checkbox" 
-          ${i.pago ? "checked" : ""} 
-          onchange="togglePago(${i.idx})">
-      </td>
-      <td>${i.desc}</td>
-      <td class="${i.tipo==='Receita'?'val-receita':'val-despesa'}">
-        R$ ${i.valor.toFixed(2)}
-      </td>
-      <td>
-        ${i.pago
-          ? '<span class="status-pago">PAGO</span>'
-          : '<span class="status-pendente">PENDENTE</span>'}
-      </td>
-    </tr>`;
-  });
+      corpoItens.innerHTML+=`
+      <tr>
+        <td>
+          <input type="checkbox"
+            ${i.pago ? "checked" : ""}
+            onchange="togglePago(${i.id})">
+        </td>
+        <td>${i.desc}</td>
+        <td class="${i.tipo==='Receita'?'val-receita':'val-despesa'}">
+          R$ ${i.valor.toFixed(2)}
+        </td>
+        <td>
+          ${i.pago
+            ? '<span class="status-pago">PAGO</span>'
+            : '<span class="status-pendente">PENDENTE</span>'}
+        </td>
+      </tr>`;
+    });
 
   resRec.innerText=`R$ ${r.toFixed(2)}`;
   resDes.innerText=`R$ ${d.toFixed(2)}`;
   resSal.innerText=`R$ ${(r-d).toFixed(2)}`;
 }
-
 
 /* ========= HISTÓRICO ========= */
 function renderHistorico(){
