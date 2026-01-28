@@ -1,275 +1,233 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<title>Controle Financeiro</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <meta charset="UTF-8">
+  <title>Finanças Pessoais</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<style>
-:root{
- --bg:#f1f5f9;
- --card:#ffffff;
- --text:#0f172a;
- --primary:#2563eb;
- --ok:#16a34a;
- --bad:#dc2626;
- --warn:#f59e0b;
-}
-body.dark{
- --bg:#020617;
- --card:#020617;
- --text:#e5e7eb;
-}
-*{box-sizing:border-box}
-body{
- margin:0;
- font-family:Segoe UI,Arial;
- background:var(--bg);
- color:var(--text);
-}
-input,select,button,table,th,td{
- background:var(--card);
- color:var(--text);
-}
-input,select{
- padding:8px;
- border-radius:8px;
- border:1px solid #999;
- width:100%;
-}
-button{
- padding:10px;
- border:none;
- border-radius:10px;
- background:var(--primary);
- color:#fff;
- cursor:pointer;
-}
-.hidden{display:none}
-header{
- padding:12px;
- background:var(--card);
- display:flex;
- justify-content:space-between;
- box-shadow:0 2px 6px rgba(0,0,0,.15);
-}
-nav button{
- background:none;
- color:var(--text);
-}
-.card{
- background:var(--card);
- border-radius:16px;
- padding:16px;
- margin-bottom:16px;
-}
-.resumo{
- display:grid;
- grid-template-columns:repeat(3,1fr);
- gap:10px;
- text-align:center;
-}
-.rec{color:var(--ok)}
-.desp{color:var(--bad)}
-.saldo{color:var(--primary)}
-table{width:100%;border-collapse:collapse}
-th,td{padding:8px;border-bottom:1px solid #888;font-size:13px}
-.status-pago{color:var(--ok);font-weight:bold}
-.status-pendente{color:var(--warn);font-weight:bold}
-.toggle-dark{
- position:fixed;bottom:14px;right:14px;
- background:var(--primary);
- color:#fff;
- padding:12px;
- border-radius:50%;
-}
-</style>
+  <style>
+    :root {
+      --bg: #121212;
+      --card: #1e1e1e;
+      --text: #ffffff;
+      --muted: #bdbdbd;
+      --primary: #4caf50;
+      --danger: #f44336;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    header {
+      padding: 16px;
+      text-align: center;
+      font-size: 20px;
+      background: #000;
+    }
+
+    nav {
+      display: flex;
+      justify-content: space-around;
+      background: #000;
+      padding: 10px 0;
+    }
+
+    nav button {
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    nav button.active {
+      color: var(--primary);
+      font-weight: bold;
+    }
+
+    .container {
+      padding: 16px;
+    }
+
+    .card {
+      background: var(--card);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+
+    label {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    input, select {
+      width: 100%;
+      padding: 10px;
+      border-radius: 8px;
+      border: none;
+      margin: 6px 0 12px;
+      background: #2a2a2a;
+      color: var(--text);
+    }
+
+    button.primary {
+      width: 100%;
+      padding: 12px;
+      border-radius: 8px;
+      border: none;
+      background: var(--primary);
+      color: #000;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      padding: 10px;
+      border-bottom: 1px solid #333;
+      text-align: left;
+      font-size: 13px;
+    }
+
+    th {
+      color: var(--muted);
+    }
+
+    .hidden {
+      display: none;
+    }
+  </style>
 </head>
 
 <body>
 
-<!-- LOGIN -->
-<div id="loginView" class="card" style="max-width:360px;margin:60px auto">
- <h3>🔐 Login</h3>
- <input id="user" placeholder="Usuário">
- <input id="pass" type="password" placeholder="Senha">
- <button onclick="login()">Entrar</button>
- <p id="loginErro" style="color:red"></p>
+<header>💰 Minhas Finanças</header>
+
+<nav>
+  <button id="tabLancamentos" class="active" onclick="showTab('lancamentos')">Lançamentos</button>
+  <button id="tabHistorico" onclick="showTab('historico')">Histórico</button>
+</nav>
+
+<div class="container">
+
+  <!-- LANÇAMENTOS -->
+  <div id="lancamentos" class="tab">
+
+    <div class="card">
+      <label>Tipo</label>
+      <select id="tipo">
+        <option value="Receita">Receita</option>
+        <option value="Despesa">Despesa</option>
+      </select>
+
+      <label>Descrição</label>
+      <input id="descricao" placeholder="Ex: Aluguel">
+
+      <label>Valor</label>
+      <input id="valor" type="number" step="0.01">
+
+      <label>Data</label>
+      <input id="data" type="date">
+
+      <button class="primary" onclick="salvarLancamento()">Salvar</button>
+    </div>
+
+  </div>
+
+  <!-- HISTÓRICO -->
+  <div id="historico" class="tab hidden">
+
+    <div class="card">
+      <table>
+        <thead>
+          <tr>
+            <th>Data</th>
+            <th>Descrição</th>
+            <th>Tipo</th>
+            <th>Valor</th>
+          </tr>
+        </thead>
+        <tbody id="gridHistorico">
+          <!-- preenchido via JS -->
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+
 </div>
-
-<!-- APP -->
-<div id="appView" class="hidden">
-<header>
- <strong>👤 <span id="userName"></span></strong>
- <nav>
-  <button onclick="tab('lan')">🧾 Lançamentos</button>
-  <button onclick="tab('hist')">📊 Histórico</button>
-  <button onclick="logout()">⏻</button>
- </nav>
-</header>
-
-<main style="padding:16px">
-
-<!-- LANÇAMENTOS -->
-<section id="lan">
-
-<div class="card">
- <h4>➕ Novo Lançamento</h4>
- <div style="display:grid;gap:8px">
-  <select id="tipo">
-   <option>Receita</option>
-   <option>Despesa</option>
-  </select>
-  <input type="date" id="data">
-  <input id="desc" placeholder="Descrição">
-  <input type="number" id="valor" placeholder="Valor">
-  <label><input type="checkbox" id="pago"> Pago</label>
-  <button onclick="salvar()">Salvar</button>
- </div>
-</div>
-
-<div class="card resumo">
- <div class="rec">Receitas<br><b id="r">0</b></div>
- <div class="desp">Despesas<br><b id="d">0</b></div>
- <div class="saldo">Saldo<br><b id="s">0</b></div>
-</div>
-
-<div class="card">
- <h4>📋 Lançamentos</h4>
- <table>
-  <thead>
-   <tr><th>Data</th><th>Descrição</th><th>Valor</th><th>Status</th></tr>
-  </thead>
-  <tbody id="lista"></tbody>
- </table>
-</div>
-</section>
-
-<!-- HISTÓRICO -->
-<section id="hist" class="hidden">
- <div class="card">
-  <canvas id="grafico"></canvas>
- </div>
- <div class="card">
-  <h4>📜 Histórico Completo</h4>
-  <table>
-   <thead>
-    <tr><th>Data</th><th>Descrição</th><th>Valor</th><th>Tipo</th></tr>
-   </thead>
-   <tbody id="histLista"></tbody>
-  </table>
- </div>
-</section>
-
-</main>
-</div>
-
-<div class="toggle-dark" onclick="dark()">🌙</div>
 
 <script>
-const API="https://script.google.com/macros/s/AKfycbxHjTzh9gF0yfw9LW7EGYTAshfKQJyRV7TCmhmJIQr9pVw4f00bmnZpwbhvtO2e7Fon5Q/exec";
-let DB=[],USER="",chart;
+  /* =========================
+     CONTROLE DE ABAS
+  ========================== */
+  function showTab(tab) {
+    document.getElementById('lancamentos').classList.add('hidden');
+    document.getElementById('historico').classList.add('hidden');
 
-/* UTIL */
-const fmt=d=>{
- if(!d)return "";
- if(d instanceof Date)return d.toLocaleDateString("pt-BR");
- if(d.includes("-"))return d.split("-").reverse().join("/");
- return d;
-}
+    document.getElementById('tabLancamentos').classList.remove('active');
+    document.getElementById('tabHistorico').classList.remove('active');
 
-/* LOGIN */
-function login(){
- fetch(`${API}?action=login&user=${user.value}&pass=${pass.value}`)
- .then(r=>r.json()).then(j=>{
-  if(!j.ok)return loginErro.innerText="Erro login";
-  USER=j.usuario;
-  loginView.classList.add("hidden");
-  appView.classList.remove("hidden");
-  userName.innerText=USER;
-  load();
- })
-}
-function logout(){location.reload()}
+    document.getElementById(tab).classList.remove('hidden');
+    document.getElementById('tab' + capitalize(tab)).classList.add('active');
+  }
 
-/* TABS */
-function tab(t){
- lan.classList.toggle("hidden",t!=="lan");
- hist.classList.toggle("hidden",t!=="hist");
- if(t==="hist")graf();
-}
+  function capitalize(s) {
+    return s.charAt(0).toUpperCase() + s.slice(1);
+  }
 
-/* LOAD */
-function load(){
- fetch(`${API}?action=listar`)
- .then(r=>r.json()).then(d=>{
-  DB=d;
-  render();
- })
-}
+  /* =========================
+     FUNÇÕES DO V3 (MANTIDAS)
+  ========================== */
 
-/* SALVAR */
-function salvar(){
- fetch(API,{
-  method:"POST",
-  body:JSON.stringify({
-   data:data.value,
-   desc:desc.value,
-   valor:+valor.value,
-   tipo:tipo.value,
-   pago:pago.checked,
-   user:USER
-  })
- }).then(()=>load());
-}
+  function salvarLancamento() {
+    const dados = {
+      tipo: tipo.value,
+      descricao: descricao.value,
+      valor: valor.value,
+      data: data.value
+    };
 
-/* RENDER */
-function render(){
- let r=0,d=0;
- lista.innerHTML="";
- histLista.innerHTML="";
- DB.forEach(l=>{
-  if(l.tipo==="Receita")r+=l.valor; else d+=l.valor;
-  lista.innerHTML+=`
-   <tr>
-    <td>${fmt(l.data)}</td>
-    <td>${l.desc}</td>
-    <td>R$ ${l.valor.toFixed(2)}</td>
-    <td class="${l.pago?"status-pago":"status-pendente"}">${l.pago?"Pago":"Pendente"}</td>
-   </tr>`;
-  histLista.innerHTML+=`
-   <tr>
-    <td>${fmt(l.data)}</td>
-    <td>${l.desc}</td>
-    <td>R$ ${l.valor.toFixed(2)}</td>
-    <td>${l.tipo}</td>
-   </tr>`;
- });
- rEl.innerText=r; dEl.innerText=d; sEl.innerText=r-d;
-}
+    google.script.run
+      .withSuccessHandler(() => {
+        alert('Salvo com sucesso');
+        carregarHistorico();
+      })
+      .salvarLancamento(dados); // 🔒 função original do V3
+  }
 
-/* GRÁFICO */
-function graf(){
- const m={};
- DB.forEach(l=>{
-  const k=l.data.slice(0,7);
-  m[k]=m[k]||0;
-  m[k]+=l.tipo==="Receita"?l.valor:-l.valor;
- });
- const labels=Object.keys(m);
- const data=Object.values(m);
- if(chart)chart.destroy();
- chart=new Chart(grafico,{
-  type:"bar",
-  data:{labels,datasets:[{label:"Saldo",data}]}
- });
-}
+  function carregarHistorico() {
+    google.script.run
+      .withSuccessHandler(renderHistorico)
+      .listarLancamentos(); // 🔒 função original do V3
+  }
 
-/* UI */
-function dark(){
- document.body.classList.toggle("dark");
-}
+  function renderHistorico(lista) {
+    const grid = document.getElementById('gridHistorico');
+    grid.innerHTML = '';
+
+    lista.forEach(l => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${l.data}</td>
+        <td>${l.descricao}</td>
+        <td>${l.tipo}</td>
+        <td>${Number(l.valor).toFixed(2)}</td>
+      `;
+      grid.appendChild(tr);
+    });
+  }
+
+  carregarHistorico();
 </script>
 
 </body>
