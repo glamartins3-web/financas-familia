@@ -132,19 +132,14 @@ td,th{
   <canvas id="grafico"></canvas>
 </div>
 
-<div class="card">
-<h3>Histórico</h3>
-<table>
-<thead>
-<tr>
-<th>✓</th>
-<th>Descrição</th>
-<th>Valor</th>
-<th>Status</th>
-</tr>
-</thead>
-<tbody id="lista"></tbody>
-</table>
+<!-- HISTÓRICO -->
+<div id="pg-hist" class="container hidden">
+
+  <div class="container-box mb-3">
+    <h6 class="fw-bold mb-2">📈 Evolução Financeira Mensal</h6>
+    <canvas id="graficoEvolucao" height="160"></canvas>
+  </div>
+
 </div>
 
 </main>
@@ -242,5 +237,72 @@ function toggleDark(){
 if(localStorage.dark==="true")document.body.classList.add("dark");
 </script>
 
+<script>
+let graficoEvolucao;
+
+function renderGrafico(){
+  const mapa = {};
+
+  // Agrupa por mês
+  db.forEach(i=>{
+    const mes = i.data.slice(0,7);
+    if(!mapa[mes]) mapa[mes] = { r:0, d:0 };
+    if(i.tipo === "Receita") mapa[mes].r += i.valor;
+    else mapa[mes].d += i.valor;
+  });
+
+  const meses = Object.keys(mapa).sort();
+  let saldoAcumulado = 0;
+
+  const receitas = [];
+  const despesas = [];
+  const saldos   = [];
+
+  meses.forEach(m=>{
+    receitas.push(mapa[m].r);
+    despesas.push(mapa[m].d);
+    saldoAcumulado += (mapa[m].r - mapa[m].d);
+    saldos.push(saldoAcumulado);
+  });
+
+  const ctx = document.getElementById("graficoEvolucao").getContext("2d");
+  if(graficoEvolucao) graficoEvolucao.destroy();
+
+  graficoEvolucao = new Chart(ctx,{
+    type:"line",
+    data:{
+      labels: meses,
+      datasets:[
+        {
+          label:"Receita",
+          data: receitas,
+          borderWidth:3,
+          tension:.35
+        },
+        {
+          label:"Despesa",
+          data: despesas,
+          borderWidth:3,
+          tension:.35
+        },
+        {
+          label:"Saldo Acumulado",
+          data: saldos,
+          borderWidth:4,
+          tension:.35
+        }
+      ]
+    },
+    options:{
+      responsive:true,
+      plugins:{
+        legend:{ position:"bottom" }
+      }
+    }
+  });
+}
+</script>
+
+  
 </body>
 </html>
