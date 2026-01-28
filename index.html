@@ -208,20 +208,38 @@ async function salvar(){
 function render(){
   corpoItens.innerHTML="";
   let r=0,d=0;
-  db.filter(x=>x.data&&x.data.startsWith(mesFoco.value)).forEach(i=>{
-    i.tipo==="Receita"?r+=i.valor:d+=i.valor;
+
+  const listaMes = db
+    .map((item,idx)=>({...item,idx}))
+    .filter(x=>x.data && x.data.startsWith(mesFoco.value));
+
+  listaMes.forEach(i=>{
+    i.tipo==="Receita" ? r+=i.valor : d+=i.valor;
+
     corpoItens.innerHTML+=`
     <tr>
-      <td><input type="checkbox" disabled ${i.pago?'checked':''}></td>
+      <td>
+        <input type="checkbox" 
+          ${i.pago ? "checked" : ""} 
+          onchange="togglePago(${i.idx})">
+      </td>
       <td>${i.desc}</td>
-      <td class="${i.tipo==='Receita'?'val-receita':'val-despesa'}">R$ ${i.valor.toFixed(2)}</td>
-      <td>${i.pago?'<span class="status-pago">PAGO</span>':'<span class="status-pendente">PENDENTE</span>'}</td>
+      <td class="${i.tipo==='Receita'?'val-receita':'val-despesa'}">
+        R$ ${i.valor.toFixed(2)}
+      </td>
+      <td>
+        ${i.pago
+          ? '<span class="status-pago">PAGO</span>'
+          : '<span class="status-pendente">PENDENTE</span>'}
+      </td>
     </tr>`;
   });
+
   resRec.innerText=`R$ ${r.toFixed(2)}`;
   resDes.innerText=`R$ ${d.toFixed(2)}`;
   resSal.innerText=`R$ ${(r-d).toFixed(2)}`;
 }
+
 
 /* ========= HISTÓRICO ========= */
 function renderHistorico(){
