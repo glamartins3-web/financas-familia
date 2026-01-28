@@ -2,309 +2,185 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Controle Financeiro</title>
-
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
-:root{
-  --bg:#f0f2f5;
-  --card:#ffffff;
-  --text:#1a252f;
+:root {
+  --bg: #f4f6f8;
+  --card: #ffffff;
+  --text: #222;
+  --primary: #2563eb;
 }
-body.dark{
-  --bg:#0f1720;
-  --card:#1e293b;
-  --text:#e5e7eb;
+body.dark {
+  --bg: #0f172a;
+  --card: #020617;
+  --text: #e5e7eb;
+  --primary: #38bdf8;
 }
-body{
-  background:var(--bg);
-  color:var(--text);
-  font-family:'Segoe UI',Tahoma,sans-serif;
-  padding-top:70px;
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
 }
-.hidden{display:none!important}
-.nav-top{
-  position:fixed;top:0;width:100%;
-  background:#1a252f;
-  padding:10px;
-  display:flex;
-  justify-content:space-around;
-  z-index:1000;
+header {
+  background: var(--card);
+  padding: 12px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
-.container-box{
-  background:var(--card);
-  border-radius:16px;
-  padding:16px;
-  margin-bottom:16px;
-  box-shadow:0 6px 18px rgba(0,0,0,.08);
+header strong {
+  color: var(--primary);
 }
-#tela-login{
-  position:fixed;inset:0;
-  background:#1a252f;
-  display:flex;
-  align-items:center;
-  justify-content:center;
+nav {
+  display: flex;
+  gap: 12px;
 }
-.login-box{
-  background:#fff;
-  padding:28px;
-  border-radius:18px;
-  max-width:360px;
-  width:100%;
+nav button {
+  border: none;
+  background: none;
+  font-size: 14px;
+  cursor: pointer;
+  color: var(--text);
 }
-.card-resumo{
-  border-radius:14px;
-  padding:14px;
-  color:#fff;
-  text-align:center;
-  font-weight:bold;
+main {
+  padding: 16px;
 }
-.bg-receita{background:#16a34a}
-.bg-despesa{background:#dc2626}
-.bg-saldo{background:#2563eb}
-.val-receita{color:#16a34a;font-weight:bold}
-.val-despesa{color:#dc2626;font-weight:bold}
-.status-pago{color:#16a34a;font-weight:bold}
-.status-pendente{color:#f59e0b;font-weight:bold}
-.badge-rec{background:#64748b}
-.month-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
-.btn-month{border-radius:10px;padding:6px;border:1px solid #ddd}
-.btn-month.active{background:#1a252f;color:#fff}
+.card {
+  background: var(--card);
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+input, select, button {
+  padding: 10px;
+  width: 100%;
+  margin-bottom: 10px;
+}
+button.primary {
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.toggle-dark {
+  position: fixed;
+  bottom: 16px;
+  right: 16px;
+  padding: 10px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: #fff;
+  cursor: pointer;
+}
+.hidden { display: none; }
 </style>
 </head>
 
 <body>
 
 <!-- LOGIN -->
-<div id="tela-login">
-  <div class="login-box text-center">
-    <h4 class="fw-bold mb-3">ACESSO</h4>
-    <input id="userInput" class="form-control mb-2" placeholder="Usuário">
-    <input id="passInput" type="password" class="form-control mb-3" placeholder="Senha">
-    <button class="btn btn-dark w-100 fw-bold" onclick="fazerLogin()">ENTRAR</button>
-    <div id="loginError" class="text-danger small mt-2 hidden">Dados inválidos</div>
-  </div>
+<div id="loginView" class="card">
+  <h2>🔐 Login</h2>
+  <input id="user" placeholder="Usuário">
+  <input id="pass" type="password" placeholder="Senha">
+  <button class="primary" onclick="login()">Entrar</button>
+  <p id="loginErro" style="color:red;"></p>
 </div>
 
 <!-- APP -->
-<div id="appContent" class="hidden">
+<div id="appView" class="hidden">
+  <header>
+    <div>Olá, <strong id="userName"></strong></div>
+    <nav>
+      <button onclick="showTab('lancamentos')">💸 Lançamentos</button>
+      <button onclick="showTab('historico')">📊 Histórico</button>
+      <button onclick="logout()">⏻ Sair</button>
+    </nav>
+  </header>
 
-<nav class="nav-top">
-  <button class="btn btn-light btn-sm" onclick="showPage('lan')">💸</button>
-  <button class="btn btn-light btn-sm" onclick="showPage('hist')">📊</button>
-  <button class="btn btn-light btn-sm" onclick="toggleDark()">🌙</button>
-  <button class="btn btn-outline-danger btn-sm" onclick="logout()">⏻</button>
-</nav>
+  <main>
+    <div id="lancamentos" class="card">
+      <h3>💸 Lançamentos</h3>
+      <p>Base pronta (fase 2)</p>
+    </div>
 
-<!-- LANÇAMENTOS -->
-<div id="pg-lan" class="container">
-
-  <div class="container-box">
-    <div id="monthSelector" class="month-grid"></div>
-    <input type="hidden" id="mesFoco">
-  </div>
-
-  <div class="row g-2 mb-2">
-    <div class="col-4"><div class="card-resumo bg-receita">Receita<br><span id="resRec">R$0</span></div></div>
-    <div class="col-4"><div class="card-resumo bg-despesa">Despesa<br><span id="resDes">R$0</span></div></div>
-    <div class="col-4"><div class="card-resumo bg-saldo">Saldo<br><span id="resSal">R$0</span></div></div>
-  </div>
-
-  <div class="container-box">
-    <input id="fData" type="date" class="form-control mb-2">
-    <input id="fDesc" class="form-control mb-2" placeholder="Descrição">
-    <input id="fCategoria" class="form-control mb-2" placeholder="Categoria">
-    <input id="fValor" type="number" class="form-control mb-2" placeholder="Valor">
-    <select id="fTipo" class="form-select mb-2">
-      <option>Receita</option>
-      <option>Despesa</option>
-    </select>
-    <select id="fRecorrente" class="form-select mb-2">
-      <option value="N">Única</option>
-      <option value="S">Recorrente</option>
-    </select>
-    <button class="btn btn-dark w-100 fw-bold" onclick="adicionar()">INCLUIR</button>
-  </div>
-
-  <div class="container-box table-responsive">
-    <table class="table table-sm">
-      <thead>
-        <tr>
-          <th>✓</th><th>Descrição</th><th>Valor</th><th>Incluído</th>
-        </tr>
-      </thead>
-      <tbody id="corpoItens"></tbody>
-    </table>
-  </div>
+    <div id="historico" class="card hidden">
+      <h3>📊 Histórico</h3>
+      <p>Base pronta (fase 3)</p>
+    </div>
+  </main>
 </div>
 
-<!-- HISTÓRICO -->
-<div id="pg-hist" class="container hidden">
-  <div class="container-box">
-    <canvas id="graficoMensal" height="140"></canvas>
-  </div>
-</div>
-
-</div>
+<div class="toggle-dark" onclick="toggleDark()">🌙</div>
 
 <script>
-const URL_API="https://script.google.com/macros/s/AKfycbxHjTzh9gF0yfw9LW7EGYTAshfKQJyRV7TCmhmJIQr9pVw4f00bmnZpwbhvtO2e7Fon5Q/exec";
-let db=[],userNow="",grafico;
-/* ===== DOM ===== */
-const userInput     = document.getElementById("userInput");
-const passInput     = document.getElementById("passInput");
-const loginError    = document.getElementById("loginError");
-const telaLogin     = document.getElementById("tela-login");
-const appContent    = document.getElementById("appContent");
+const API =
+  "https://script.google.com/macros/s/AKfycbxHjTzh9gF0yfw9LW7EGYTAshfKQJyRV7TCmhmJIQr9pVw4f00bmnZpwbhvtO2e7Fon5Q/exec"; // ⚠️ COLE A URL DO DEPLOY
 
-const pgLan         = document.getElementById("pg-lan");
-const pgHist        = document.getElementById("pg-hist");
+/* ================= LOGIN ================= */
+function login() {
+  const u = user.value.trim();
+  const p = pass.value.trim();
+  if (!u || !p) return;
 
-const monthSelector = document.getElementById("monthSelector");
-const mesFoco       = document.getElementById("mesFoco");
-
-const corpoItens    = document.getElementById("corpoItens");
-const resRec        = document.getElementById("resRec");
-const resDes        = document.getElementById("resDes");
-const resSal        = document.getElementById("resSal");
-
-const fData         = document.getElementById("fData");
-const fDesc         = document.getElementById("fDesc");
-const fCategoria    = document.getElementById("fCategoria");
-const fValor        = document.getElementById("fValor");
-const fTipo         = document.getElementById("fTipo");
-const fRecorrente   = document.getElementById("fRecorrente");
-
-const graficoMensal = document.getElementById("graficoMensal");
-  
-/* ===== Dark Mode ===== */
-function toggleDark(){
-  document.body.classList.toggle("dark");
-  localStorage.setItem("dark",document.body.classList.contains("dark"));
-}
-if(localStorage.getItem("dark")==="true")document.body.classList.add("dark");
-
-/* ===== Login ===== */
-async function fazerLogin(){
-  loginError.classList.add("hidden");
-  const r=await fetch(`${URL_API}?action=login&user=${userInput.value}&pass=${passInput.value}`);
-  const j=await r.json();
-  if(j.ok){
-    userNow=j.usuario;
-    telaLogin.classList.add("hidden");
-    appContent.classList.remove("hidden");
-    initMonths();carregar();
-  }else loginError.classList.remove("hidden");
-}
-function logout(){location.reload()}
-
-/* ===== Navegação ===== */
-function showPage(p){
-  pgLan.classList.toggle("hidden", p !== "lan");
-  pgHist.classList.toggle("hidden", p !== "hist");
+  fetch(`${API}?action=login&user=${encodeURIComponent(u)}&pass=${encodeURIComponent(p)}`)
+    .then(r => r.json())
+    .then(j => {
+      if (j.ok) {
+        localStorage.setItem("user", j.usuario);
+        localStorage.setItem("loginTime", Date.now());
+        initApp();
+      } else {
+        loginErro.innerText = "Usuário ou senha inválidos";
+      }
+    });
 }
 
-/* ===== Meses ===== */
-function initMonths(){
-  const d=new Date(),y=d.getFullYear(),m=d.getMonth();
-  monthSelector.innerHTML="";
-  for(let i=0;i<12;i++){
-    const v=`${y}-${String(i+1).padStart(2,"0")}`;
-    monthSelector.innerHTML+=`<button class="btn-month ${i===m?'active':''}" onclick="setMes('${v}',this)">${i+1}</button>`;
+/* ================= SESSÃO ================= */
+function initApp() {
+  const user = localStorage.getItem("user");
+  if (!user) return;
+
+  const time = Number(localStorage.getItem("loginTime"));
+  if (Date.now() - time > 10 * 60 * 1000) {
+    logout();
+    return;
   }
-  mesFoco.value=`${y}-${String(m+1).padStart(2,"0")}`;
-}
-function setMes(v,b){
-  document.querySelectorAll(".btn-month").forEach(x=>x.classList.remove("active"));
-  b.classList.add("active");
-  mesFoco.value=v;render();
+
+  loginView.classList.add("hidden");
+  appView.classList.remove("hidden");
+  userName.innerText = user;
+  showTab("lancamentos");
 }
 
-/* ===== Dados ===== */
-async function carregar(){
-  const r=await fetch(`${URL_API}?action=listar`);
-  const d=await r.json();
-  db=d.map(l=>({
-    id:l[0],data:l[2],desc:l[3],valor:+l[4],
-    tipo:l[5],pago:l[6]==="PAGO",
-    categoria:l[7]||"",incluido:l[8]||l[2],
-    recorrente:l[9]==="S",inicio:l[2]
-  }));
-  render();renderGrafico();
+function logout() {
+  localStorage.clear();
+  location.reload();
 }
 
-function adicionar(){
-  db.push({
-    id:Date.now(),
-    data:fData.value,
-    desc:fDesc.value,
-    categoria:fCategoria.value,
-    valor:+fValor.value,
-    tipo:fTipo.value,
-    pago:false,
-    recorrente:fRecorrente.value==="S",
-    inicio:fData.value,
-    incluido:new Date().toISOString().slice(0,10),
-    user:userNow
-  });
-  salvar();
-}
-async function salvar(){
-  await fetch(URL_API,{method:"POST",body:JSON.stringify(db)});
-  render();renderGrafico();
-}
-function togglePago(id){
-  const i=db.find(x=>x.id===id);
-  if(i){i.pago=!i.pago;salvar();}
+/* ================= TABS ================= */
+function showTab(id) {
+  document.querySelectorAll("main .card").forEach(c => c.classList.add("hidden"));
+  document.getElementById(id).classList.remove("hidden");
 }
 
-/* ===== Render ===== */
-function render(){
-  corpoItens.innerHTML="";
-  let r=0,d=0;
-  const m=mesFoco.value;
-  db.forEach(i=>{
-    const ok=i.recorrente?m>=i.inicio.slice(0,7):i.data.startsWith(m);
-    if(!ok)return;
-    i.tipo==="Receita"?r+=i.valor:d+=i.valor;
-    corpoItens.innerHTML+=`
-    <tr>
-      <td><input type="checkbox" ${i.pago?'checked':''} onchange="togglePago(${i.id})"></td>
-      <td>${i.desc}<br><small>${i.categoria} ${i.recorrente?'<span class="badge badge-rec">Rec</span>':''}</small></td>
-      <td class="${i.tipo==='Receita'?'val-receita':'val-despesa'}">R$ ${i.valor.toFixed(2)}</td>
-      <td><small>${i.incluido}</small></td>
-    </tr>`;
-  });
-  resRec.innerText=`R$ ${r.toFixed(2)}`;
-  resDes.innerText=`R$ ${d.toFixed(2)}`;
-  resSal.innerText=`R$ ${(r-d).toFixed(2)}`;
+/* ================= DARK MODE ================= */
+function toggleDark() {
+  document.body.classList.toggle("dark");
+  localStorage.setItem("dark", document.body.classList.contains("dark"));
 }
 
-/* ===== Gráfico ===== */
-function renderGrafico(){
-  const map={};
-  db.forEach(i=>{
-    const m=i.data.slice(0,7);
-    map[m]=map[m]||{r:0,d:0};
-    i.tipo==="Receita"?map[m].r+=i.valor:map[m].d+=i.valor;
-  });
-  const meses=Object.keys(map).sort();
-  const ctx=graficoMensal.getContext("2d");
-  if(grafico)grafico.destroy();
-  grafico=new Chart(ctx,{
-    type:"line",
-    data:{
-      labels:meses,
-      datasets:[
-        {label:"Receitas",data:meses.map(m=>map[m].r)},
-        {label:"Despesas",data:meses.map(m=>map[m].d)}
-      ]
-    }
-  });
+if (localStorage.getItem("dark") === "true") {
+  document.body.classList.add("dark");
 }
+
+/* ================= INIT ================= */
+initApp();
 </script>
+
 </body>
 </html>
