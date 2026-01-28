@@ -11,55 +11,50 @@
 <style>
 :root{
   --bg:#f0f2f5;
-  --dark:#1a252f;
+  --card:#ffffff;
+  --text:#1a252f;
+}
+body.dark{
+  --bg:#0f1720;
+  --card:#1e293b;
+  --text:#e5e7eb;
 }
 body{
   background:var(--bg);
+  color:var(--text);
   font-family:'Segoe UI',Tahoma,sans-serif;
-  padding-top:64px;
+  padding-top:70px;
 }
 .hidden{display:none!important}
-
-/* NAV */
 .nav-top{
-  position:fixed;
-  top:0;
-  width:100%;
-  background:var(--dark);
+  position:fixed;top:0;width:100%;
+  background:#1a252f;
   padding:10px;
   display:flex;
   justify-content:space-around;
   z-index:1000;
 }
-
-/* BOX */
 .container-box{
-  background:#fff;
+  background:var(--card);
   border-radius:16px;
   padding:16px;
-  box-shadow:0 6px 18px rgba(0,0,0,.08);
   margin-bottom:16px;
+  box-shadow:0 6px 18px rgba(0,0,0,.08);
 }
-
-/* LOGIN */
 #tela-login{
-  position:fixed;
-  inset:0;
-  background:var(--dark);
+  position:fixed;inset:0;
+  background:#1a252f;
   display:flex;
   align-items:center;
   justify-content:center;
-  z-index:9999;
 }
 .login-box{
   background:#fff;
-  padding:24px;
+  padding:28px;
   border-radius:18px;
   max-width:360px;
   width:100%;
 }
-
-/* RESUMO */
 .card-resumo{
   border-radius:14px;
   padding:14px;
@@ -67,41 +62,17 @@ body{
   text-align:center;
   font-weight:bold;
 }
-.bg-receita{background:linear-gradient(135deg,#2ecc71,#27ae60)}
-.bg-despesa{background:linear-gradient(135deg,#ff7675,#e74c3c)}
-.bg-saldo{background:linear-gradient(135deg,#6c5ce7,#341f97)}
-
-.val-receita{color:#27ae60;font-weight:bold}
-.val-despesa{color:#e74c3c;font-weight:bold}
-.status-pago{color:#27ae60;font-weight:bold}
-.status-pendente{color:#f39c12;font-weight:bold}
-
-/* CALENDÁRIO */
-.calendar{
-  display:grid;
-  grid-template-columns:repeat(7,1fr);
-  gap:6px;
-}
-.calendar div{
-  background:#fff;
-  border-radius:10px;
-  padding:10px 0;
-  text-align:center;
-  font-weight:bold;
-  border:1px solid #ddd;
-}
-.calendar .active{
-  background:var(--dark);
-  color:#fff;
-}
-.calendar .has-item{
-  border:2px solid #27ae60;
-}
-
-/* MOBILE */
-@media(min-width:768px){
-  .nav-top{justify-content:center;gap:12px}
-}
+.bg-receita{background:#16a34a}
+.bg-despesa{background:#dc2626}
+.bg-saldo{background:#2563eb}
+.val-receita{color:#16a34a;font-weight:bold}
+.val-despesa{color:#dc2626;font-weight:bold}
+.status-pago{color:#16a34a;font-weight:bold}
+.status-pendente{color:#f59e0b;font-weight:bold}
+.badge-rec{background:#64748b}
+.month-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
+.btn-month{border-radius:10px;padding:6px;border:1px solid #ddd}
+.btn-month.active{background:#1a252f;color:#fff}
 </style>
 </head>
 
@@ -110,11 +81,11 @@ body{
 <!-- LOGIN -->
 <div id="tela-login">
   <div class="login-box text-center">
-    <h4 class="fw-bold mb-3">ACESSO RESTRITO</h4>
+    <h4 class="fw-bold mb-3">ACESSO</h4>
     <input id="userInput" class="form-control mb-2" placeholder="Usuário">
     <input id="passInput" type="password" class="form-control mb-3" placeholder="Senha">
     <button class="btn btn-dark w-100 fw-bold" onclick="fazerLogin()">ENTRAR</button>
-    <div id="loginError" class="text-danger mt-2 small hidden">Dados inválidos</div>
+    <div id="loginError" class="text-danger small mt-2 hidden">Dados inválidos</div>
   </div>
 </div>
 
@@ -122,52 +93,49 @@ body{
 <div id="appContent" class="hidden">
 
 <nav class="nav-top">
-  <button class="btn btn-light btn-sm fw-bold" onclick="showPage('lan')">💸</button>
-  <button class="btn btn-light btn-sm fw-bold" onclick="showPage('hist')">📊</button>
-  <button class="btn btn-outline-danger btn-sm" onclick="logout()">⎋</button>
+  <button class="btn btn-light btn-sm" onclick="showPage('lan')">💸</button>
+  <button class="btn btn-light btn-sm" onclick="showPage('hist')">📊</button>
+  <button class="btn btn-light btn-sm" onclick="toggleDark()">🌙</button>
+  <button class="btn btn-outline-danger btn-sm" onclick="logout()">⏻</button>
 </nav>
 
 <!-- LANÇAMENTOS -->
 <div id="pg-lan" class="container">
 
   <div class="container-box">
-    <h6 class="fw-bold mb-2">Calendário Mensal</h6>
-    <div id="calendar" class="calendar"></div>
+    <div id="monthSelector" class="month-grid"></div>
     <input type="hidden" id="mesFoco">
   </div>
 
   <div class="row g-2 mb-2">
-    <div class="col-4"><div class="card-resumo bg-receita">Receitas<br><span id="resRec">R$0</span></div></div>
-    <div class="col-4"><div class="card-resumo bg-despesa">Despesas<br><span id="resDes">R$0</span></div></div>
+    <div class="col-4"><div class="card-resumo bg-receita">Receita<br><span id="resRec">R$0</span></div></div>
+    <div class="col-4"><div class="card-resumo bg-despesa">Despesa<br><span id="resDes">R$0</span></div></div>
     <div class="col-4"><div class="card-resumo bg-saldo">Saldo<br><span id="resSal">R$0</span></div></div>
   </div>
 
   <div class="container-box">
-    <div class="row g-2">
-      <div class="col-6"><input id="fData" type="date" class="form-control"></div>
-      <div class="col-6"><input id="fValor" type="number" class="form-control" placeholder="Valor"></div>
-      <div class="col-12"><input id="fDesc" class="form-control" placeholder="Descrição"></div>
-      <div class="col-6">
-        <select id="fTipo" class="form-select">
-          <option>Receita</option>
-          <option>Despesa</option>
-        </select>
-      </div>
-      <div class="col-6">
-        <select id="fRecorrente" class="form-select">
-          <option value="N">Única</option>
-          <option value="S">Recorrente</option>
-        </select>
-      </div>
-      <div class="col-12">
-        <button class="btn btn-dark w-100 fw-bold" onclick="adicionar()">INCLUIR</button>
-      </div>
-    </div>
+    <input id="fData" type="date" class="form-control mb-2">
+    <input id="fDesc" class="form-control mb-2" placeholder="Descrição">
+    <input id="fCategoria" class="form-control mb-2" placeholder="Categoria">
+    <input id="fValor" type="number" class="form-control mb-2" placeholder="Valor">
+    <select id="fTipo" class="form-select mb-2">
+      <option>Receita</option>
+      <option>Despesa</option>
+    </select>
+    <select id="fRecorrente" class="form-select mb-2">
+      <option value="N">Única</option>
+      <option value="S">Recorrente</option>
+    </select>
+    <button class="btn btn-dark w-100 fw-bold" onclick="adicionar()">INCLUIR</button>
   </div>
 
   <div class="container-box table-responsive">
     <table class="table table-sm">
-      <thead><tr><th>✓</th><th>Descrição</th><th>Valor</th></tr></thead>
+      <thead>
+        <tr>
+          <th>✓</th><th>Descrição</th><th>Valor</th><th>Incluído</th>
+        </tr>
+      </thead>
       <tbody id="corpoItens"></tbody>
     </table>
   </div>
@@ -175,135 +143,142 @@ body{
 
 <!-- HISTÓRICO -->
 <div id="pg-hist" class="container hidden">
-
   <div class="container-box">
-    <canvas id="graficoMensal" height="160"></canvas>
+    <canvas id="graficoMensal" height="140"></canvas>
   </div>
-
-  <div class="container-box table-responsive">
-    <table class="table">
-      <thead class="table-dark">
-        <tr><th>Mês</th><th>Receita</th><th>Despesa</th><th>Saldo</th></tr>
-      </thead>
-      <tbody id="corpoHist"></tbody>
-    </table>
-  </div>
-
 </div>
+
 </div>
 
 <script>
-const URL_API="https://script.google.com/macros/s/AKfycbxHjTzh9gF0yfw9LW7EGYTAshfKQJyRV7TCmhmJIQr9pVw4f00bmnZpwbhvtO2e7Fon5Q/exec";
-
-const $=id=>document.getElementById(id);
+const URL_API="SUA_URL_DO_GAS_AQUI";
 let db=[],userNow="",grafico;
 
-/* NAV */
-function showPage(p){
-  $("pg-lan").classList.toggle("hidden",p!=="lan");
-  $("pg-hist").classList.toggle("hidden",p!=="hist");
+/* ===== Dark Mode ===== */
+function toggleDark(){
+  document.body.classList.toggle("dark");
+  localStorage.setItem("dark",document.body.classList.contains("dark"));
 }
+if(localStorage.getItem("dark")==="true")document.body.classList.add("dark");
 
-/* LOGIN */
+/* ===== Login ===== */
 async function fazerLogin(){
-  $("loginError").classList.add("hidden");
-  const r=await fetch(`${URL_API}?action=login&user=${encodeURIComponent($("userInput").value)}&pass=${encodeURIComponent($("passInput").value)}`);
+  loginError.classList.add("hidden");
+  const r=await fetch(`${URL_API}?action=login&user=${userInput.value}&pass=${passInput.value}`);
   const j=await r.json();
-  if(!j.ok) return $("loginError").classList.remove("hidden");
-  userNow=j.usuario;
-  $("tela-login").classList.add("hidden");
-  $("appContent").classList.remove("hidden");
-  carregar();
+  if(j.ok){
+    userNow=j.usuario;
+    telaLogin.classList.add("hidden");
+    appContent.classList.remove("hidden");
+    initMonths();carregar();
+  }else loginError.classList.remove("hidden");
 }
-function logout(){location.reload();}
+function logout(){location.reload()}
 
-/* DADOS */
+/* ===== Navegação ===== */
+function showPage(p){
+  pg-lan.classList.toggle("hidden",p!=="lan");
+  pg-hist.classList.toggle("hidden",p!=="hist");
+}
+
+/* ===== Meses ===== */
+function initMonths(){
+  const d=new Date(),y=d.getFullYear(),m=d.getMonth();
+  monthSelector.innerHTML="";
+  for(let i=0;i<12;i++){
+    const v=`${y}-${String(i+1).padStart(2,"0")}`;
+    monthSelector.innerHTML+=`<button class="btn-month ${i===m?'active':''}" onclick="setMes('${v}',this)">${i+1}</button>`;
+  }
+  mesFoco.value=`${y}-${String(m+1).padStart(2,"0")}`;
+}
+function setMes(v,b){
+  document.querySelectorAll(".btn-month").forEach(x=>x.classList.remove("active"));
+  b.classList.add("active");
+  mesFoco.value=v;render();
+}
+
+/* ===== Dados ===== */
 async function carregar(){
   const r=await fetch(`${URL_API}?action=listar`);
   const d=await r.json();
-  db=d.map(l=>({id:l[0],data:l[2],desc:l[3],valor:+l[4],tipo:l[5],pago:l[6]==="PAGO"}));
-  render();
-  renderHistorico();
-  renderCalendario();
+  db=d.map(l=>({
+    id:l[0],data:l[2],desc:l[3],valor:+l[4],
+    tipo:l[5],pago:l[6]==="PAGO",
+    categoria:l[7]||"",incluido:l[8]||l[2],
+    recorrente:l[9]==="S",inicio:l[2]
+  }));
+  render();renderGrafico();
 }
 
-/* CALENDÁRIO */
-function renderCalendario(){
-  const cal=$("calendar");
-  cal.innerHTML="";
-  const d=new Date(),y=d.getFullYear(),m=d.getMonth()+1;
-  $("mesFoco").value=`${y}-${String(m).padStart(2,"0")}`;
-  for(let i=1;i<=31;i++){
-    const data=`${$("mesFoco").value}-${String(i).padStart(2,"0")}`;
-    const tem=db.some(x=>x.data===data);
-    cal.innerHTML+=`<div class="${tem?'has-item':''}">${i}</div>`;
-  }
-}
-
-/* CRUD */
 function adicionar(){
   db.push({
     id:Date.now(),
-    data:$("fData").value,
-    desc:$("fDesc").value,
-    valor:+$("fValor").value,
-    tipo:$("fTipo").value,
-    pago:false
+    data:fData.value,
+    desc:fDesc.value,
+    categoria:fCategoria.value,
+    valor:+fValor.value,
+    tipo:fTipo.value,
+    pago:false,
+    recorrente:fRecorrente.value==="S",
+    inicio:fData.value,
+    incluido:new Date().toISOString().slice(0,10),
+    user:userNow
   });
   salvar();
 }
 async function salvar(){
   await fetch(URL_API,{method:"POST",body:JSON.stringify(db)});
-  render();renderHistorico();renderCalendario();
+  render();renderGrafico();
+}
+function togglePago(id){
+  const i=db.find(x=>x.id===id);
+  if(i){i.pago=!i.pago;salvar();}
 }
 
-/* RENDER */
+/* ===== Render ===== */
 function render(){
+  corpoItens.innerHTML="";
   let r=0,d=0;
-  $("corpoItens").innerHTML="";
-  db.filter(x=>x.data.startsWith($("mesFoco").value)).forEach(i=>{
+  const m=mesFoco.value;
+  db.forEach(i=>{
+    const ok=i.recorrente?m>=i.inicio.slice(0,7):i.data.startsWith(m);
+    if(!ok)return;
     i.tipo==="Receita"?r+=i.valor:d+=i.valor;
-    $("corpoItens").innerHTML+=`
+    corpoItens.innerHTML+=`
     <tr>
-      <td><input type="checkbox" ${i.pago?"checked":""}></td>
-      <td>${i.desc}</td>
-      <td class="${i.tipo==="Receita"?"val-receita":"val-despesa"}">R$ ${i.valor.toFixed(2)}</td>
+      <td><input type="checkbox" ${i.pago?'checked':''} onchange="togglePago(${i.id})"></td>
+      <td>${i.desc}<br><small>${i.categoria} ${i.recorrente?'<span class="badge badge-rec">Rec</span>':''}</small></td>
+      <td class="${i.tipo==='Receita'?'val-receita':'val-despesa'}">R$ ${i.valor.toFixed(2)}</td>
+      <td><small>${i.incluido}</small></td>
     </tr>`;
   });
-  $("resRec").innerText=`R$ ${r.toFixed(2)}`;
-  $("resDes").innerText=`R$ ${d.toFixed(2)}`;
-  $("resSal").innerText=`R$ ${(r-d).toFixed(2)}`;
+  resRec.innerText=`R$ ${r.toFixed(2)}`;
+  resDes.innerText=`R$ ${d.toFixed(2)}`;
+  resSal.innerText=`R$ ${(r-d).toFixed(2)}`;
 }
 
-/* HISTÓRICO + GRÁFICO */
-function renderHistorico(){
-  const hist={};$("corpoHist").innerHTML="";
+/* ===== Gráfico ===== */
+function renderGrafico(){
+  const map={};
   db.forEach(i=>{
     const m=i.data.slice(0,7);
-    hist[m]=hist[m]||{r:0,d:0};
-    i.tipo==="Receita"?hist[m].r+=i.valor:hist[m].d+=i.valor;
+    map[m]=map[m]||{r:0,d:0};
+    i.tipo==="Receita"?map[m].r+=i.valor:map[m].d+=i.valor;
   });
-  const meses=Object.keys(hist).sort();
-  meses.forEach(m=>{
-    const s=hist[m].r-hist[m].d;
-    $("corpoHist").innerHTML+=`
-    <tr><td>${m}</td>
-    <td class="val-receita">R$ ${hist[m].r.toFixed(2)}</td>
-    <td class="val-despesa">R$ ${hist[m].d.toFixed(2)}</td>
-    <td>R$ ${s.toFixed(2)}</td></tr>`;
-  });
-  const ctx=$("graficoMensal").getContext("2d");
+  const meses=Object.keys(map).sort();
+  const ctx=graficoMensal.getContext("2d");
   if(grafico)grafico.destroy();
   grafico=new Chart(ctx,{
     type:"line",
-    data:{labels:meses,datasets:[
-      {label:"Receitas",data:meses.map(m=>hist[m].r),borderColor:"#27ae60"},
-      {label:"Despesas",data:meses.map(m=>hist[m].d),borderColor:"#e74c3c"}
-    ]},
-    options:{responsive:true,plugins:{legend:{position:"bottom"}}}
+    data:{
+      labels:meses,
+      datasets:[
+        {label:"Receitas",data:meses.map(m=>map[m].r)},
+        {label:"Despesas",data:meses.map(m=>map[m].d)}
+      ]
+    }
   });
 }
 </script>
-
 </body>
 </html>
