@@ -6,77 +6,80 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
-:root {
-  --bg: #f4f6f8;
-  --card: #ffffff;
-  --text: #222;
-  --primary: #2563eb;
+:root{
+  --bg:#f1f5f9;
+  --card:#ffffff;
+  --text:#1e293b;
+  --primary:#2563eb;
+  --ok:#16a34a;
+  --warn:#f59e0b;
 }
-body.dark {
-  --bg: #0f172a;
-  --card: #020617;
-  --text: #e5e7eb;
-  --primary: #38bdf8;
+body.dark{
+  --bg:#020617;
+  --card:#020617;
+  --text:#e5e7eb;
 }
-body {
-  margin: 0;
-  font-family: Arial, sans-serif;
-  background: var(--bg);
-  color: var(--text);
+body{
+  margin:0;
+  font-family:Segoe UI,Arial;
+  background:var(--bg);
+  color:var(--text);
 }
-header {
-  background: var(--card);
-  padding: 12px 16px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+.hidden{display:none}
+header{
+  background:var(--card);
+  padding:12px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  box-shadow:0 2px 8px rgba(0,0,0,.1);
 }
-header strong {
-  color: var(--primary);
+nav button{
+  background:none;
+  border:none;
+  font-size:14px;
+  cursor:pointer;
+  margin-left:10px;
 }
-nav {
-  display: flex;
-  gap: 12px;
+main{padding:16px}
+.card{
+  background:var(--card);
+  border-radius:12px;
+  padding:14px;
+  margin-bottom:16px;
 }
-nav button {
-  border: none;
-  background: none;
-  font-size: 14px;
-  cursor: pointer;
-  color: var(--text);
+input,select,button{
+  width:100%;
+  padding:10px;
+  margin-bottom:8px;
 }
-main {
-  padding: 16px;
+button.primary{
+  background:var(--primary);
+  color:#fff;
+  border:none;
+  border-radius:6px;
 }
-.card {
-  background: var(--card);
-  border-radius: 10px;
-  padding: 16px;
-  margin-bottom: 16px;
+table{
+  width:100%;
+  border-collapse:collapse;
 }
-input, select, button {
-  padding: 10px;
-  width: 100%;
-  margin-bottom: 10px;
+td,th{
+  padding:8px;
+  border-bottom:1px solid #ddd;
+  font-size:14px;
 }
-button.primary {
-  background: var(--primary);
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
+.status-pago{color:var(--ok);font-weight:bold}
+.status-pendente{color:var(--warn);font-weight:bold}
+.toggle-dark{
+  position:fixed;
+  right:14px;
+  bottom:14px;
+  background:var(--primary);
+  color:#fff;
+  border-radius:50%;
+  padding:12px;
+  cursor:pointer;
 }
-.toggle-dark {
-  position: fixed;
-  bottom: 16px;
-  right: 16px;
-  padding: 10px;
-  border-radius: 50%;
-  background: var(--primary);
-  color: #fff;
-  cursor: pointer;
-}
-.hidden { display: none; }
 </style>
 </head>
 
@@ -84,102 +87,155 @@ button.primary {
 
 <!-- LOGIN -->
 <div id="loginView" class="card">
-  <h2>🔐 Login</h2>
+  <h3>🔐 Login</h3>
   <input id="user" placeholder="Usuário">
   <input id="pass" type="password" placeholder="Senha">
   <button class="primary" onclick="login()">Entrar</button>
-  <p id="loginErro" style="color:red;"></p>
+  <p id="loginErro" style="color:red"></p>
 </div>
 
 <!-- APP -->
 <div id="appView" class="hidden">
-  <header>
-    <div>Olá, <strong id="userName"></strong></div>
-    <nav>
-      <button onclick="showTab('lancamentos')">💸 Lançamentos</button>
-      <button onclick="showTab('historico')">📊 Histórico</button>
-      <button onclick="logout()">⏻ Sair</button>
-    </nav>
-  </header>
+<header>
+  <strong id="userName"></strong>
+  <nav>
+    <button onclick="showTab('lanc')">💸 Lançamentos</button>
+    <button onclick="logout()">⏻</button>
+  </nav>
+</header>
 
-  <main>
-    <div id="lancamentos" class="card">
-      <h3>💸 Lançamentos</h3>
-      <p>Base pronta (fase 2)</p>
-    </div>
+<main>
 
-    <div id="historico" class="card hidden">
-      <h3>📊 Histórico</h3>
-      <p>Base pronta (fase 3)</p>
-    </div>
-  </main>
+<div id="lanc" class="card">
+<h3>Novo Lançamento</h3>
+
+<input type="date" id="data">
+<input placeholder="Descrição" id="desc">
+<input placeholder="Categoria" id="cat">
+<input type="number" placeholder="Valor" id="valor">
+
+<select id="tipo">
+  <option>Receita</option>
+  <option>Despesa</option>
+</select>
+
+<select id="rec">
+  <option value="N">Único</option>
+  <option value="S">Recorrente</option>
+</select>
+
+<select id="parcelas">
+  <option value="1">1x</option>
+  <option value="2">2x</option>
+  <option value="3">3x</option>
+  <option value="6">6x</option>
+  <option value="12">12x</option>
+</select>
+
+<button class="primary" onclick="add()">Salvar</button>
+</div>
+
+<div class="card">
+<h3>Histórico</h3>
+<table>
+<thead>
+<tr>
+<th>✓</th>
+<th>Descrição</th>
+<th>Valor</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody id="lista"></tbody>
+</table>
+</div>
+
+</main>
 </div>
 
 <div class="toggle-dark" onclick="toggleDark()">🌙</div>
 
 <script>
-const API =
-  "https://script.google.com/macros/s/AKfycbxHjTzh9gF0yfw9LW7EGYTAshfKQJyRV7TCmhmJIQr9pVw4f00bmnZpwbhvtO2e7Fon5Q/exec"; // ⚠️ COLE A URL DO DEPLOY
+const API="SUA_URL_DO_GAS_AQUI";
+let DB=[],USER="";
 
-/* ================= LOGIN ================= */
-function login() {
-  const u = user.value.trim();
-  const p = pass.value.trim();
-  if (!u || !p) return;
-
-  fetch(`${API}?action=login&user=${encodeURIComponent(u)}&pass=${encodeURIComponent(p)}`)
-    .then(r => r.json())
-    .then(j => {
-      if (j.ok) {
-        localStorage.setItem("user", j.usuario);
-        localStorage.setItem("loginTime", Date.now());
-        initApp();
-      } else {
-        loginErro.innerText = "Usuário ou senha inválidos";
-      }
-    });
-}
-
-/* ================= SESSÃO ================= */
-function initApp() {
-  const user = localStorage.getItem("user");
-  if (!user) return;
-
-  const time = Number(localStorage.getItem("loginTime"));
-  if (Date.now() - time > 10 * 60 * 1000) {
-    logout();
-    return;
-  }
-
+/* LOGIN */
+function login(){
+ fetch(`${API}?action=login&user=${user.value}&pass=${pass.value}`)
+ .then(r=>r.json()).then(j=>{
+  if(!j.ok)return loginErro.innerText="Erro no login";
+  USER=j.usuario;
+  localStorage.user=USER;
   loginView.classList.add("hidden");
   appView.classList.remove("hidden");
-  userName.innerText = user;
-  showTab("lancamentos");
+  userName.innerText=USER;
+  load();
+ })
 }
 
-function logout() {
-  localStorage.clear();
-  location.reload();
+function logout(){localStorage.clear();location.reload()}
+
+/* CRUD */
+function load(){
+ fetch(`${API}?action=listar`)
+ .then(r=>r.json()).then(d=>{
+  DB=d; render();
+ })
 }
 
-/* ================= TABS ================= */
-function showTab(id) {
-  document.querySelectorAll("main .card").forEach(c => c.classList.add("hidden"));
-  document.getElementById(id).classList.remove("hidden");
+function add(){
+ const p=+parcelas.value;
+ for(let i=0;i<p;i++){
+  const dt=new Date(data.value);
+  dt.setMonth(dt.getMonth()+i);
+  DB.push({
+   id:Date.now()+i,
+   data:dt.toISOString().slice(0,10),
+   desc:desc.value,
+   cat:cat.value,
+   valor:+valor.value/p,
+   tipo:tipo.value,
+   pago:false,
+   rec:rec.value==="S",
+   user:USER
+  });
+ }
+ save();
 }
 
-/* ================= DARK MODE ================= */
-function toggleDark() {
-  document.body.classList.toggle("dark");
-  localStorage.setItem("dark", document.body.classList.contains("dark"));
+function togglePago(id){
+ const i=DB.find(x=>x.id===id);
+ if(i){i.pago=!i.pago; save();}
 }
 
-if (localStorage.getItem("dark") === "true") {
-  document.body.classList.add("dark");
+function save(){
+ fetch(API,{method:"POST",body:JSON.stringify(DB)})
+ render();
 }
 
-/* ================= INIT ================= */
-initApp();
+/* RENDER */
+function render(){
+ lista.innerHTML="";
+ DB.forEach(i=>{
+  lista.innerHTML+=`
+   <tr>
+    <td><input type="checkbox" ${i.pago?"checked":""} onchange="togglePago(${i.id})"></td>
+    <td>${i.desc}<br><small>${i.cat}</small></td>
+    <td>R$ ${i.valor.toFixed(2)}</td>
+    <td class="${i.pago?"status-pago":"status-pendente"}">
+      ${i.pago?"Pago":"Pendente"}
+    </td>
+   </tr>`;
+ })
+}
+
+/* UI */
+function showTab(){}
+function toggleDark(){
+ document.body.classList.toggle("dark");
+ localStorage.dark=document.body.classList.contains("dark");
+}
+if(localStorage.dark==="true")document.body.classList.add("dark");
 </script>
 
 </body>
