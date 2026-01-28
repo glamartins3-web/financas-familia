@@ -64,7 +64,20 @@ body{background:#f0f2f5;font-family:'Segoe UI',Tahoma,sans-serif;padding-top:70p
     <div class="col-4"><div class="card-resumo bg-despesa">Despesas<br><span id="resDes">R$0</span></div></div>
     <div class="col-4"><div class="card-resumo bg-saldo">Saldo<br><span id="resSal">R$0</span></div></div>
   </div>
+  
+  <!-- NOVOS CAMPOS NO FORMULÁRIO -->
+<div class="col-md-2">
+  <input id="fParcelas" type="number" class="form-control" placeholder="Parcelas" min="1">
+</div> 
 
+   <!-- RECORRÊNCIA FIXA (mensal automática) -->
+  <div class="col-md-2">
+  <select id="fRecorrente" class="form-select">
+    <option value="N">Única</option>
+    <option value="S">Recorrente</option>
+  </select>
+</div>
+  
   <div class="container-box">
     <div class="row g-2">
       <div class="col-md-3"><input id="fData" type="date" class="form-control"></div>
@@ -89,11 +102,6 @@ body{background:#f0f2f5;font-family:'Segoe UI',Tahoma,sans-serif;padding-top:70p
     </table>
   </div>
 </div>
-
-  <!-- NOVOS CAMPOS NO FORMULÁRIO -->
-<div class="col-md-2">
-  <input id="fParcelas" type="number" class="form-control" placeholder="Parcelas" min="1">
-</div> 
   
 <!-- HISTÓRICO -->
 <div id="pg-hist" class="container hidden">
@@ -104,7 +112,12 @@ body{background:#f0f2f5;font-family:'Segoe UI',Tahoma,sans-serif;padding-top:70p
       <canvas id="chartHist"></canvas>
     </div>
   </div>
-
+  
+<div class="container-box">
+  <h6 class="fw-bold mb-2">Evolução Mensal</h6>
+  <canvas id="graficoMensal" height="120"></canvas>
+</div>
+  
   <div class="container-box table-responsive">
     <table class="table table-hover">
       <thead class="table-dark">
@@ -199,26 +212,21 @@ async function carregar(){
 }
 
 function adicionar(){
-  const parcelas = parseInt(document.getElementById("fParcelas").value) || 1;
-  const groupId = Date.now();
+  const recorrente = document.getElementById("fRecorrente").value === "S";
+  const idBase = Date.now();
 
-  for(let i=0;i<parcelas;i++){
-    const d = new Date(fData.value);
-    d.setMonth(d.getMonth() + i);
-
-    db.push({
-      id: Date.now() + i,
-      groupId: parcelas > 1 ? groupId : "",
-      data: d.toISOString().slice(0,10),
-      desc: parcelas > 1 
-        ? `${fDesc.value} (${i+1}/${parcelas})`
-        : fDesc.value,
-      valor: +fValor.value,
-      tipo: fTipo.value,
-      pago: false,
-      user: userNow
-    });
-  }
+  db.push({
+    id: idBase,
+    groupId: "",
+    data: fData.value,
+    desc: fDesc.value,
+    valor: +fValor.value,
+    tipo: fTipo.value,
+    pago: false,
+    user: userNow,
+    recorrente: recorrente,
+    inicio: fData.value
+  });
 
   salvar();
 }
@@ -242,33 +250,52 @@ function render(){
   corpoItens.innerHTML="";
   let r=0,d=0;
 
-  db.filter(x=>x.data && x.data.startsWith(mesFoco.value))
-    .forEach(i=>{
-      i.tipo==="Receita" ? r+=i.valor : d+=i.valor;
+  const mesAtual = mesFoco.value;
 
-      corpoItens.innerHTML+=`
-      <tr>
-        <td>
-          <input type="checkbox"
-            ${i.pago ? "checked" : ""}
-            onchange="togglePago(${i.id})">
-        </td>
-        <td>${i.desc}</td>
-        <td class="${i.tipo==='Receita'?'val-receita':'val-despesa'}">
-          R$ ${i.valor.toFixed(2)}
-        </td>
-        <td>
-          ${i.pago
-            ? '<span class="status-pago">PAGO</span>'
-            : '<span class="status-pendente">PENDENTE</span>'}
-        </td>
-      </tr>`;
-    });
+  db.forEach(i=>{
+    if(!i.data) return;
+
+    const mesItem = i.data.slice(0,7);
+    const mesInicio = i.inicio ? i.inicio.slice(0,7) : mesItem;
+
+    const aparece =
+      i.recorrente
+        ? mesAtual >= mesInicio
+        : mesItem === mesAtual;
+
+    if(!aparece) return;
+
+    i.tipo==="Receita" ? r+=i.valor : d+=i.valor;
+
+    corpoItens.innerHTML+=`
+    <tr>
+      <td>
+        <input type="checkbox"
+          ${i.pago ? "checked" : ""}
+          onchange="togglePago(${i.id})">
+      </td>
+      <td>
+        ${i.desc}
+        ${i.recorrente ? '<span class="badge bg-secondary ms-1">Recorrente</span>' : ''}
+      </td>
+      <td class="${i.tipo==='Receita'?'val-receita':'val-despesa'}">
+        R$ ${i.valor.toFixed(2)}
+      </td>
+      <td>
+        ${i.pago
+          ? '<span class="status-pago">PAGO</span>'
+          : '<span class="status-pendente">PENDENTE</span>'}
+      </td>
+    </tr>`;
+  });
 
   resRec.innerText=`R$ ${r.toFixed(2)}`;
   resDes.innerText=`R$ ${d.toFixed(2)}`;
   resSal.innerText=`R$ ${(r-d).toFixed(2)}`;
+
+  renderGrafico();
 }
+
 
 /* ========= HISTÓRICO ========= */
 function renderHistorico(){
@@ -294,21 +321,46 @@ function renderHistorico(){
   renderGrafico(hist,meses);
 }
 
-function renderGrafico(hist,meses){
-  if(chart)chart.destroy();
-  chart=new Chart(document.getElementById("chartHist"),{
+let grafico;
+
+function renderGrafico(){
+  const mapa = {};
+
+  db.forEach(i=>{
+    if(!i.data) return;
+    const mes = i.data.slice(0,7);
+    if(!mapa[mes]) mapa[mes]={r:0,d:0};
+    i.tipo==="Receita"
+      ? mapa[mes].r+=i.valor
+      : mapa[mes].d+=i.valor;
+  });
+
+  const meses = Object.keys(mapa).sort();
+  const receitas = meses.map(m=>mapa[m].r);
+  const despesas = meses.map(m=>mapa[m].d);
+  const saldo = meses.map((m,i)=>receitas[i]-despesas[i]);
+
+  const ctx = document.getElementById("graficoMensal").getContext("2d");
+  if(grafico) grafico.destroy();
+
+  grafico = new Chart(ctx,{
     type:"line",
     data:{
-      labels:meses.map(m=>m.substring(5,7)+"/"+m.substring(0,4)),
+      labels:meses,
       datasets:[
-        {label:"Receita",data:meses.map(m=>hist[m].r),borderWidth:3},
-        {label:"Despesa",data:meses.map(m=>hist[m].d),borderWidth:3},
-        {label:"Saldo",data:meses.map(m=>hist[m].r-hist[m].d),borderWidth:4}
+        {label:"Receitas",data:receitas,borderColor:"#27ae60",fill:false},
+        {label:"Despesas",data:despesas,borderColor:"#e74c3c",fill:false},
+        {label:"Saldo",data:saldo,borderColor:"#6c5ce7",fill:false}
       ]
     },
-    options:{plugins:{legend:{position:"bottom"}}}
+    options:{
+      responsive:true,
+      plugins:{legend:{position:"bottom"}},
+      scales:{y:{beginAtZero:true}}
+    }
   });
 }
+
 </script>
 
 </body>
