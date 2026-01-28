@@ -118,18 +118,42 @@ body{background:#f0f2f5;font-family:'Segoe UI',Tahoma,sans-serif;padding-top:70p
 </div>
 
 <script>
+/* ========= CONFIG ========= */
 const URL_API="https://script.google.com/macros/s/AKfycbxHjTzh9gF0yfw9LW7EGYTAshfKQJyRV7TCmhmJIQr9pVw4f00bmnZpwbhvtO2e7Fon5Q/exec";
 
+/* ========= DOM ========= */
+const userInput=document.getElementById("userInput");
+const passInput=document.getElementById("passInput");
+const telaLogin=document.getElementById("tela-login");
+const appContent=document.getElementById("appContent");
+const loginError=document.getElementById("loginError");
+
+const monthSelector=document.getElementById("monthSelector");
+const mesFoco=document.getElementById("mesFoco");
+
+const fData=document.getElementById("fData");
+const fDesc=document.getElementById("fDesc");
+const fValor=document.getElementById("fValor");
+const fTipo=document.getElementById("fTipo");
+
+const corpoItens=document.getElementById("corpoItens");
+const resRec=document.getElementById("resRec");
+const resDes=document.getElementById("resDes");
+const resSal=document.getElementById("resSal");
+
+/* ========= STATE ========= */
 let db=[],userNow="",chart;
 
+/* ========= NAV ========= */
 function showPage(p){
   document.getElementById("pg-lan").classList.toggle("hidden",p!=="lan");
   document.getElementById("pg-hist").classList.toggle("hidden",p!=="hist");
 }
 
+/* ========= LOGIN ========= */
 async function fazerLogin(){
   loginError.classList.add("hidden");
-  const r=await fetch(`${URL_API}?action=login&user=${userInput.value}&pass=${passInput.value}`);
+  const r=await fetch(`${URL_API}?action=login&user=${encodeURIComponent(userInput.value)}&pass=${encodeURIComponent(passInput.value)}`);
   const j=await r.json();
   if(j.ok){
     userNow=j.usuario;
@@ -137,9 +161,12 @@ async function fazerLogin(){
     appContent.classList.remove("hidden");
     initMonths();
     carregar();
-  } else loginError.classList.remove("hidden");
+  }else loginError.classList.remove("hidden");
 }
 
+function logout(){location.reload();}
+
+/* ========= MESES ========= */
 function initMonths(){
   monthSelector.innerHTML="";
   const d=new Date(),y=d.getFullYear(),m=d.getMonth();
@@ -157,6 +184,7 @@ function setMes(v,b){
   render();
 }
 
+/* ========= DADOS ========= */
 async function carregar(){
   const r=await fetch(`${URL_API}?action=listar`);
   const d=await r.json();
@@ -165,6 +193,18 @@ async function carregar(){
   renderHistorico();
 }
 
+function adicionar(){
+  db.push({id:Date.now(),data:fData.value,desc:fDesc.value,valor:+fValor.value,tipo:fTipo.value,pago:false,user:userNow});
+  salvar();
+}
+
+async function salvar(){
+  await fetch(URL_API,{method:"POST",body:JSON.stringify(db)});
+  render();
+  renderHistorico();
+}
+
+/* ========= LANÇAMENTOS ========= */
 function render(){
   corpoItens.innerHTML="";
   let r=0,d=0;
@@ -172,7 +212,7 @@ function render(){
     i.tipo==="Receita"?r+=i.valor:d+=i.valor;
     corpoItens.innerHTML+=`
     <tr>
-      <td><input type="checkbox" ${i.pago?'checked':''}></td>
+      <td><input type="checkbox" disabled ${i.pago?'checked':''}></td>
       <td>${i.desc}</td>
       <td class="${i.tipo==='Receita'?'val-receita':'val-despesa'}">R$ ${i.valor.toFixed(2)}</td>
       <td>${i.pago?'<span class="status-pago">PAGO</span>':'<span class="status-pendente">PENDENTE</span>'}</td>
@@ -183,6 +223,7 @@ function render(){
   resSal.innerText=`R$ ${(r-d).toFixed(2)}`;
 }
 
+/* ========= HISTÓRICO ========= */
 function renderHistorico(){
   const hist={},corpo=document.getElementById("corpoHist");
   corpo.innerHTML="";
