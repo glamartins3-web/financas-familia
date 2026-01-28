@@ -203,6 +203,12 @@ async function salvar(){
   render();
   renderHistorico();
 }
+  
+/* ========= Caixa de Seleção pago ========= */
+function togglePago(index){
+  db[index].pago = !db[index].pago;
+  salvar();
+}
 
 /* ========= LANÇAMENTOS ========= */
 function render(){
