@@ -277,11 +277,19 @@ async function salvar(){
   
 /* ========= Caixa de Seleção pago ========= */
 function togglePago(id){
-  const item = db.find(x => x.id === id);
+  const item = db.find(x => String(x.id) === String(id));
   if(!item) return;
+
   item.pago = !item.pago;
+
+  // opcional: marcar data de pagamento
+  item.dataPagto = item.pago
+    ? new Date().toISOString().slice(0,10)
+    : "";
+
   salvar();
 }
+
 
 /* ========= LANÇAMENTOS ========= */
 function render(){
