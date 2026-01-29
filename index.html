@@ -239,6 +239,7 @@ async function carregar(){
     desc: l[3],
     valor: +l[4],
     tipo: l[5],
+    status: l[6] || "PENDENTE",
     pago: l[6] === "PAGO",
     user: l[7] || "",
     dataPagto: l[8] || ""
@@ -282,13 +283,16 @@ function togglePago(id){
 
   item.pago = !item.pago;
 
-  // opcional: marcar data de pagamento
+  // 🔥 FORÇA O STATUS EXPLÍCITO
+  item.status = item.pago ? "PAGO" : "PENDENTE";
+
   item.dataPagto = item.pago
     ? new Date().toISOString().slice(0,10)
     : "";
 
   salvar();
 }
+
 
 
 /* ========= LANÇAMENTOS ========= */
@@ -317,7 +321,7 @@ function render(){
 <tr>
   <td>
     <input type="checkbox"
-      ${i.pago ? "checked" : ""}
+      ${i.status === "PAGO" ? "checked" : ""}
       onchange="togglePago(${i.id})">
   </td>
 
@@ -335,10 +339,10 @@ function render(){
   </td>
 
   <td>
-    ${i.pago
-      ? '<span class="status-pago">PAGO</span>'
-      : '<span class="status-pendente">PENDENTE</span>'}
-  </td>
+  ${i.status === "PAGO"
+    ? '<span class="status-pago">PAGO</span>'
+    : '<span class="status-pendente">PENDENTE</span>'}
+</td>
 </tr>`;
 
   });
