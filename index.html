@@ -193,13 +193,24 @@ async function fazerLogin(){
 function logout(){location.reload();}
 
 /* ========= MESES ========= */
+const MESES_ABREV = [
+  "Jan","Fev","Mar","Abr","Mai","Jun",
+  "Jul","Ago","Set","Out","Nov","Dez"
+];
+  
 function initMonths(){
   monthSelector.innerHTML="";
   const d=new Date(),y=d.getFullYear(),m=d.getMonth();
-  for(let i=0;i<12;i++){
-    const v=`${y}-${String(i+1).padStart(2,"0")}`;
-    monthSelector.innerHTML+=`<button class="btn-month ${i===m?'active':''}" onclick="setMes('${v}',this)">${i+1}</button>`;
-  }
+for(let i=0;i<12;i++){
+  const v = `${y}-${String(i+1).padStart(2,"0")}`;
+
+  monthSelector.innerHTML += `
+    <button class="btn-month ${i===m?'active':''}"
+      onclick="setMes('${v}',this)">
+      ${MESES_ABREV[i]}
+    </button>`;
+}
+
   mesFoco.value=`${y}-${String(m+1).padStart(2,"0")}`;
 }
 
