@@ -97,7 +97,15 @@ body{background:#f0f2f5;font-family:'Segoe UI',Tahoma,sans-serif;padding-top:70p
 
   <div class="container-box table-responsive">
     <table class="table table-sm table-hover">
-      <thead><tr><th>Pago</th><th>Descrição</th><th>Valor</th><th>Status</th></tr></thead>
+      <thead>
+  <tr>
+    <th>Pago</th>
+    <th>Data</th>
+    <th>Descrição</th>
+    <th>Valor</th>
+    <th>Status</th>
+  </tr>
+</thead>
       <tbody id="corpoItens"></tbody>
     </table>
   </div>
@@ -201,7 +209,13 @@ function setMes(v,b){
   mesFoco.value=v;
   render();
 }
-
+/*--Criar uma função de formatação de data-*/
+  function formatarDataBR(dataISO){
+  if(!dataISO) return "";
+  const [y,m,d] = dataISO.split("-");
+  return `${d}/${m}/${y.slice(2)}`;
+}
+  
 /* ========= DADOS ========= */
 async function carregar(){
   const r=await fetch(`${URL_API}?action=listar`);
@@ -268,25 +282,33 @@ function render(){
     i.tipo==="Receita" ? r+=i.valor : d+=i.valor;
 
     corpoItens.innerHTML+=`
-    <tr>
-      <td>
-        <input type="checkbox"
-          ${i.pago ? "checked" : ""}
-          onchange="togglePago(${i.id})">
-      </td>
-      <td>
-        ${i.desc}
-        ${i.recorrente ? '<span class="badge bg-secondary ms-1">Recorrente</span>' : ''}
-      </td>
-      <td class="${i.tipo==='Receita'?'val-receita':'val-despesa'}">
-        R$ ${i.valor.toFixed(2)}
-      </td>
-      <td>
-        ${i.pago
-          ? '<span class="status-pago">PAGO</span>'
-          : '<span class="status-pendente">PENDENTE</span>'}
-      </td>
-    </tr>`;
+<tr>
+  <td>
+    <input type="checkbox"
+      ${i.pago ? "checked" : ""}
+      onchange="togglePago(${i.id})">
+  </td>
+
+  <td>
+    ${formatarDataBR(i.data)}
+  </td>
+
+  <td>
+    ${i.desc}
+    ${i.recorrente ? '<span class="badge bg-secondary ms-1">Recorrente</span>' : ''}
+  </td>
+
+  <td class="${i.tipo==='Receita'?'val-receita':'val-despesa'}">
+    R$ ${i.valor.toFixed(2)}
+  </td>
+
+  <td>
+    ${i.pago
+      ? '<span class="status-pago">PAGO</span>'
+      : '<span class="status-pendente">PENDENTE</span>'}
+  </td>
+</tr>`;
+
   });
 
   resRec.innerText=`R$ ${r.toFixed(2)}`;
