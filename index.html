@@ -229,12 +229,25 @@ function setMes(v,b){
   
 /* ========= DADOS ========= */
 async function carregar(){
-  const r=await fetch(`${URL_API}?action=listar`);
-  const d=await r.json();
-  db=d.map(l=>({data:l[2],desc:l[3],valor:+l[4],tipo:l[5],pago:l[6]==="PAGO"}));
+  const r = await fetch(`${URL_API}?action=listar`);
+  const d = await r.json();
+
+  db = d.map(l => ({
+    id: l[0],                // 🔥 ESSENCIAL
+    groupId: l[1] || "",
+    data: l[2],
+    desc: l[3],
+    valor: +l[4],
+    tipo: l[5],
+    pago: l[6] === "PAGO",
+    user: l[7] || "",
+    dataPagto: l[8] || ""
+  }));
+
   render();
   renderHistorico();
 }
+
 
 function adicionar(){
   const recorrente = document.getElementById("fRecorrente").value === "S";
