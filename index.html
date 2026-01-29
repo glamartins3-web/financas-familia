@@ -277,21 +277,26 @@ async function salvar(){
 }
   
 /* ========= Caixa de Seleção pago ========= */
-function togglePago(id){
+async function togglePago(id) {
   const item = db.find(x => String(x.id) === String(id));
-  if(!item) return;
+  if (!item) return;
 
-  item.pago = !item.pago;
+  const novoStatus = item.status === "PAGO" ? "PENDENTE" : "PAGO";
+  item.status = novoStatus;
+  item.pago = novoStatus === "PAGO";
 
-  // 🔥 FORÇA O STATUS EXPLÍCITO
-  item.status = item.pago ? "PAGO" : "PENDENTE";
+  await fetch(URL_API, {
+    method: "POST",
+    body: JSON.stringify({
+      action: "updatePago",
+      id: item.id,
+      status: novoStatus
+    })
+  });
 
-  item.dataPagto = item.pago
-    ? new Date().toISOString().slice(0,10)
-    : "";
-
-  salvar();
+  render();
 }
+
 
 
 
