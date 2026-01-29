@@ -233,17 +233,15 @@ async function carregar(){
   const d = await r.json();
 
   db = d.map(l => ({
-    id: l[0],                // 🔥 ESSENCIAL
-    groupId: l[1] || "",
-    data: l[2],
-    desc: l[3],
-    valor: +l[4],
-    tipo: l[5],
-    status: l[6] || "PENDENTE",
-    pago: l[6] === "PAGO",
-    user: l[7] || "",
-    dataPagto: l[8] || ""
-  }));
+  id: l[0],
+  data: l[2],
+  desc: l[3],
+  valor: +l[4],
+  tipo: l[5],
+  status: l[6] || "PENDENTE", // 🔥 ÚNICO CONTROLE
+  user: l[7] || ""
+}));
+
 
   render();
   renderHistorico();
@@ -281,9 +279,10 @@ async function togglePago(id) {
   const item = db.find(x => String(x.id) === String(id));
   if (!item) return;
 
-  const novoStatus = item.status === "PAGO" ? "PENDENTE" : "PAGO";
+  const novoStatus =
+    item.status === "PAGO" ? "PENDENTE" : "PAGO";
+
   item.status = novoStatus;
-  item.pago = novoStatus === "PAGO";
 
   await fetch(URL_API, {
     method: "POST",
@@ -296,9 +295,6 @@ async function togglePago(id) {
 
   render();
 }
-
-
-
 
 /* ========= LANÇAMENTOS ========= */
 function render(){
@@ -325,9 +321,9 @@ function render(){
     corpoItens.innerHTML+=`
 <tr>
   <td>
-    <input type="checkbox"
-      ${i.status === "PAGO" ? "checked" : ""}
-      onchange="togglePago(${i.id})">
+<input type="checkbox"
+  ${i.status === "PAGO" ? "checked" : ""}
+  onclick="togglePago('${i.id}')">
   </td>
 
   <td>
@@ -348,6 +344,7 @@ function render(){
     ? '<span class="status-pago">PAGO</span>'
     : '<span class="status-pendente">PENDENTE</span>'}
 </td>
+
 </tr>`;
 
   });
