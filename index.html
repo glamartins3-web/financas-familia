@@ -249,30 +249,37 @@ async function carregar(){
 }
 
 
-function adicionar(){
-  const recorrente = document.getElementById("fRecorrente").value === "S";
-  const idBase = Date.now();
-
-  db.push({
-    id: idBase,
-    groupId: "",
+async function adicionar(){
+  const item = {
+    id: Date.now(),
     data: fData.value,
     desc: fDesc.value,
     valor: +fValor.value,
     tipo: fTipo.value,
-    pago: false,
-    user: userNow,
-    recorrente: recorrente,
-    inicio: fData.value
-  });
+    user: userNow
+  };
 
-  salvar();
-}
+  db.push({...item, status:"PENDENTE"});
+  await salvarLancamento(item);
 
-async function salvar(){
-  await fetch(URL_API,{method:"POST",body:JSON.stringify(db)});
   render();
   renderHistorico();
+}
+
+
+async function salvarLancamento(item){
+  await fetch(URL_API,{
+    method:"POST",
+    body: JSON.stringify({
+      action: "addLancamento",
+      id: item.id,
+      data: item.data,
+      desc: item.desc,
+      valor: item.valor,
+      tipo: item.tipo,
+      user: item.user
+    })
+  });
 }
   
 /* ========= Caixa de Seleção pago ========= */
