@@ -483,8 +483,8 @@ corpoItens.innerHTML += `
   resDes.innerText=`R$ ${d.toFixed(2)}`;
   resSal.innerText=`R$ ${(r-d).toFixed(2)}`;
 
-  /*renderGrafico();
-}*/
+  renderGrafico();
+}
 
 async function excluir(id){
   if(!confirm("Excluir este lançamento?")) return;
@@ -543,11 +543,11 @@ function renderHistorico(){
       <td class="${s>=0?'val-receita':'val-despesa'}">R$ ${s.toFixed(2)}</td>
     </tr>`;
   });
-  /*renderGrafico(hist,meses);*/
+  renderGrafico(hist,meses);
 }
 
-/*let grafico;
-/*
+let grafico;
+
 function renderGrafico(){
   const mapa = {};
 
@@ -558,7 +558,7 @@ function renderGrafico(){
     i.tipo==="Receita"
       ? mapa[mes].r+=i.valor
       : mapa[mes].d+=i.valor;
-  });*/
+  });
 
   const meses = Object.keys(mapa).sort();
   const receitas = meses.map(m=>mapa[m].r);
