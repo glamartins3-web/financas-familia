@@ -186,21 +186,29 @@ function showPage(p){
 /* ========= LOGIN ========= */
 async function fazerLogin(){
   loginError.classList.add("hidden");
-  const r=await fetch(`${URL_API}?action=login&user=${encodeURIComponent(userInput.value)}&pass=${encodeURIComponent(passInput.value)}`);
-  const j=await r.json();
-if(j.ok){
-  userNow = j.usuario;
 
-  // 🔐 SALVA SESSÃO
-  localStorage.setItem("usuarioLogado", userNow);
+  const r = await fetch(
+    `${URL_API}?action=login&user=${encodeURIComponent(userInput.value)}&pass=${encodeURIComponent(passInput.value)}`
+  );
 
-  telaLogin.classList.add("hidden");
-  appContent.classList.remove("hidden");
+  const j = await r.json();
 
-  document.getElementById("userLogado").innerText = userNow;
+  if(j.ok){
+    userNow = j.usuario;
 
-  initMonths();
-  carregar();
+    // 🔐 SALVA SESSÃO
+    localStorage.setItem("usuarioLogado", userNow);
+
+    telaLogin.classList.add("hidden");
+    appContent.classList.remove("hidden");
+
+    document.getElementById("userLogado").innerText = userNow;
+
+    initMonths();
+    carregar();
+  } else {
+    loginError.classList.remove("hidden");
+  }
 }
 
 
