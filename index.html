@@ -297,74 +297,64 @@ function limparFormulario(){
 
 // Ajuste sua função adicionar //
 async function adicionar(){
-  // remove erros antigos
-  document.querySelectorAll(".is-invalid").forEach(e => e.classList.remove("is-invalid"));
+  document.querySelectorAll(".is-invalid")
+    .forEach(e => e.classList.remove("is-invalid"));
 
   let erro = false;
 
-  if(!fData.value){
-    fData.classList.add("is-invalid");
-    erro = true;
-  }
-
-  if(!fDesc.value || fDesc.value.length < 3){
-    fDesc.classList.add("is-invalid");
-    erro = true;
-  }
-
-  if(!fValor.value || Number(fValor.value) <= 0){
-    fValor.classList.add("is-invalid");
-    erro = true;
-  }
-
-  if(!fTipo.value){
-    fTipo.classList.add("is-invalid");
-    erro = true;
-  }
+  if(!fData.value){ fData.classList.add("is-invalid"); erro=true; }
+  if(!fDesc.value || fDesc.value.length < 3){ fDesc.classList.add("is-invalid"); erro=true; }
+  if(!fValor.value || Number(fValor.value) <= 0){ fValor.classList.add("is-invalid"); erro=true; }
+  if(!fTipo.value){ fTipo.classList.add("is-invalid"); erro=true; }
 
   if(erro){
     mostrarToast("⚠️ Preencha todos os campos corretamente");
     return;
   }
 
-const item = {
-  id: editandoId || Date.now(),
-  data: fData.value,
-  desc: fDesc.value,
-  valor: +fValor.value,
-  tipo: fTipo.value,
-  user: userNow
-};
+  const item = {
+    id: editandoId || Date.now(),
+    data: fData.value,
+    desc: fDesc.value,
+    valor: +fValor.value,
+    tipo: fTipo.value,
+    user: userNow
+  };
 
-const action = editandoId ? "updateLancamento" : "addLancamento";
+  const action = editandoId ? "updateLancamento" : "addLancamento";
 
-  // adiciona local
-  if(editandoId){
-  const idx = db.findIndex(x => String(x.id) === String(editandoId));
-  if(idx > -1){
-    db[idx] = {...db[idx], ...item};
+  // 🔐 PRIMEIRO grava no GAS
+  const resp = await fetch(URL_API,{
+    method:"POST",
+    body: JSON.stringify({
+      action,
+      ...item
+    })
+  });
+
+  const json = await resp.json();
+  if(!json.ok){
+    mostrarToast("❌ Erro ao salvar");
+    return;
   }
-  editandoId = null; // 🔒 encerra edição
-}else{
-  db.push({...item, status:"PENDENTE"});
-}
 
+  // 🧠 AGORA sincroniza o estado local
+  if(editandoId){
+    const idx = db.findIndex(x => String(x.id) === String(editandoId));
+    if(idx > -1){
+      db[idx] = { ...db[idx], ...item };
+    }
+    editandoId = null;
+  }else{
+    db.push({ ...item, status:"PENDENTE" });
+  }
 
- // grava no GAS
-await fetch(URL_API,{
-  method:"POST",
-  body:JSON.stringify({
-    action,
-    ...item
-  })
-});
-
- // atualiza tela
   render();
   renderHistorico();
-  limparFormulario();  // 🔥 LIMPA O FORMULÁRIO
-  mostrarToast("✅ Registro incluído");
+  limparFormulario();
+  mostrarToast("✅ Registro salvo");
 }
+
 
 async function salvar(){
   await fetch(URL_API,{
