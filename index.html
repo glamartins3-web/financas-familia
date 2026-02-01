@@ -569,21 +569,43 @@ function renderGrafico(){
   if(grafico) grafico.destroy();
 
   grafico = new Chart(ctx,{
-    type:"line",
-    data:{
-      labels:meses,
-      datasets:[
-        {label:"Receitas",data:receitas,borderColor:"#27ae60",fill:false},
-        {label:"Despesas",data:despesas,borderColor:"#e74c3c",fill:false},
-        {label:"Saldo",data:saldo,borderColor:"#6c5ce7",fill:false}
-      ]
+  type: "bar",
+  data: {
+    labels: meses,
+    datasets: [
+     {
+  label: "Receitas",
+  data: receitas,
+  backgroundColor: "#27ae60",
+  borderRadius: 6
+},
+      {
+        label: "Despesas",
+        data: despesas,
+        backgroundColor: "#e74c3c"
+      },
+      {
+        label: "Saldo",
+        data: saldo,
+        backgroundColor: "#6c5ce7"
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: {
+        position: "bottom"
+      }
     },
-    options:{
-      responsive:true,
-      plugins:{legend:{position:"bottom"}},
-      scales:{y:{beginAtZero:true}}
+    scales: {
+      y: {
+        beginAtZero: true
+      }
     }
-  });
+  }
+});
+
 }
 
 function abrirSalario(){
