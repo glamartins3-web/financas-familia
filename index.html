@@ -52,24 +52,6 @@ body{background:#f0f2f5;font-family:'Segoe UI',Tahoma,sans-serif;padding-top:70p
   <button class="btn btn-outline-danger btn-sm" onclick="logout()">Logout</button>
 </nav>
 
-  <!-- TOAST -->
-<div id="toast" style="
-  position:fixed;
-  bottom:20px;
-  right:20px;
-  background:#2ecc71;
-  color:#fff;
-  padding:14px 18px;
-  border-radius:12px;
-  font-weight:bold;
-  box-shadow:0 6px 18px rgba(0,0,0,.2);
-  display:none;
-  z-index:99999;
-">
-  ✅ Salvo com sucesso
-</div>
-
-
 <!-- LANÇAMENTOS -->
 <div id="pg-lan" class="container">
 
@@ -129,6 +111,8 @@ body{background:#f0f2f5;font-family:'Segoe UI',Tahoma,sans-serif;padding-top:70p
     </table>
   </div>
 </div>
+
+  
   
 <!-- HISTÓRICO -->
 <div id="pg-hist" class="container hidden">
@@ -496,6 +480,22 @@ function showToast(msg = "Salvo com sucesso") {
 }
 
 </script>
-
+<!-- TOAST -->
+<div id="toast" style="
+  position:fixed;
+  bottom:20px;
+  right:20px;
+  background:#2ecc71;
+  color:#fff;
+  padding:14px 18px;
+  border-radius:12px;
+  font-weight:bold;
+  box-shadow:0 6px 18px rgba(0,0,0,.2);
+  display:none;
+  z-index:99999;
+">
+  ✅ Salvo com sucesso
+</div>
+  
 </body>
 </html>
