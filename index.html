@@ -327,29 +327,38 @@ async function adicionar(){
     return;
   }
 
-  const item = {
-    id: Date.now(),
-    data: fData.value,
-    desc: fDesc.value,
-    valor: +fValor.value,
-    tipo: fTipo.value,
-    user: userNow
-  };
+const item = {
+  id: editandoId || Date.now(),
+  data: fData.value,
+  desc: fDesc.value,
+  valor: +fValor.value,
+  tipo: fTipo.value,
+  user: userNow
+};
+
+const action = editandoId ? "updateLancamento" : "addLancamento";
+
   // adiciona local
-  db.push({
-    ...item,
-    status: "PENDENTE"
-  });
+  if(editandoId){
+  const idx = db.findIndex(x => String(x.id) === String(editandoId));
+  if(idx > -1){
+    db[idx] = {...db[idx], ...item};
+  }
+  editandoId = null; // 🔒 encerra edição
+}else{
+  db.push({...item, status:"PENDENTE"});
+}
+
 
  // grava no GAS
-  await fetch(URL_API,{
-    method:"POST",
-    body:JSON.stringify({
-      action:"addLancamento",
-      ...item
-    })
-  });
-  
+await fetch(URL_API,{
+  method:"POST",
+  body:JSON.stringify({
+    action,
+    ...item
+  })
+});
+
  // atualiza tela
   render();
   renderHistorico();
@@ -479,8 +488,16 @@ corpoItens.innerHTML += `
   renderGrafico();
 }
 
-  function excluir(id){
+async function excluir(id){
   if(!confirm("Excluir este lançamento?")) return;
+
+  await fetch(URL_API,{
+    method:"POST",
+    body: JSON.stringify({
+      action:"deleteLancamento",
+      id:id
+    })
+  });
 
   db = db.filter(x => String(x.id) !== String(id));
 
@@ -489,17 +506,22 @@ corpoItens.innerHTML += `
   mostrarToast("🗑️ Excluído");
 }
 
+let editandoId = null;
+  
 function editar(id){
   const i = db.find(x => String(x.id) === String(id));
   if(!i) return;
 
-  fData.value = i.data;
-  fDesc.value = i.desc;
-  fValor.value = i.valor;
-  fTipo.value = i.tipo;
+  editandoId = i.id; // 🔑 guarda o ID
 
-  excluir(id); // remove antigo, será recriado
+  fData.value  = i.data;
+  fDesc.value  = i.desc;
+  fValor.value = i.valor;
+  fTipo.value  = i.tipo;
+
+  mostrarToast("✏️ Editando lançamento");
 }
+
 
 
 /* ========= HISTÓRICO ========= */
