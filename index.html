@@ -94,7 +94,12 @@ body{background:#f0f2f5;font-family:'Segoe UI',Tahoma,sans-serif;padding-top:70p
           <option>Despesa</option>
         </select>
       </div>
-      <div class="col-12">
+
+      <!----- 💰 Salário / Adiantamento ---->
+      <div class="d-flex gap-2 mt-2">
+  <button class="btn btn-outline-success w-50" onclick="abrirSalario()">
+    💰 Salário / Adiantamento
+  </button>
         <button class="btn btn-dark w-100 fw-bold mt-2" onclick="adicionar()">INCLUIR</button>
       </div>
     </div>
@@ -109,6 +114,9 @@ body{background:#f0f2f5;font-family:'Segoe UI',Tahoma,sans-serif;padding-top:70p
     <th>Descrição</th>
     <th>Valor</th>
     <th>Status</th>
+    <th>Usuário</th>
+    <th>Ações</th>
+    
   </tr>
 </thead>
       <tbody id="corpoItens"></tbody>
@@ -288,9 +296,34 @@ function limparFormulario(){
 
 
 // Ajuste sua função adicionar //
-  async function adicionar(){
-  if (!fData.value || !fDesc.value || !fValor.value) {
-    alert("Preencha Data, Descrição e Valor.");
+async function adicionar(){
+  // remove erros antigos
+  document.querySelectorAll(".is-invalid").forEach(e => e.classList.remove("is-invalid"));
+
+  let erro = false;
+
+  if(!fData.value){
+    fData.classList.add("is-invalid");
+    erro = true;
+  }
+
+  if(!fDesc.value || fDesc.value.length < 3){
+    fDesc.classList.add("is-invalid");
+    erro = true;
+  }
+
+  if(!fValor.value || Number(fValor.value) <= 0){
+    fValor.classList.add("is-invalid");
+    erro = true;
+  }
+
+  if(!fTipo.value){
+    fTipo.classList.add("is-invalid");
+    erro = true;
+  }
+
+  if(erro){
+    mostrarToast("⚠️ Preencha todos os campos corretamente");
     return;
   }
 
@@ -302,28 +335,26 @@ function limparFormulario(){
     tipo: fTipo.value,
     user: userNow
   };
-
   // adiciona local
   db.push({
     ...item,
     status: "PENDENTE"
   });
 
-  // grava no GAS
-  await fetch(URL_API, {
-    method: "POST",
-    body: JSON.stringify({
-      action: "addLancamento",
+ // grava no GAS
+  await fetch(URL_API,{
+    method:"POST",
+    body:JSON.stringify({
+      action:"addLancamento",
       ...item
     })
   });
-
-  // atualiza tela
+  
+ // atualiza tela
   render();
   renderHistorico();
-
-  // 🔥 LIMPA O FORMULÁRIO
-  limparFormulario();
+  limparFormulario();  // 🔥 LIMPA O FORMULÁRIO
+  mostrarToast("✅ Registro incluído");
 }
 
 async function salvar(){
@@ -396,34 +427,48 @@ function render(){
 
     i.tipo==="Receita" ? r+=i.valor : d+=i.valor;
 
-    corpoItens.innerHTML+=`
+corpoItens.innerHTML += `
 <tr>
+
+  <!-- Pago -->
   <td>
-<input type="checkbox"
-  ${i.status === "PAGO" ? "checked" : ""}
-  onclick="togglePago('${i.id}')">
+    <input type="checkbox"
+      ${i.status === "PAGO" ? "checked" : ""}
+      onclick="togglePago('${i.id}')">
   </td>
 
-  <td>
-    ${formatarDataBR(i.data)}
-  </td>
+  <!-- Data -->
+  <td>${formatarDataBR(i.data)}</td>
 
-  <td>
-    ${i.desc}
-    ${i.recorrente ? '<span class="badge bg-secondary ms-1">Recorrente</span>' : ''}
-  </td>
+  <!-- Descrição -->
+  <td>${i.desc}</td>
 
+  <!-- Valor -->
   <td class="${i.tipo==='Receita'?'val-receita':'val-despesa'}">
     R$ ${i.valor.toFixed(2)}
   </td>
 
+  <!-- Status -->
   <td>
-  ${i.status === "PAGO"
-    ? '<span class="status-pago">PAGO</span>'
-    : '<span class="status-pendente">PENDENTE</span>'}
-</td>
+    ${i.status === "PAGO"
+      ? '<span class="status-pago">PAGO</span>'
+      : '<span class="status-pendente">PENDENTE</span>'}
+  </td>
+
+  <!-- 👤 USUÁRIO -->
+  <td>${i.user || "-"}</td>
+
+  <!-- ⚙️ AÇÕES -->
+  <td>
+    <button class="btn btn-sm btn-outline-primary"
+      onclick="editar('${i.id}')">✏️ Editar</button>
+
+    <button class="btn btn-sm btn-outline-danger"
+      onclick="excluir('${i.id}')">🗑️ Excluir</button>
+  </td>
 
 </tr>`;
+
 
   });
 
@@ -432,6 +477,28 @@ function render(){
   resSal.innerText=`R$ ${(r-d).toFixed(2)}`;
 
   renderGrafico();
+}
+
+  function excluir(id){
+  if(!confirm("Excluir este lançamento?")) return;
+
+  db = db.filter(x => String(x.id) !== String(id));
+
+  render();
+  renderHistorico();
+  mostrarToast("🗑️ Excluído");
+}
+
+function editar(id){
+  const i = db.find(x => String(x.id) === String(id));
+  if(!i) return;
+
+  fData.value = i.data;
+  fDesc.value = i.desc;
+  fValor.value = i.valor;
+  fTipo.value = i.tipo;
+
+  excluir(id); // remove antigo, será recriado
 }
 
 
@@ -498,6 +565,59 @@ function renderGrafico(){
     }
   });
 }
+
+function abrirSalario(){
+  new bootstrap.Modal(document.getElementById("modalSalario")).show();
+}
+
+  /*---funções do salário---*/
+async function salvarSalario(){
+  const s05 = Number(document.getElementById("sal05").value || 0);
+  const s20 = Number(document.getElementById("sal20").value || 0);
+
+  const hoje = new Date();
+  const mes = hoje.toISOString().slice(0,7);
+
+  const registros = [];
+
+  if(s05 > 0){
+    registros.push({
+      id: Date.now()+1,
+      data: `${mes}-05`,
+      desc: "Salário",
+      valor: s05,
+      tipo: "Receita"
+    });
+  }
+
+  if(s20 > 0){
+    registros.push({
+      id: Date.now()+2,
+      data: `${mes}-20`,
+      desc: "Adiantamento",
+      valor: s20,
+      tipo: "Receita"
+    });
+  }
+
+  for(const r of registros){
+    r.user = userNow;
+    db.push({...r,status:"PENDENTE"});
+
+    await fetch(URL_API,{
+      method:"POST",
+      body:JSON.stringify({
+        action:"addLancamento",
+        ...r
+      })
+    });
+  }
+
+  render();
+  renderHistorico();
+  mostrarToast("💰 Salário registrado");
+}
+
   
 function showToast(msg = "Salvo com sucesso") {
   const t = document.getElementById("toast");
@@ -526,6 +646,32 @@ window.onload = () => {
 
   
 </script>
+
+<div class="modal fade" id="modalSalario">
+  <div class="modal-dialog modal-sm modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">💰 Salário</h5>
+        <button class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+        <label>Salário (dia 05)</label>
+        <input id="sal05" type="number" class="form-control mb-2">
+
+        <label>Adiantamento (dia 20)</label>
+        <input id="sal20" type="number" class="form-control">
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-success w-100" onclick="salvarSalario()">
+          Registrar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
   
 <!-- TOAST -->
 <div id="toast" style="
