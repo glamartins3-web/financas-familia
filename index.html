@@ -443,7 +443,12 @@ corpoItens.innerHTML += `
   <td>${formatarDataBR(i.data)}</td>
 
   <!-- Descrição -->
-  <td>${i.desc}</td>
+<td>
+  ${i.desc === "Salário" || i.desc === "Adiantamento"
+    ? "💰 " + i.desc
+    : i.desc}
+</td>
+
 
   <!-- Valor -->
   <td class="${i.tipo==='Receita'?'val-receita':'val-despesa'}">
@@ -597,22 +602,28 @@ async function salvarSalario(){
 
   if(s05 > 0){
     registros.push({
-      id: Date.now()+1,
-      data: `${mes}-05`,
-      desc: "Salário",
-      valor: s05,
-      tipo: "Receita"
-    });
+  id: Date.now()+1,
+  data: `${mes}-05`,
+  desc: "Salário",
+  valor: s05,
+  tipo: "Receita",
+  recorrente: true,
+  inicio: mes
+});
+
   }
 
   if(s20 > 0){
     registros.push({
-      id: Date.now()+2,
-      data: `${mes}-20`,
-      desc: "Adiantamento",
-      valor: s20,
-      tipo: "Receita"
-    });
+  id: Date.now()+2,
+  data: `${mes}-20`,
+  desc: "Adiantamento",
+  valor: s20,
+  tipo: "Receita",
+  recorrente: true,
+  inicio: mes
+});
+
   }
 
   for(const r of registros){
