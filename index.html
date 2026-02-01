@@ -52,6 +52,24 @@ body{background:#f0f2f5;font-family:'Segoe UI',Tahoma,sans-serif;padding-top:70p
   <button class="btn btn-outline-danger btn-sm" onclick="logout()">Logout</button>
 </nav>
 
+  <!-- TOAST -->
+<div id="toast" style="
+  position:fixed;
+  bottom:20px;
+  right:20px;
+  background:#2ecc71;
+  color:#fff;
+  padding:14px 18px;
+  border-radius:12px;
+  font-weight:bold;
+  box-shadow:0 6px 18px rgba(0,0,0,.2);
+  display:none;
+  z-index:99999;
+">
+  ✅ Salvo com sucesso
+</div>
+
+
 <!-- LANÇAMENTOS -->
 <div id="pg-lan" class="container">
 
@@ -248,22 +266,19 @@ async function carregar(){
   renderHistorico();
 }
 
-function limparFormulario() {
+function limparFormulario(){
   fData.value = "";
   fDesc.value = "";
   fValor.value = "";
+  fTipo.value = "Receita";
 
-  // volta para o primeiro item do select
-  fTipo.selectedIndex = 0;
-
-  // parcelas (volta para estado inicial)
   const fParcelas = document.getElementById("fParcelas");
-  if (fParcelas) fParcelas.value = "";
+  if(fParcelas) fParcelas.value = "";
 
-  // recorrente (volta para "Única")
-  const fRecorrente = document.getElementById("fRecorrente");
-  if (fRecorrente) fRecorrente.value = "N";
+  const fRec = document.getElementById("fRecorrente");
+  if(fRec) fRec.value = "N";
 }
+
 
 // Ajuste sua função adicionar //
   async function adicionar(){
@@ -304,21 +319,22 @@ function limparFormulario() {
   limparFormulario();
 }
 
-
-async function salvarLancamento(item){
-  await fetch(URL_API,{
+async function salvar(){
+  const r = await fetch(URL_API,{
     method:"POST",
-    body: JSON.stringify({
-      action: "addLancamento",
-      id: item.id,
-      data: item.data,
-      desc: item.desc,
-      valor: item.valor,
-      tipo: item.tipo,
-      user: item.user
-    })
+    body:JSON.stringify(db)
   });
+
+  if(r.ok){
+    showToast("Lançamento salvo com sucesso");
+    limparFormulario();
+  }
+
+  render();
+  renderHistorico();
 }
+
+
   
 /* ========= Caixa de Seleção pago ========= */
 async function togglePago(id) {
@@ -465,6 +481,18 @@ function renderGrafico(){
       scales:{y:{beginAtZero:true}}
     }
   });
+}
+  
+function showToast(msg = "Salvo com sucesso") {
+  const t = document.getElementById("toast");
+  t.innerText = "✅ " + msg;
+  t.style.display = "block";
+  t.style.opacity = "1";
+
+  setTimeout(() => {
+    t.style.opacity = "0";
+    setTimeout(() => t.style.display = "none", 400);
+  }, 3000);
 }
 
 </script>
