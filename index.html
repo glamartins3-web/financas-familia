@@ -248,8 +248,30 @@ async function carregar(){
   renderHistorico();
 }
 
+function limparFormulario() {
+  fData.value = "";
+  fDesc.value = "";
+  fValor.value = "";
 
-async function adicionar(){
+  // volta para o primeiro item do select
+  fTipo.selectedIndex = 0;
+
+  // parcelas (volta para estado inicial)
+  const fParcelas = document.getElementById("fParcelas");
+  if (fParcelas) fParcelas.value = "";
+
+  // recorrente (volta para "Única")
+  const fRecorrente = document.getElementById("fRecorrente");
+  if (fRecorrente) fRecorrente.value = "N";
+}
+
+// Ajuste sua função adicionar //
+  async function adicionar(){
+  if (!fData.value || !fDesc.value || !fValor.value) {
+    alert("Preencha Data, Descrição e Valor.");
+    return;
+  }
+
   const item = {
     id: Date.now(),
     data: fData.value,
@@ -259,11 +281,27 @@ async function adicionar(){
     user: userNow
   };
 
-  db.push({...item, status:"PENDENTE"});
-  await salvarLancamento(item);
+  // adiciona local
+  db.push({
+    ...item,
+    status: "PENDENTE"
+  });
 
+  // grava no GAS
+  await fetch(URL_API, {
+    method: "POST",
+    body: JSON.stringify({
+      action: "addLancamento",
+      ...item
+    })
+  });
+
+  // atualiza tela
   render();
   renderHistorico();
+
+  // 🔥 LIMPA O FORMULÁRIO
+  limparFormulario();
 }
 
 
