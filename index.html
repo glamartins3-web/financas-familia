@@ -307,9 +307,6 @@ function limparFormulario(){
   fValor.value = "";
   fTipo.value = "Receita";
 
-  const fParcelas = document.getElementById("fParcelas");
-  if(fParcelas) fParcelas.value = "";
-
   const fRec = document.getElementById("fRecorrente");
   if(fRec) fRec.value = "N";
 }
@@ -332,47 +329,59 @@ async function adicionar(){
     return;
   }
 
-  const item = {
-    id: editandoId || Date.now(),
-    data: fData.value,
-    desc: fDesc.value,
-    valor: +fValor.value,
-    tipo: fTipo.value,
-    user: userNow
-  };
+  const parcelas = Number(fParcelas?.value || 1);
+  const totalParcelas = parcelas > 0 ? parcelas : 1;
 
-  const action = editandoId ? "updateLancamento" : "addLancamento";
+  const valorTotal = Number(fValor.value);
+  const valorParcela = +(valorTotal / totalParcelas).toFixed(2);
 
-  // 🔐 PRIMEIRO grava no GAS
-  const resp = await fetch(URL_API,{
-    method:"POST",
-    body: JSON.stringify({
-      action,
-      ...item
-    })
-  });
+  const dataBase = new Date(fData.value + "T00:00:00");
+  const groupId = totalParcelas > 1 ? Date.now() : "";
 
-  const json = await resp.json();
-  if(!json.ok){
-    mostrarToast("❌ Erro ao salvar");
-    return;
-  }
+  // 🔁 LOOP DE PARCELAS
+  for(let p = 1; p <= totalParcelas; p++){
+    const dataParcela = new Date(dataBase);
+    dataParcela.setMonth(dataBase.getMonth() + (p - 1));
 
-  // 🧠 AGORA sincroniza o estado local
-  if(editandoId){
-    const idx = db.findIndex(x => String(x.id) === String(editandoId));
-    if(idx > -1){
-      db[idx] = { ...db[idx], ...item };
+    const item = {
+      id: Date.now() + p,
+      groupId,
+      data: dataParcela.toISOString().slice(0,10),
+      desc: totalParcelas > 1
+        ? `${fDesc.value} (${p}/${totalParcelas})`
+        : fDesc.value,
+      valor: valorParcela,
+      tipo: fTipo.value,
+      user: userNow
+    };
+
+    // 🔐 SALVA NO GAS
+    const resp = await fetch(URL_API,{
+      method:"POST",
+      body: JSON.stringify({
+        action:"addLancamento",
+        ...item
+      })
+    });
+
+    const json = await resp.json();
+    if(!json.ok){
+      mostrarToast("❌ Erro ao salvar parcelas");
+      return;
     }
-    editandoId = null;
-  }else{
-    db.push({ ...item, status:"PENDENTE" });
+
+    // 🧠 SINCRONIZA LOCAL
+    db.push({
+      ...item,
+      status:"PENDENTE"
+    });
   }
 
   render();
   renderHistorico();
   limparFormulario();
-  mostrarToast("✅ Registro salvo");
+  mostrarToast(`✅ ${totalParcelas} parcela(s) gerada(s)`);
+}salvo");
 }
 
 
