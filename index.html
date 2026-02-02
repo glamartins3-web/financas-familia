@@ -258,10 +258,27 @@ function setMes(v,b){
   render();
 }
 /*--Criar uma função de formatação de data-*/
-  function formatarDataBR(dataISO){
-  if(!dataISO) return "";
-  const [y,m,d] = dataISO.split("-");
-  return `${d}/${m}/${y.slice(2)}`;
+  function formatarDataBR(data) {
+  if (!data) return "";
+
+  // Se já for Date
+  if (data instanceof Date) {
+    const d = String(data.getDate()).padStart(2, "0");
+    const m = String(data.getMonth() + 1).padStart(2, "0");
+    const a = String(data.getFullYear()).slice(2);
+    return `${d}/${m}/${a}`;
+  }
+
+  // Se vier como string ISO ou ISO com hora
+  if (typeof data === "string") {
+    // pega só a parte da data (YYYY-MM-DD)
+    const iso = data.split("T")[0];
+    const [y, m, d] = iso.split("-");
+    if (!y || !m || !d) return data;
+    return `${d}/${m}/${y.slice(2)}`;
+  }
+
+  return data;
 }
   
 /* ========= DADOS ========= */
