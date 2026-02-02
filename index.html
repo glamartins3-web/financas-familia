@@ -466,6 +466,10 @@ corpoItens.innerHTML += `
     : i.desc}
 </td>
 
+<!-- Tipo -->
+<td class="${i.tipo === 'Receita' ? 'val-receita' : 'val-despesa'}">
+  ${i.tipo === 'Receita' ? '💰 Receita' : '💸 Despesa'}
+</td>
 
   <!-- Valor -->
   <td class="${i.tipo==='Receita'?'val-receita':'val-despesa'}">
@@ -479,6 +483,7 @@ corpoItens.innerHTML += `
       : '<span class="status-pendente">PENDENTE</span>'}
   </td>
 
+  
   <!-- 👤 USUÁRIO -->
   <td>${i.user || "-"}</td>
 
