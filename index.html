@@ -31,26 +31,27 @@ body{background:#f0f2f5;font-family:'Segoe UI',Tahoma,sans-serif;padding-top:70p
 
 <body>
 
-<!-- LOGIN (inalterado) -->
+<!-- LOGIN -->
 <div id="tela-login">
   <div class="login-box text-center">
-    <div class="mb-2" style="font-size: 3rem;">🏦</div>
+    <div style="font-size:3rem">🏦</div>
     <h4 class="fw-bold mb-3">Bem-vindo</h4>
     <input id="userInput" class="form-control mb-2" placeholder="Usuário">
     <input id="passInput" type="password" class="form-control mb-3" placeholder="Senha">
-    <button class="btn btn-dark w-100 fw-bold" onclick="fazerLogin()">ENTRAR NO SISTEMA</button>
-    <div id="loginError" class="text-danger mt-2 small hidden">❌ Dados de acesso inválidos</div>
+    <button class="btn btn-dark w-100 fw-bold" onclick="fazerLogin()">ENTRAR</button>
+    <div id="loginError" class="text-danger mt-2 small hidden"></div>
   </div>
 </div>
 
+<!-- APP -->
 <div id="appContent" class="hidden">
 
 <nav class="nav-top">
   <span style="color:#fff;font-weight:bold">
-    👤 <span id="userLogado"></span>
+    👤 Olá...<span id="userLogado"></span>
   </span>
-  <button class="btn btn-light btn-sm fw-bold" onclick="showPage('lan')">💸 LANÇAMENTOS</button>
-  <button class="btn btn-light btn-sm fw-bold" onclick="showPage('hist')">📊 HISTÓRICO</button>
+  <button class="btn btn-light btn-sm fw-bold" onclick="showPage('lan')">LANÇAMENTOS</button>
+  <button class="btn btn-light btn-sm fw-bold" onclick="showPage('hist')">HISTÓRICO</button>
   <button class="btn btn-outline-danger btn-sm" onclick="logout()">Logout</button>
 </nav>
 
@@ -61,33 +62,34 @@ body{background:#f0f2f5;font-family:'Segoe UI',Tahoma,sans-serif;padding-top:70p
     <input type="hidden" id="mesFoco">
   </div>
 
-  <!-- CAMPOS -->
   <div class="row g-2 mb-3">
-    <div class="col-md-2">
-      <input id="fParcelas" type="number" class="form-control" placeholder="Parcelas" min="1">
-    </div>
+    <div class="col-4"><div class="card-resumo bg-receita">Receitas<br><span id="resRec">R$0</span></div></div>
+    <div class="col-4"><div class="card-resumo bg-despesa">Despesas<br><span id="resDes">R$0</span></div></div>
+    <div class="col-4"><div class="card-resumo bg-saldo">Saldo<br><span id="resSal">R$0</span></div></div>
   </div>
 
   <div class="container-box">
     <div class="row g-2">
-      <div class="col-md-3"><input id="fData" type="date" class="form-control"></div>
-      <div class="col-md-4"><input id="fDesc" class="form-control" placeholder="Descrição"></div>
+      <div class="col-md-2"><input id="fData" type="date" class="form-control"></div>
+      <div class="col-md-3"><input id="fDesc" class="form-control" placeholder="Descrição"></div>
       <div class="col-md-2"><input id="fValor" type="number" class="form-control" placeholder="Valor"></div>
-      <div class="col-md-3">
+      <div class="col-md-2">
         <select id="fTipo" class="form-select">
           <option>Receita</option>
           <option>Despesa</option>
         </select>
       </div>
-
-      <div class="d-flex gap-2 mt-2">
-        <button class="btn btn-dark w-100 fw-bold" onclick="adicionar()">INCLUIR</button>
+      <div class="col-md-1">
+        <input id="fParcelas" type="number" min="1" class="form-control" placeholder="x">
+      </div>
+      <div class="col-md-2">
+        <button class="btn btn-dark w-100" onclick="adicionar()">INCLUIR</button>
       </div>
     </div>
   </div>
 
   <div class="container-box table-responsive">
-    <table class="table table-sm table-hover">
+    <table class="table table-sm">
       <thead>
         <tr>
           <th>Pago</th>
@@ -105,97 +107,165 @@ body{background:#f0f2f5;font-family:'Segoe UI',Tahoma,sans-serif;padding-top:70p
   </div>
 </div>
 
+<div id="pg-hist" class="container hidden">
+  <div class="container-box">
+    <canvas id="graficoMensal" height="120"></canvas>
+  </div>
 </div>
 
+</div>
+
+<!-- TOAST -->
+<div id="toast" style="position:fixed;bottom:20px;right:20px;background:#2ecc71;color:#fff;
+padding:14px 18px;border-radius:12px;font-weight:bold;display:none;z-index:9999"></div>
+
 <script>
-const URL_API="https://script.google.com/macros/s/AKfycbxHjTzh9gF0yfw9LW7EGYTAshfKQJyRV7TCmhmJIQr9pVw4f00bmnZpwbhvtO2e7Fon5Q/exec";
+const URL_API="https://script.google.com/macros/s/SEU_DEPLOY/exec";
 
-/* ========= DOM ========= */
-const fParcelas = document.getElementById("fParcelas"); // 🔧 AJUSTE PARCELAMENTO
-const fData=document.getElementById("fData");
-const fDesc=document.getElementById("fDesc");
-const fValor=document.getElementById("fValor");
-const fTipo=document.getElementById("fTipo");
-const corpoItens=document.getElementById("corpoItens");
+let db=[],userNow="",grafico;
 
-/* ========= STATE ========= */
-let db=[],userNow="";
+/* LOGIN */
+async function fazerLogin(){
+  const u=userInput.value.trim();
+  const p=passInput.value.trim();
+  loginError.classList.add("hidden");
 
-/* ========= DADOS ========= */
-async function carregar(){
-  const r = await fetch(`${URL_API}?action=listar`);
-  const d = await r.json();
+  if(!u||!p){
+    loginError.textContent="Informe usuário e senha";
+    loginError.classList.remove("hidden");
+    return;
+  }
 
-  db = d.map(l => ({
-    id: l[0],
-    groupId: l[1] || "",      // 🔧 AJUSTE PARCELAMENTO
-    data: l[2],
-    desc: l[3],
-    valor: +l[4],
-    tipo: l[5],
-    status: l[6] || "PENDENTE",
-    user: l[7] || ""
-  }));
+  const r=await fetch(`${URL_API}?action=login&user=${encodeURIComponent(u)}&pass=${encodeURIComponent(p)}`);
+  const j=await r.json();
 
+  if(j.ok){
+    userNow=j.usuario;
+    localStorage.setItem("usuarioLogado",userNow);
+    userLogado.innerText=userNow;
+    telaLogin.classList.add("hidden");
+    appContent.classList.remove("hidden");
+    initMonths();
+    carregar();
+  }else{
+    loginError.textContent="Usuário ou senha inválidos";
+    loginError.classList.remove("hidden");
+  }
+}
+
+function logout(){
+  localStorage.clear();
+  location.reload();
+}
+
+/* MESES */
+const MESES=["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
+function initMonths(){
+  const d=new Date();
+  const y=d.getFullYear(),m=d.getMonth();
+  monthSelector.innerHTML="";
+  for(let i=0;i<12;i++){
+    const v=`${y}-${String(i+1).padStart(2,"0")}`;
+    monthSelector.innerHTML+=`<button class="btn-month ${i===m?'active':''}" onclick="setMes('${v}',this)">${MESES[i]}</button>`;
+  }
+  mesFoco.value=`${y}-${String(m+1).padStart(2,"0")}`;
+}
+
+function setMes(v,b){
+  document.querySelectorAll(".btn-month").forEach(x=>x.classList.remove("active"));
+  b.classList.add("active");
+  mesFoco.value=v;
   render();
 }
 
-/* ========= ADICIONAR COM PARCELAMENTO ========= */
+/* DADOS */
+async function carregar(){
+  const r=await fetch(`${URL_API}?action=listar`);
+  const d=await r.json();
+  db=d.map(l=>({
+    id:l[0],groupId:l[1],data:l[2],desc:l[3],
+    valor:+l[4],tipo:l[5],status:l[6]||"PENDENTE",user:l[7]||""
+  }));
+  render();
+}
+
+/* PARCELAMENTO */
 async function adicionar(){
-  const totalParcelas = Math.max(1, Number(fParcelas.value || 1));
-  const valorTotal = Number(fValor.value);
-  const valorParcela = +(valorTotal / totalParcelas).toFixed(2);
-  const dataBase = new Date(fData.value + "T00:00:00");
+  const parcelas=Number(fParcelas.value||1);
+  const total=parcelas>0?parcelas:1;
+  const valor=+fValor.value;
+  const base=new Date(fData.value+"T00:00:00");
+  const groupId=total>1?Date.now():"";
 
-  const baseId = Date.now();          // 🔧 AJUSTE PARCELAMENTO
-  const groupId = totalParcelas > 1 ? baseId : "";
-
-  for(let p=1;p<=totalParcelas;p++){
-    const d = new Date(dataBase);
-    d.setMonth(d.getMonth() + (p-1));
-
-    const item = {
-      id: baseId + p,
+  for(let p=1;p<=total;p++){
+    const dt=new Date(base);
+    dt.setMonth(base.getMonth()+p-1);
+    const item={
+      id:Date.now()+p,
       groupId,
-      data: d.toISOString().slice(0,10),
-      desc: totalParcelas > 1
-        ? `${fDesc.value} (${p}/${totalParcelas})`
-        : fDesc.value,
-      valor: valorParcela,
-      tipo: fTipo.value,
-      user: userNow
+      data:dt.toISOString().slice(0,10),
+      desc:total>1?`${fDesc.value} (${p}/${total})`:fDesc.value,
+      valor:(valor/total).toFixed(2),
+      tipo:fTipo.value,
+      user:userNow
     };
 
-    await fetch(URL_API,{
-      method:"POST",
-      body:JSON.stringify({action:"addLancamento",...item})
-    });
-
+    await fetch(URL_API,{method:"POST",body:JSON.stringify({action:"addLancamento",...item})});
     db.push({...item,status:"PENDENTE"});
   }
 
   render();
-  fParcelas.value="";
+  toast("Parcelamento criado");
 }
 
-/* ========= RENDER ========= */
 function render(){
   corpoItens.innerHTML="";
+  let r=0,d=0;
+  const mes=mesFoco.value;
+
   db.forEach(i=>{
+    if(i.data.slice(0,7)!==mes)return;
+    i.tipo==="Receita"?r+=+i.valor:d+=+i.valor;
     corpoItens.innerHTML+=`
-<tr>
-  <td><input type="checkbox"></td>
-  <td>${i.data.split("-").reverse().join("/")}</td>
-  <td>${i.groupId ? "💳 " : ""}${i.desc}</td>
-  <td class="${i.tipo==='Receita'?'val-receita':'val-despesa'}">${i.tipo}</td>
-  <td>R$ ${i.valor.toFixed(2)}</td>
-  <td>${i.status}</td>
-  <td>${i.user}</td>
-  <td>—</td>
-</tr>`;
+    <tr>
+      <td><input type="checkbox" ${i.status==="PAGO"?"checked":""}></td>
+      <td>${i.data}</td>
+      <td>${i.desc}</td>
+      <td class="${i.tipo==="Receita"?"val-receita":"val-despesa"}">${i.tipo}</td>
+      <td>R$ ${(+i.valor).toFixed(2)}</td>
+      <td>${i.status}</td>
+      <td>${i.user}</td>
+      <td>—</td>
+    </tr>`;
   });
+
+  resRec.innerText=`R$ ${r.toFixed(2)}`;
+  resDes.innerText=`R$ ${d.toFixed(2)}`;
+  resSal.innerText=`R$ ${(r-d).toFixed(2)}`;
+}
+
+function toast(m){
+  toastEl.innerText=m;
+  toastEl.style.display="block";
+  setTimeout(()=>toastEl.style.display="none",2500);
+}
+
+const toastEl=document.getElementById("toast");
+
+/* AUTO LOGIN */
+window.onload=()=>{
+  const u=localStorage.getItem("usuarioLogado");
+  if(u){
+    userNow=u;
+    userLogado.innerText=u;
+    telaLogin.classList.add("hidden");
+    appContent.classList.remove("hidden");
+    initMonths();
+    carregar();
+  }
 }
 </script>
 
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
