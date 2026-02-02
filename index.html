@@ -120,36 +120,50 @@ body{background:#f0f2f5;font-family:'Segoe UI',Tahoma,sans-serif;padding-top:70p
 padding:14px 18px;border-radius:12px;font-weight:bold;display:none;z-index:9999"></div>
 
 <script>
-const URL_API="https://script.google.com/macros/s/SEU_DEPLOY/exec";
+const URL_API="https://script.google.com/macros/s/AKfycbxHjTzh9gF0yfw9LW7EGYTAshfKQJyRV7TCmhmJIQr9pVw4f00bmnZpwbhvtO2e7Fon5Q/exec";
 
 let db=[],userNow="",grafico;
 
 /* LOGIN */
 async function fazerLogin(){
-  const u=userInput.value.trim();
-  const p=passInput.value.trim();
   loginError.classList.add("hidden");
+  loginError.innerText = "";
 
-  if(!u||!p){
-    loginError.textContent="Informe usuário e senha";
+  const user = userInput.value.trim();
+  const pass = passInput.value.trim();
+
+  if(!user || !pass){
+    loginError.innerText = "Informe usuário e senha";
     loginError.classList.remove("hidden");
     return;
   }
 
-  const r=await fetch(`${URL_API}?action=login&user=${encodeURIComponent(u)}&pass=${encodeURIComponent(p)}`);
-  const j=await r.json();
+  try {
+    const resp = await fetch(
+      `${URL_API}?action=login&user=${encodeURIComponent(user)}&pass=${encodeURIComponent(pass)}`
+    );
 
-  if(j.ok){
-    userNow=j.usuario;
-    localStorage.setItem("usuarioLogado",userNow);
-    userLogado.innerText=userNow;
-    telaLogin.classList.add("hidden");
-    appContent.classList.remove("hidden");
-    initMonths();
-    carregar();
-  }else{
-    loginError.textContent="Usuário ou senha inválidos";
+    const json = await resp.json();
+
+    if(json.ok){
+      userNow = json.usuario;
+      localStorage.setItem("usuarioLogado", userNow);
+
+      document.getElementById("userLogado").innerText = userNow;
+      telaLogin.classList.add("hidden");
+      appContent.classList.remove("hidden");
+
+      initMonths();
+      carregar();
+    } else {
+      loginError.innerText = "Usuário ou senha inválidos";
+      loginError.classList.remove("hidden");
+    }
+
+  } catch (e) {
+    loginError.innerText = "Erro ao conectar ao servidor";
     loginError.classList.remove("hidden");
+    console.error(e);
   }
 }
 
