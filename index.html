@@ -427,20 +427,27 @@ async function togglePago(id) {
 
 /* ========= LANÇAMENTOS ========= */
 function render(){
-  let html = "";
-  let r = 0, d = 0;
+  corpoItens.innerHTML="";
+  let r=0,d=0;
+
   const mesAtual = mesFoco.value;
 
-  for(const i of db){
-    if(!i.data) continue;
+  db.forEach(i=>{
+    if(!i.data) return;
 
     const mesItem = i.data.slice(0,7);
-    const aparece = mesItem === mesAtual;
-    if(!aparece) continue;
+    const mesInicio = i.inicio ? i.inicio.slice(0,7) : mesItem;
 
-    i.tipo === "Receita" ? r += i.valor : d += i.valor;
+    const aparece =
+      i.recorrente
+        ? mesAtual >= mesInicio
+        : mesItem === mesAtual;
 
-    html += `
+    if(!aparece) return;
+
+    i.tipo==="Receita" ? r+=i.valor : d+=i.valor;
+
+corpoItens.innerHTML += `
 <tr>
 
   <!-- Pago -->
