@@ -108,6 +108,18 @@ body{background:#f0f2f5;font-family:'Segoe UI',Tahoma,sans-serif;padding-top:70p
     </div>
   </div>
 
+  <div class="container-box mb-2">
+  <strong>Detalhamento Financeiro</strong><br>
+  <span class="status-pago">
+    PAGO: R$ <span id="totalPago">0,00</span>
+  </span>
+  |
+  <span class="status-pendente">
+    PENDENTE: R$ <span id="totalPendente">0,00</span>
+  </span>
+</div>
+
+  
   <div class="container-box table-responsive">
     <table class="table table-sm table-hover">
 <thead>
@@ -185,6 +197,9 @@ const corpoItens=document.getElementById("corpoItens");
 const resRec=document.getElementById("resRec");
 const resDes=document.getElementById("resDes");
 const resSal=document.getElementById("resSal");
+
+const totalPago = document.getElementById("totalPago");
+const totalPendente = document.getElementById("totalPendente");
 
 /* ========= STATE ========= */
 let db=[],userNow="",chart;
@@ -429,6 +444,8 @@ async function togglePago(id) {
 function render(){
   corpoItens.innerHTML="";
   let r=0,d=0;
+  let totalPagoMes = 0;
+  let totalPendenteMes = 0;
 
   const mesAtual = mesFoco.value;
 
@@ -499,12 +516,17 @@ corpoItens.innerHTML += `
 
 </tr>`;
 
+totalPago.innerText = totalPagoMes.toFixed(2);
+totalPendente.innerText = totalPendenteMes.toFixed(2);
 
   });
 
   resRec.innerText=`R$ ${r.toFixed(2)}`;
   resDes.innerText=`R$ ${d.toFixed(2)}`;
   resSal.innerText=`R$ ${(r-d).toFixed(2)}`;
+
+totalPago.innerText = totalPagoMes.toFixed(2);
+totalPendente.innerText = totalPendenteMes.toFixed(2);
 
   renderGrafico();
 }
@@ -583,6 +605,12 @@ function renderGrafico(){
       ? mapa[mes].r+=i.valor
       : mapa[mes].d+=i.valor;
   });
+
+  if (i.status === "PAGO") {
+  totalPagoMes += i.valor;
+} else {
+  totalPendenteMes += i.valor;
+}
 
   const meses = Object.keys(mapa).sort();
   const receitas = meses.map(m=>mapa[m].r);
