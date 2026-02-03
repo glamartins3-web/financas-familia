@@ -442,49 +442,64 @@ function render(){
 
     html += `
 <tr>
+
+  <!-- Pago -->
   <td>
     <input type="checkbox"
       ${i.status === "PAGO" ? "checked" : ""}
       onclick="togglePago('${i.id}')">
   </td>
 
+  <!-- Data -->
   <td>${formatarDataBR(i.data)}</td>
 
-  <td>
-    ${i.desc}
-    <div class="d-md-none small ${i.tipo === 'Receita' ? 'val-receita' : 'val-despesa'}">
-      ${i.tipo === 'Receita' ? '💰 Receita' : '💸 Despesa'}
-    </div>
-  </td>
+  <!-- Descrição -->
+<td>
+  ${i.desc === "Salário" || i.desc === "Adiantamento"
+    ? "💰 " + i.desc
+    : i.desc}
+</td>
 
-  <td class="d-none d-md-table-cell ${i.tipo === 'Receita' ? 'val-receita' : 'val-despesa'}">
-    ${i.tipo}
-  </td>
+<!-- Tipo -->
+<td class="${i.tipo === 'Receita' ? 'val-receita' : 'val-despesa'}">
+  ${i.tipo === 'Receita' ? '💰 Receita' : '💸 Despesa'}
+</td>
 
+
+  <!-- Valor -->
   <td class="${i.tipo==='Receita'?'val-receita':'val-despesa'}">
     R$ ${i.valor.toFixed(2)}
   </td>
 
-  <td class="d-none d-md-table-cell">
-    ${i.status}
+  <!-- Status -->
+  <td>
+    ${i.status === "PAGO"
+      ? '<span class="status-pago">PAGO</span>'
+      : '<span class="status-pendente">PENDENTE</span>'}
   </td>
 
-  <td class="d-none d-lg-table-cell">
-    ${i.user || "-"}
+  <!-- 👤 USUÁRIO -->
+  <td>${i.user || "-"}</td>
+
+  <!-- ⚙️ AÇÕES -->
+  <td>
+    <button class="btn btn-sm btn-outline-primary"
+      onclick="editar('${i.id}')">✏️ Editar</button>
+
+    <button class="btn btn-sm btn-outline-danger"
+      onclick="excluir('${i.id}')">🗑️ Excluir</button>
   </td>
 
-  <td class="text-nowrap">
-    <button class="btn btn-sm btn-outline-primary" onclick="editar('${i.id}')">✏️ Editar</button>
-    <button class="btn btn-sm btn-outline-danger" onclick="excluir('${i.id}')">🗑️Excluir</button>
-  </td>
 </tr>`;
-  }
 
-  corpoItens.innerHTML = html;
 
-  resRec.innerText = `R$ ${r.toFixed(2)}`;
-  resDes.innerText = `R$ ${d.toFixed(2)}`;
-  resSal.innerText = `R$ ${(r-d).toFixed(2)}`;
+  });
+
+  resRec.innerText=`R$ ${r.toFixed(2)}`;
+  resDes.innerText=`R$ ${d.toFixed(2)}`;
+  resSal.innerText=`R$ ${(r-d).toFixed(2)}`;
+
+  renderGrafico();
 }
 
 
