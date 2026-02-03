@@ -110,18 +110,19 @@ body{background:#f0f2f5;font-family:'Segoe UI',Tahoma,sans-serif;padding-top:70p
 
   <div class="container-box table-responsive">
     <table class="table table-sm table-hover">
-      <thead>
+<thead>
   <tr>
     <th>Pago</th>
     <th>Data</th>
     <th>Descrição</th>
+    <th>Tipo</th> <!-- 👈 NOVA -->
     <th>Valor</th>
     <th>Status</th>
     <th>Usuário</th>
     <th>Ações</th>
-    
   </tr>
 </thead>
+
       <tbody id="corpoItens"></tbody>
     </table>
   </div>
@@ -426,82 +427,66 @@ async function togglePago(id) {
 
 /* ========= LANÇAMENTOS ========= */
 function render(){
-  corpoItens.innerHTML="";
-  let r=0,d=0;
-
+  let html = "";
+  let r = 0, d = 0;
   const mesAtual = mesFoco.value;
 
-  db.forEach(i=>{
-    if(!i.data) return;
+  for(const i of db){
+    if(!i.data) continue;
 
     const mesItem = i.data.slice(0,7);
-    const mesInicio = i.inicio ? i.inicio.slice(0,7) : mesItem;
+    const aparece = mesItem === mesAtual;
+    if(!aparece) continue;
 
-    const aparece =
-      i.recorrente
-        ? mesAtual >= mesInicio
-        : mesItem === mesAtual;
+    i.tipo === "Receita" ? r += i.valor : d += i.valor;
 
-    if(!aparece) return;
-
-    i.tipo==="Receita" ? r+=i.valor : d+=i.valor;
-
-corpoItens.innerHTML += `
+    html += `
 <tr>
-
-  <!-- Pago -->
   <td>
     <input type="checkbox"
       ${i.status === "PAGO" ? "checked" : ""}
       onclick="togglePago('${i.id}')">
   </td>
 
-  <!-- Data -->
   <td>${formatarDataBR(i.data)}</td>
 
-  <!-- Descrição -->
-<td>
-  ${i.desc === "Salário" || i.desc === "Adiantamento"
-    ? "💰 " + i.desc
-    : i.desc}
-</td>
+  <td>
+    ${i.desc}
+    <div class="d-md-none small ${i.tipo === 'Receita' ? 'val-receita' : 'val-despesa'}">
+      ${i.tipo === 'Receita' ? '💰 Receita' : '💸 Despesa'}
+    </div>
+  </td>
 
+  <td class="d-none d-md-table-cell ${i.tipo === 'Receita' ? 'val-receita' : 'val-despesa'}">
+    ${i.tipo}
+  </td>
 
-  <!-- Valor -->
   <td class="${i.tipo==='Receita'?'val-receita':'val-despesa'}">
     R$ ${i.valor.toFixed(2)}
   </td>
 
-  <!-- Status -->
-  <td>
-    ${i.status === "PAGO"
-      ? '<span class="status-pago">PAGO</span>'
-      : '<span class="status-pendente">PENDENTE</span>'}
+  <td class="d-none d-md-table-cell">
+    ${i.status}
   </td>
 
-  <!-- 👤 USUÁRIO -->
-  <td>${i.user || "-"}</td>
-
-  <!-- ⚙️ AÇÕES -->
-  <td>
-    <button class="btn btn-sm btn-outline-primary"
-      onclick="editar('${i.id}')">✏️ Editar</button>
-
-    <button class="btn btn-sm btn-outline-danger"
-      onclick="excluir('${i.id}')">🗑️ Excluir</button>
+  <td class="d-none d-lg-table-cell">
+    ${i.user || "-"}
   </td>
 
+  <td class="text-nowrap">
+    <button class="btn btn-sm btn-outline-primary" onclick="editar('${i.id}')">✏️</button>
+    <button class="btn btn-sm btn-outline-danger" onclick="excluir('${i.id}')">🗑️</button>
+  </td>
 </tr>`;
+  }
 
+  corpoItens.innerHTML = html;
 
-  });
-
-  resRec.innerText=`R$ ${r.toFixed(2)}`;
-  resDes.innerText=`R$ ${d.toFixed(2)}`;
-  resSal.innerText=`R$ ${(r-d).toFixed(2)}`;
-
-  renderGrafico();
+  resRec.innerText = `R$ ${r.toFixed(2)}`;
+  resDes.innerText = `R$ ${d.toFixed(2)}`;
+  resSal.innerText = `R$ ${(r-d).toFixed(2)}`;
 }
+
 
 async function excluir(id){
   if(!confirm("Excluir este lançamento?")) return;
