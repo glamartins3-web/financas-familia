@@ -442,15 +442,23 @@ async function togglePago(id) {
 
 /* ========= LANÇAMENTOS ========= */
 function render(){
-  corpoItens.innerHTML="";
-  let r=0,d=0;
+function render(){
+  corpoItens.innerHTML = "";
+
+  let r = 0;
+  let d = 0;
   let totalPagoMes = 0;
   let totalPendenteMes = 0;
 
   const mesAtual = mesFoco.value;
 
-  db.forEach(i=>{
-    if(!i.data) return;
+  db.forEach(i => {
+    if (!i.data) return;
+
+    const mesItem = i.data.slice(0,7);
+
+    if (mesItem !== mesAtual) return;
+
 
     const mesItem = i.data.slice(0,7);
     const mesInicio = i.inicio ? i.inicio.slice(0,7) : mesItem;
@@ -463,6 +471,20 @@ function render(){
     if(!aparece) return;
 
     i.tipo==="Receita" ? r+=i.valor : d+=i.valor;
+    
+    // Receita / Despesa
+    if (i.tipo === "Receita") {
+      r += i.valor;
+    } else {
+      d += i.valor;
+    }
+
+    // 🔥 DETALHAMENTO FINANCEIRO
+    if (i.status === "PAGO") {
+      totalPagoMes += i.valor;
+    } else {
+      totalPendenteMes += i.valor;
+    }
 
 corpoItens.innerHTML += `
 <tr>
@@ -521,14 +543,12 @@ totalPendente.innerText = totalPendenteMes.toFixed(2);
 
   });
 
-  resRec.innerText=`R$ ${r.toFixed(2)}`;
-  resDes.innerText=`R$ ${d.toFixed(2)}`;
-  resSal.innerText=`R$ ${(r-d).toFixed(2)}`;
+  resRec.innerText = `R$ ${r.toFixed(2)}`;
+  resDes.innerText = `R$ ${d.toFixed(2)}`;
+  resSal.innerText = `R$ ${(r - d).toFixed(2)}`;
 
-totalPago.innerText = totalPagoMes.toFixed(2);
-totalPendente.innerText = totalPendenteMes.toFixed(2);
-
-  renderGrafico();
+  totalPago.innerText = totalPagoMes.toFixed(2);
+  totalPendente.innerText = totalPendenteMes.toFixed(2);
 }
 
 
