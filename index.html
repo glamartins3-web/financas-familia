@@ -447,13 +447,13 @@ async function togglePago(id) {
     })
   });
 }
-function classeVencimento(item) {
-  if (item.tipo !== "Despesa") return "";
+function classeVencimento(i) {
+  if (!i || i.tipo !== "Despesa" || !i.data) return "";
 
   const hoje = new Date();
   hoje.setHours(0,0,0,0);
 
-  const dataItem = new Date(item.data + "T00:00:00");
+  const dataItem = new Date(i.data + "T00:00:00");
 
   if (dataItem < hoje) return "vencida";
   if (dataItem.getTime() === hoje.getTime()) return "hoje";
@@ -497,7 +497,7 @@ const listaOrdenada = [...db].sort((a, b) => {
     i.tipo==="Receita" ? r+=i.valor : d+=i.valor;
 
 corpoItens.innerHTML += `
-<tr>
+<tr class="${typeof classeVencimento === 'function' ? classeVencimento(i) : ''}">
 
   <!-- Pago -->
   <td>
