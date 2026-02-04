@@ -447,7 +447,7 @@ async function togglePago(id) {
     })
   });
 }
-  function classeVencimento(item) {
+function classeVencimento(item) {
   if (item.tipo !== "Despesa") return "";
 
   const hoje = new Date();
@@ -459,8 +459,6 @@ async function togglePago(id) {
   if (dataItem.getTime() === hoje.getTime()) return "hoje";
   return "futura";
 }
-
-
 
 /* ========= LANÇAMENTOS ========= */
 function render(){
@@ -499,7 +497,7 @@ const listaOrdenada = [...db].sort((a, b) => {
     i.tipo==="Receita" ? r+=i.valor : d+=i.valor;
 
 corpoItens.innerHTML += `
-<tr class="${classeVencimento(i)}">
+<tr>
 
   <!-- Pago -->
   <td>
