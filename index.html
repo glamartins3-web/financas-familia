@@ -440,8 +440,22 @@ function render(){
   let r=0,d=0;
 
   const mesAtual = mesFoco.value;
+  
+  // 🔁 CLONE do banco (não altera o original)
+const listaOrdenada = [...db].sort((a, b) => {
+  // Receitas sempre depois
+  if (a.tipo === "Receita" && b.tipo !== "Receita") return 1;
+  if (a.tipo !== "Receita" && b.tipo === "Receita") return -1;
 
-  db.forEach(i=>{
+  // Ambas são despesas → ordenar por data
+  if (a.tipo === "Despesa" && b.tipo === "Despesa") {
+    return new Date(a.data) - new Date(b.data);
+  }
+
+  return 0;
+});
+
+  listaOrdenada.forEach(i => {
     if(!i.data) return;
 
     const mesItem = i.data.slice(0,7);
