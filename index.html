@@ -28,8 +28,13 @@ body{background:#f0f2f5;font-family:'Segoe UI',Tahoma,sans-serif;padding-top:70p
 .btn-month.active{background:#1a252f;color:#fff}
   /* 🔽 Fonte menor no grid de lançamentos */
 #corpoItens td {font-size: 0.85rem; /* padrão ~1rem */}
-  /* 🔽 Fonte menor no grid de lançamentos */
-#corpoItens td {font-size: 0.85rem; /* padrão ~1rem */}
+@media (max-width: 768px) {
+  #corpoItens td {
+    font-size: 0.8rem;
+    padding: 6px 4px;
+  }
+}
+
 </style>
 </head>
 
