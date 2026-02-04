@@ -34,7 +34,23 @@ body{background:#f0f2f5;font-family:'Segoe UI',Tahoma,sans-serif;padding-top:70p
     padding: 6px 4px;
   }
 }
+/* 🎯 STATUS DE VENCIMENTO */
+.vencida {
+  background: #ffe6e6;
+  color: #c0392b;
+  font-weight: bold;
+}
 
+.hoje {
+  background: #fff7cc;
+  color: #f39c12;
+  font-weight: bold;
+}
+
+.futura {
+  background: #e8f8f0;
+  color: #27ae60;
+}
 </style>
 </head>
 
@@ -431,8 +447,20 @@ async function togglePago(id) {
     })
   });
 
-  render();
+  function classeVencimento(item) {
+  if (item.tipo !== "Despesa") return "";
+
+  const hoje = new Date();
+  hoje.setHours(0,0,0,0);
+
+  const dataItem = new Date(item.data + "T00:00:00");
+
+  if (dataItem < hoje) return "vencida";
+  if (dataItem.getTime() === hoje.getTime()) return "hoje";
+  return "futura";
 }
+
+
 
 /* ========= LANÇAMENTOS ========= */
 function render(){
@@ -471,7 +499,7 @@ const listaOrdenada = [...db].sort((a, b) => {
     i.tipo==="Receita" ? r+=i.valor : d+=i.valor;
 
 corpoItens.innerHTML += `
-<tr>
+<tr class="${classeVencimento(i)}">
 
   <!-- Pago -->
   <td>
