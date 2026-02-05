@@ -360,20 +360,30 @@ async function carregar(){
   const r = await fetch(`${URL_API}?action=listar`);
   const d = await r.json();
 
-  db = d.map(l => ({
-  id: l[0],
-  data: l[2],
-  desc: l[3],
-  valor: +l[4],
-  tipo: l[5],
-  status: l[6] || "PENDENTE", // 🔥 ÚNICO CONTROLE
-  user: l[7] || ""
-}));
+  db = d.map(l => {
+    let dataISO = "";
 
+    if (l[2] instanceof Date) {
+      dataISO = l[2].toISOString().slice(0,10);
+    } else if (typeof l[2] === "string") {
+      dataISO = l[2].split("T")[0];
+    }
+
+    return {
+      id: l[0],
+      data: dataISO,
+      desc: l[3],
+      valor: Number(l[4]),
+      tipo: l[5],
+      status: l[6] || "PENDENTE",
+      user: l[7] || ""
+    };
+  });
 
   render();
   renderHistorico();
 }
+
 
 function limparFormulario(){
   fData.value = "";
@@ -494,32 +504,34 @@ async function togglePago(id) {
   const item = db.find(x => String(x.id) === String(id));
   if (!item) return;
 
-  const novoStatus =
-    item.status === "PAGO" ? "PENDENTE" : "PAGO";
-
-  item.status = novoStatus;
+  item.status = item.status === "PAGO" ? "PENDENTE" : "PAGO";
 
   await fetch(URL_API, {
     method: "POST",
     body: JSON.stringify({
       action: "updatePago",
       id: item.id,
-      status: novoStatus
+      status: item.status
     })
   });
+
+  render();          // 🔥 ESSENCIAL
+  renderHistorico(); // 🔥 ESSENCIAL
 }
-function classeVencimento(i) {
-  if (!i || i.tipo !== "Despesa" || !i.data) return "";
+
+function classeVencimento(item) {
+  if (!item || item.tipo !== "Despesa" || !item.data) return "";
 
   const hoje = new Date();
   hoje.setHours(0,0,0,0);
 
-  const dataItem = new Date(i.data + "T00:00:00");
+  const dataItem = new Date(item.data + "T00:00:00");
 
   if (dataItem < hoje) return "vencida";
   if (dataItem.getTime() === hoje.getTime()) return "hoje";
   return "futura";
 }
+
 
 /* ========= LANÇAMENTOS ========= */
 function render(){
