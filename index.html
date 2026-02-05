@@ -600,6 +600,32 @@ corpoItens.innerHTML += `
   resDes.innerText=`R$ ${d.toFixed(2)}`;
   resSal.innerText=`R$ ${(r-d).toFixed(2)}`;
 
+// 📊 ATUALIZA BARRAS DE PROGRESSO DAS DESPESAS
+const totalDesp = despPago + despPendente;
+
+const percPago = totalDesp > 0
+  ? Math.round((despPago / totalDesp) * 100)
+  : 0;
+
+const percPend = 100 - percPago;
+
+const barPago = document.getElementById("barDespesaPago");
+const barPend = document.getElementById("barDespesaPendente");
+
+if (barPago && barPend) {
+  barPago.style.width = percPago + "%";
+  barPago.innerText = `${percPago}% (R$ ${despPago.toFixed(2)})`;
+
+  barPend.style.width = percPend + "%";
+  barPend.innerText = `${percPend}% (R$ ${despPendente.toFixed(2)})`;
+}
+
+const elQtdPago = document.getElementById("qtdPago");
+const elQtdPend = document.getElementById("qtdPendente");
+
+if (elQtdPago) elQtdPago.innerText = qtdPago;
+if (elQtdPend) elQtdPend.innerText = qtdPendente;
+
   renderGrafico();
 }
 
@@ -665,32 +691,6 @@ function renderHistorico(){
 }
 
 let grafico;
-
-// 📊 ATUALIZA BARRAS DE PROGRESSO DAS DESPESAS
-const totalDesp = despPago + despPendente;
-
-const percPago = totalDesp > 0
-  ? Math.round((despPago / totalDesp) * 100)
-  : 0;
-
-const percPend = 100 - percPago;
-
-const barPago = document.getElementById("barDespesaPago");
-const barPend = document.getElementById("barDespesaPendente");
-
-if (barPago && barPend) {
-  barPago.style.width = percPago + "%";
-  barPago.innerText = `${percPago}% (R$ ${despPago.toFixed(2)})`;
-
-  barPend.style.width = percPend + "%";
-  barPend.innerText = `${percPend}% (R$ ${despPendente.toFixed(2)})`;
-}
-
-const elQtdPago = document.getElementById("qtdPago");
-const elQtdPend = document.getElementById("qtdPendente");
-
-if (elQtdPago) elQtdPago.innerText = qtdPago;
-if (elQtdPend) elQtdPend.innerText = qtdPendente;
 
 function renderGrafico(){
   const mapa = {};
