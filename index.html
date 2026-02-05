@@ -296,29 +296,35 @@ function showPage(p){
 async function fazerLogin(){
   loginError.classList.add("hidden");
 
-  const r = await fetch(
-    `${URL_API}?action=login&user=${encodeURIComponent(userInput.value)}&pass=${encodeURIComponent(passInput.value)}`
-  );
+  try {
+    const r = await fetch(
+      `${URL_API}?action=login&user=${encodeURIComponent(userInput.value)}&pass=${encodeURIComponent(passInput.value)}`
+    );
 
-  const j = await r.json();
+    const j = await r.json();
 
-  if(j.ok){
-    userNow = j.usuario;
+    if(j.ok){
+      userNow = j.usuario;
+      localStorage.setItem("usuarioLogado", userNow);
 
-    // 🔐 SALVA SESSÃO
-    localStorage.setItem("usuarioLogado", userNow);
+      telaLogin.classList.add("hidden");
+      appContent.classList.remove("hidden");
 
-    telaLogin.classList.add("hidden");
-    appContent.classList.remove("hidden");
+      document.getElementById("userLogado").innerText = userNow;
 
-    document.getElementById("userLogado").innerText = userNow;
+      initMonths();
+      carregar();
+    } else {
+      loginError.classList.remove("hidden");
+    }
 
-    initMonths();
-    carregar();
-  } else {
+  } catch (e) {
+    console.error("Erro no login:", e);
+    loginError.innerText = "❌ Erro de conexão com o servidor";
     loginError.classList.remove("hidden");
   }
 }
+
 
 
 function logout(){
@@ -453,12 +459,11 @@ async function adicionar(){
     return;
   }
 
-  const fParcelas = document.getElementById("fParcelas");
   const chkParcelado = document.getElementById("chkParcelado");
 const fParcelas = document.getElementById("fParcelas");
 
 const parcelas = chkParcelado?.checked
-  ? Math.max(2, Number(fParcelas.value || 2))
+  ? Math.max(2, parseInt(fParcelas.value, 10) || 2)
   : 1;
 
 
@@ -548,15 +553,18 @@ async function togglePago(id) {
 function classeVencimento(item) {
   if (!item || item.tipo !== "Despesa" || !item.data) return "";
 
+  const dataItem = new Date(item.data);
+  if (isNaN(dataItem.getTime())) return "";
+
   const hoje = new Date();
   hoje.setHours(0,0,0,0);
-
-  const dataItem = new Date(item.data + "T00:00:00");
+  dataItem.setHours(0,0,0,0);
 
   if (dataItem < hoje) return "vencida";
   if (dataItem.getTime() === hoje.getTime()) return "hoje";
   return "futura";
 }
+
 
 
 /* ========= LANÇAMENTOS ========= */
