@@ -406,14 +406,27 @@ async function adicionar(){
     return;
   }
 
-  const item = {
-    id: editandoId || Date.now(),
-    data: fData.value,
-    desc: fDesc.value,
-    valor: +fValor.value,
-    tipo: fTipo.value,
-    user: userNow
-  };
+
+const fParcelas = document.getElementById("fParcelas");
+const fRec = document.getElementById("fRecorrente");
+
+const parcelas = Number(fParcelas?.value || 1);
+const recorrente = fRec?.value === "S";
+
+const item = {
+  id: editandoId || Date.now(),
+  data: fData.value,
+  desc: fDesc.value,
+  valor: +fValor.value,
+  tipo: fTipo.value,
+  user: userNow,
+
+  // 🔥 NOVOS (PARCELAMENTO REAL)
+  parcelado: parcelas > 1,
+  parcelas: parcelas,
+  recorrente: recorrente
+};
+
 
   const action = editandoId ? "updateLancamento" : "addLancamento";
 
