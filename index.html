@@ -142,14 +142,28 @@ body{background:#f0f2f5;font-family:'Segoe UI',Tahoma,sans-serif;padding-top:70p
   
   <div class="container-box">
     <h6 class="fw-bold mb-3 text-secondary">➕ Novo Lançamento</h6>
-    <div class="row g-2">
-      <div class="col-md-3"><input id="fData" type="date" class="form-control"></div>
-      <div class="col-md-4"><input id="fDesc" class="form-control" placeholder="Descrição"></div>
-      <div class="col-md-2"><input id="fValor" type="number" class="form-control" placeholder="Valor"></div>
-      <div class="col-md-3">
-        <select id="fTipo" class="form-select">
-          <option>Receita</option>
-          <option>Despesa</option>
+ <div class="row g-2">
+
+  <div class="col-md-3">
+    <label class="form-label small fw-bold text-secondary">📅 Data</label>
+    <input id="fData" type="date" class="form-control">
+  </div>
+
+  <div class="col-md-4">
+    <label class="form-label small fw-bold text-secondary">📝 Descrição</label>
+    <input id="fDesc" class="form-control" placeholder="Ex: Aluguel, Mercado">
+  </div>
+
+  <div class="col-md-2">
+    <label class="form-label small fw-bold text-secondary">💰 Valor</label>
+    <input id="fValor" type="number" class="form-control" placeholder="0,00">
+  </div>
+
+  <div class="col-md-3">
+    <label class="form-label small fw-bold text-secondary">📌 Tipo</label>
+    <select id="fTipo" class="form-select">
+          <option>✅Receita</option>
+          <option>⛔️Despesa</option>
         </select>
       </div>
 
@@ -161,7 +175,7 @@ body{background:#f0f2f5;font-family:'Segoe UI',Tahoma,sans-serif;padding-top:70p
   onclick="abrirSalario()">
   💰 Salário / Adiantamento
 </button>
-        <button class="btn btn-dark w-100 fw-bold mt-2" onclick="adicionar()">INCLUIR</button>
+        <button class="btn btn-dark w-100 fw-bold mt-2" onclick="adicionar()">➕INCLUIR</button>
       </div>
     </div>
   </div>
