@@ -95,6 +95,43 @@ body{background:#f0f2f5;font-family:'Segoe UI',Tahoma,sans-serif;padding-top:70p
     <div class="col-4"><div class="card-resumo bg-saldo">Saldo<br><span id="resSal">R$0</span></div></div>
   </div>
   
+  <!--Barra de progresso-->
+  <div class="row g-2 mb-3">
+  <div class="col-4"><div class="card-resumo bg-receita">Receitas<br><span id="resRec">R$0</span></div></div>
+  <div class="col-4"><div class="card-resumo bg-despesa">Despesas<br><span id="resDes">R$0</span></div></div>
+  <div class="col-4"><div class="card-resumo bg-saldo">Saldo<br><span id="resSal">R$0</span></div></div>
+</div>
+  
+  <div class="container-box">
+  <strong>📊 Status das Despesas</strong>
+
+  <div class="mt-2 small">
+    Pagas: <span id="qtdPago">0</span> |
+    Pendentes: <span id="qtdPendente">0</span>
+  </div>
+
+  <div class="mt-2">
+    <div class="progress">
+      <div id="barDespesaPago"
+           class="progress-bar bg-success"
+           style="width:0%">
+        0%
+      </div>
+    </div>
+  </div>
+
+  <div class="mt-2">
+    <div class="progress">
+      <div id="barDespesaPendente"
+           class="progress-bar bg-warning"
+           style="width:0%">
+        0%
+      </div>
+    </div>
+  </div>
+</div>
+  
+  
   <!-- NOVOS CAMPOS NO FORMULÁRIO -->
 <div class="col-md-2">
   <input id="fParcelas" type="number" class="form-control" placeholder="Parcelas" min="1">
@@ -464,6 +501,10 @@ function classeVencimento(i) {
 function render(){
   corpoItens.innerHTML="";
   let r=0,d=0;
+  let despPago = 0; /*--Novoscampos--*/
+  let despPendente = 0;
+  let qtdPago = 0;
+  let qtdPendente = 0; /*--Novoscampos--*/
 
   const mesAtual = mesFoco.value;
   
@@ -495,6 +536,17 @@ const listaOrdenada = [...db].sort((a, b) => {
     if(!aparece) return;
 
     i.tipo==="Receita" ? r+=i.valor : d+=i.valor;
+    
+    // 📊 CONTROLE DAS DESPESAS (para barra de status)
+if (i.tipo === "Despesa") {
+  if (i.status === "PAGO") {
+    despPago += i.valor;
+    qtdPago++;
+  } else {
+    despPendente += i.valor;
+    qtdPendente++;
+  }
+}
 
 corpoItens.innerHTML += `
 <tr class="${typeof classeVencimento === 'function' ? classeVencimento(i) : ''}">
@@ -620,6 +672,32 @@ function renderHistorico(){
 }
 
 let grafico;
+
+// 📊 ATUALIZA BARRAS DE PROGRESSO DAS DESPESAS
+const totalDesp = despPago + despPendente;
+
+const percPago = totalDesp > 0
+  ? Math.round((despPago / totalDesp) * 100)
+  : 0;
+
+const percPend = 100 - percPago;
+
+const barPago = document.getElementById("barDespesaPago");
+const barPend = document.getElementById("barDespesaPendente");
+
+if (barPago && barPend) {
+  barPago.style.width = percPago + "%";
+  barPago.innerText = `${percPago}% (R$ ${despPago.toFixed(2)})`;
+
+  barPend.style.width = percPend + "%";
+  barPend.innerText = `${percPend}% (R$ ${despPendente.toFixed(2)})`;
+}
+
+const elQtdPago = document.getElementById("qtdPago");
+const elQtdPend = document.getElementById("qtdPendente");
+
+if (elQtdPago) elQtdPago.innerText = qtdPago;
+if (elQtdPend) elQtdPend.innerText = qtdPendente;
 
 function renderGrafico(){
   const mapa = {};
