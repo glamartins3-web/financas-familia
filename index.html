@@ -127,10 +127,34 @@ body{background:#f0f2f5;font-family:'Segoe UI',Tahoma,sans-serif;padding-top:70p
 </div>
   
   
-  <!-- NOVOS CAMPOS NO FORMULÁRIO -->
-<div class="col-md-2">
-  <input id="fParcelas" type="number" class="form-control" placeholder="Parcelas" min="1">
-</div> 
+<!-- 🔁 PARCELAMENTO -->
+<div class="col-md-3">
+  <label class="form-label small fw-bold text-secondary">🔁 Parcelamento</label>
+
+  <div class="form-check form-switch">
+    <input
+      class="form-check-input"
+      type="checkbox"
+      id="chkParcelado"
+      onchange="toggleParcelamento()"
+    >
+    <label class="form-check-label" for="chkParcelado">
+      Ativar parcelamento
+    </label>
+  </div>
+</div>
+
+<div class="col-md-2 hidden" id="boxParcelas">
+  <label class="form-label small fw-bold text-secondary">📦 Parcelas</label>
+  <input
+    id="fParcelas"
+    type="number"
+    class="form-control"
+    min="2"
+    value="2"
+  >
+</div>
+
 
    <!-- RECORRÊNCIA FIXA (mensal automática) -->
   <div class="col-md-2">
@@ -302,7 +326,20 @@ function logout(){
   location.reload();
 }
 
+  
+/* ========= FUNÇÃO JS PARA MOSTRAR / ESCONDER ========= */
+function toggleParcelamento(){
+  const chk = document.getElementById("chkParcelado");
+  const box = document.getElementById("boxParcelas");
 
+  if(chk.checked){
+    box.classList.remove("hidden");
+  } else {
+    box.classList.add("hidden");
+    document.getElementById("fParcelas").value = 1;
+  }
+}
+  
 /* ========= MESES ========= */
 const MESES_ABREV = [
   "Jan","Fev","Mar","Abr","Mai","Jun",
@@ -416,73 +453,62 @@ async function adicionar(){
     return;
   }
 
-
+  const fParcelas = document.getElementById("fParcelas");
+  const chkParcelado = document.getElementById("chkParcelado");
 const fParcelas = document.getElementById("fParcelas");
-const fRec = document.getElementById("fRecorrente");
 
-const parcelas = Number(fParcelas?.value || 1);
-const recorrente = fRec?.value === "S";
-
-const item = {
-  id: editandoId || Date.now(),
-  data: fData.value,
-  desc: fDesc.value,
-  valor: +fValor.value,
-  tipo: fTipo.value,
-  user: userNow,
-
-  // 🔥 NOVOS (PARCELAMENTO REAL)
-  parcelado: parcelas > 1,
-  parcelas: parcelas,
-  recorrente: recorrente
-};
+const parcelas = chkParcelado?.checked
+  ? Math.max(2, Number(fParcelas.value || 2))
+  : 1;
 
 
-  const action = editandoId ? "updateLancamento" : "addLancamento";
+  const valorTotal = Number(fValor.value);
+  const valorParcela = Number((valorTotal / parcelas).toFixed(2));
 
-  // 🔐 PRIMEIRO grava no GAS
-  const resp = await fetch(URL_API,{
-    method:"POST",
-    body: JSON.stringify({
-      action,
-      ...item
-    })
-  });
+  const dataBase = new Date(fData.value + "T00:00:00");
 
-  const json = await resp.json();
-  if(!json.ok){
-    mostrarToast("❌ Erro ao salvar");
-    return;
-  }
+  // 🔁 CRIA AS PARCELAS
+  for(let i = 1; i <= parcelas; i++){
 
-  // 🧠 AGORA sincroniza o estado local
-  if(editandoId){
-    const idx = db.findIndex(x => String(x.id) === String(editandoId));
-    if(idx > -1){
-      db[idx] = { ...db[idx], ...item };
+    const dataParcela = new Date(dataBase);
+    dataParcela.setMonth(dataBase.getMonth() + (i - 1));
+
+    const item = {
+      data: dataParcela.toISOString().slice(0,10),
+      desc: parcelas > 1
+        ? `${fDesc.value} (${i}/${parcelas})`
+        : fDesc.value,
+      valor: valorParcela,
+      tipo: fTipo.value,
+      user: userNow
+    };
+
+    const resp = await fetch(URL_API,{
+      method:"POST",
+      body: JSON.stringify({
+        action: "addLancamento",
+        ...item
+      })
+    });
+
+    const json = await resp.json();
+    if(!json.ok){
+      mostrarToast("❌ Erro ao salvar parcela " + i);
+      return;
     }
-    editandoId = null;
-  }else{
-    db.push({ ...item, status:"PENDENTE" });
+
+    // 🧠 mantém estado local sincronizado
+    db.push({
+      id: Date.now() + i,
+      ...item,
+      status: "PENDENTE"
+    });
   }
 
-  render();
-  renderHistorico();
   limparFormulario();
-  mostrarToast("✅ Registro salvo");
-}
-
-
-async function salvar(){
-  await fetch(URL_API,{
-    method:"POST",
-    body:JSON.stringify(db)
-  });
-
   render();
   renderHistorico();
-
-  mostrarToast("✅ Salvo com sucesso");
+  mostrarToast("✅ Parcelamento criado com sucesso");
 }
 
 
