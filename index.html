@@ -15,7 +15,17 @@ body{background:#f0f2f5;font-family:'Segoe UI',Tahoma,sans-serif;padding-top:70p
 .container-box{background:#fff;border-radius:16px;padding:20px;box-shadow:0 6px 18px rgba(0,0,0,.08);margin-bottom:20px}
 #tela-login{position:fixed;inset:0;background:#1a252f;display:flex;align-items:center;justify-content:center;z-index:9999}
 .login-box{background:#fff;padding:30px;border-radius:18px;max-width:360px;width:100%}
-.card-resumo{border-radius:16px;padding:18px;color:#fff;text-align:center;font-weight:bold}
+/* 📊 Resumo do Mês — compacto */
+.card-resumo {
+  padding: 10px;
+  font-size: 0.75rem;
+  line-height: 1.1;
+}
+
+.card-resumo span {
+  font-size: 0.85rem;
+}
+
 .bg-receita{background:linear-gradient(135deg,#2ecc71,#27ae60)}
 .bg-despesa{background:linear-gradient(135deg,#ff7675,#e74c3c)}
 .bg-saldo{background:linear-gradient(135deg,#6c5ce7,#341f97)}
@@ -23,8 +33,29 @@ body{background:#f0f2f5;font-family:'Segoe UI',Tahoma,sans-serif;padding-top:70p
 .val-despesa{color:#e74c3c;font-weight:bold}
 .status-pago{color:#27ae60;font-weight:bold}
 .status-pendente{color:#f39c12;font-weight:bold}
-.month-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(70px,1fr));gap:8px}
-.btn-month{border:1px solid #ddd;border-radius:10px;padding:8px;background:#fff;font-weight:bold}
+/* 📅 Selecionar Mês — compacto */
+.month-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(56px, 1fr));
+  gap: 6px;
+}
+
+.btn-month {
+  padding: 4px 6px;
+  font-size: 0.75rem;
+  border-radius: 8px;
+}
+.container-box h6 {
+  margin-bottom: 8px;
+}
+
+.progress {
+  height: 10px;
+}
+
+.progress-bar {
+  font-size: 0.65rem;
+}
 .btn-month.active{background:#1a252f;color:#fff}
   /* 🔽 Fonte menor no grid de lançamentos */
 #corpoItens td {font-size: 0.85rem; /* padrão ~1rem */}
@@ -50,6 +81,10 @@ body{background:#f0f2f5;font-family:'Segoe UI',Tahoma,sans-serif;padding-top:70p
 .futura {
   background: #e8f8f0;
   color: #27ae60;
+}
+  #pg-lan .container-box {
+  padding: 14px;
+  margin-bottom: 14px;
 }
 </style>
 </head>
@@ -92,7 +127,7 @@ body{background:#f0f2f5;font-family:'Segoe UI',Tahoma,sans-serif;padding-top:70p
 
 <h6 class="fw-bold mb-2 text-secondary">📊 Resumo do Mês</h6>
   <div class="row g-2 mb-3">
-    <div class="col-4"><div class="card-resumo bg-receita">Receitas<br><span id="resRec">R$0</span></div></div>
+    <div class="col-4"><div class="card-resumo bg-receita small">Receitas<br><span id="resRec">R$0</span></div></div>
     <div class="col-4"><div class="card-resumo bg-despesa">Despesas<br><span id="resDes">R$0</span></div></div>
     <div class="col-4"><div class="card-resumo bg-saldo">Saldo<br><span id="resSal">R$0</span></div></div>
   </div>
@@ -105,7 +140,7 @@ body{background:#f0f2f5;font-family:'Segoe UI',Tahoma,sans-serif;padding-top:70p
     Pendentes: <span id="qtdPendente">0</span>
   </div>
 
-  <div class="mt-2">
+  <div class="mt-1">
     <div class="progress">
       <div id="barDespesaPago"
            class="progress-bar bg-success"
@@ -115,7 +150,7 @@ body{background:#f0f2f5;font-family:'Segoe UI',Tahoma,sans-serif;padding-top:70p
     </div>
   </div>
 
-  <div class="mt-2">
+<div class="mt-1">
     <div class="progress">
       <div id="barDespesaPendente"
            class="progress-bar bg-warning"
