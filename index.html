@@ -210,7 +210,22 @@ body{background:#f0f2f5;font-family:'Segoe UI',Tahoma,sans-serif;padding-top:70p
 <div id="pg-lan" class="container">
 <div class="top-bar">
 
- <!-- 📅 MÊS -->
+<!-- 📅 MÊS / ANO -->
+<div class="top-card">
+  <h6>📅 MÊS / ANO</h6>
+
+  <!-- ANO -->
+  <select id="anoSelector"
+          class="form-select form-select-sm mb-2"
+          onchange="setAno(this.value)">
+  </select>
+
+  <!-- MESES -->
+  <div id="monthSelector" class="month-grid"></div>
+
+  <input type="hidden" id="mesFoco">
+</div>
+
 
   <!-- 📊 RESUMO -->
   <div class="top-card">
