@@ -426,9 +426,9 @@ const resDes=document.getElementById("resDes");
 const resSal=document.getElementById("resSal");
 
 /* ========= STATE ========= */
-
+let anoAtual = new Date().getFullYear();
 let db=[],userNow="",chart;
-let anoAtual = new Date().getFullYear(); 
+
 /* ========= NAV ========= */
 function showPage(p){
   document.getElementById("pg-lan").classList.toggle("hidden",p!=="lan");
@@ -501,7 +501,6 @@ function initAnos() {
       </option>`;
   }
 }
-
   
 /* ========= MESES ========= */
 const MESES_ABREV = [
@@ -1037,8 +1036,7 @@ window.onload = () => {
     appContent.classList.remove("hidden");
     document.getElementById("userLogado").innerText = u;
     initAnos();
-initMonths();
-
+    initMonths();
     carregar();
   }
 };
