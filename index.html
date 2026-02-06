@@ -164,6 +164,18 @@ body{background:#f0f2f5;font-family:'Segoe UI',Tahoma,sans-serif;padding-top:70p
   }
 }
 
+/* 🔴 Barra pendente personalizada */
+.bar-pendente {
+  background-color: #e74c3c !important; /* vermelho */
+  color: #fff;
+  font-weight: bold;
+}
+
+/* ⚪ Fundo cinza da barra */
+.progress {
+  background-color: #e0e0e0;
+}
+
 </style>
 </head>
 
@@ -241,8 +253,8 @@ body{background:#f0f2f5;font-family:'Segoe UI',Tahoma,sans-serif;padding-top:70p
 
     <div class="progress">
       <div id="barDespesaPendente"
-           class="progress-bar bg-warning"
-           style="width:0%">0%</div>
+     class="progress-bar bar-pendente"
+     style="width:0%">0%</div>
     </div>
   </div>
 
