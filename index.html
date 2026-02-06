@@ -210,12 +210,7 @@ body{background:#f0f2f5;font-family:'Segoe UI',Tahoma,sans-serif;padding-top:70p
 <div id="pg-lan" class="container">
 <div class="top-bar">
 
-  <!-- 📅 MÊS -->
-  <div class="top-card">
-    <h6>📅 MÊS</h6>
-    <div id="monthSelector" class="month-grid"></div>
-    <input type="hidden" id="mesFoco">
-  </div>
+ <!-- 📅 MÊS -->
 
   <!-- 📊 RESUMO -->
   <div class="top-card">
@@ -416,6 +411,7 @@ const resDes=document.getElementById("resDes");
 const resSal=document.getElementById("resSal");
 
 /* ========= STATE ========= */
+let anoAtual = new Date().getFullYear();  
 let db=[],userNow="",chart;
 
 /* ========= NAV ========= */
@@ -473,6 +469,24 @@ function toggleParcelamento(){
   parcelas.disabled = !chk.checked;
   if (!chk.checked) parcelas.value = 1;
 }
+
+ 
+/* ========= Ano ========= */  
+function initAnos() {
+  const sel = document.getElementById("anoSelector");
+  sel.innerHTML = "";
+
+  const anoInicio = 2026;
+  const anoFim = new Date().getFullYear() + 2;
+
+  for (let a = anoInicio; a <= anoFim; a++) {
+    sel.innerHTML += `
+      <option value="${a}" ${a === anoAtual ? "selected" : ""}>
+        ${a}
+      </option>`;
+  }
+}
+
   
 /* ========= MESES ========= */
 const MESES_ABREV = [
@@ -480,20 +494,30 @@ const MESES_ABREV = [
   "Jul","Ago","Set","Out","Nov","Dez"
 ];
   
-function initMonths(){
-  monthSelector.innerHTML="";
-  const d=new Date(),y=d.getFullYear(),m=d.getMonth();
-for(let i=0;i<12;i++){
-  const v = `${y}-${String(i+1).padStart(2,"0")}`;
+function initMonths() {
+  monthSelector.innerHTML = "";
 
-  monthSelector.innerHTML += `
-    <button class="btn-month ${i===m?'active':''}"
-      onclick="setMes('${v}',this)">
-      ${MESES_ABREV[i]}
-    </button>`;
+  const hoje = new Date();
+  const mesHoje = hoje.getMonth();
+
+  for (let i = 0; i < 12; i++) {
+    const v = `${anoAtual}-${String(i + 1).padStart(2, "0")}`;
+
+    monthSelector.innerHTML += `
+      <button class="btn-month ${i === mesHoje ? "active" : ""}"
+        onclick="setMes('${v}', this)">
+        ${MESES_ABREV[i]}
+      </button>`;
+  }
+
+  mesFoco.value = `${anoAtual}-${String(mesHoje + 1).padStart(2, "0")}`;
 }
 
-  mesFoco.value=`${y}-${String(m+1).padStart(2,"0")}`;
+  
+function setAno(a) {
+  anoAtual = Number(a);
+  initMonths();
+  render();
 }
 
 function setMes(v,b){
@@ -997,7 +1021,9 @@ window.onload = () => {
     telaLogin.classList.add("hidden");
     appContent.classList.remove("hidden");
     document.getElementById("userLogado").innerText = u;
-    initMonths();
+    initAnos();
+initMonths();
+
     carregar();
   }
 };
