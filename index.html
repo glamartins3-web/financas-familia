@@ -86,6 +86,84 @@ body{background:#f0f2f5;font-family:'Segoe UI',Tahoma,sans-serif;padding-top:70p
   padding: 14px;
   margin-bottom: 14px;
 }
+  /* 🔝 BARRA SUPERIOR UNIFICADA */
+.top-bar {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 1.3fr;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.top-card {
+  background: #fff;
+  border-radius: 14px;
+  padding: 12px;
+  box-shadow: 0 4px 14px rgba(0,0,0,.08);
+}
+
+/* 📅 MÊS */
+.top-card h6 {
+  font-size: 0.75rem;
+  font-weight: bold;
+  color: #6c757d;
+  margin-bottom: 6px;
+}
+
+.month-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 4px;
+}
+
+.btn-month {
+  padding: 4px;
+  font-size: 0.7rem;
+  border-radius: 8px;
+}
+
+/* 📊 RESUMO */
+.resumo-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+
+.resumo-item {
+  border-radius: 10px;
+  padding: 8px;
+  color: #fff;
+  font-size: 0.7rem;
+  text-align: center;
+  font-weight: bold;
+}
+
+.resumo-item span {
+  display: block;
+  font-size: 0.8rem;
+  margin-top: 2px;
+}
+
+/* 📊 STATUS */
+.status-info {
+  font-size: 0.7rem;
+  margin-bottom: 4px;
+}
+
+.progress {
+  height: 8px;
+}
+
+.progress-bar {
+  font-size: 0.6rem;
+}
+
+/* 📱 MOBILE */
+@media (max-width: 768px) {
+  .top-bar {
+    grid-template-columns: 1fr;
+  }
+}
+
 </style>
 </head>
 
@@ -118,49 +196,59 @@ body{background:#f0f2f5;font-family:'Segoe UI',Tahoma,sans-serif;padding-top:70p
 
 <!-- LANÇAMENTOS -->
 <div id="pg-lan" class="container">
+<div class="top-bar">
 
-  <div class="container-box">
-    <h6 class="fw-bold mb-3 text-secondary">📅 Selecionar Mês</h6>
+  <!-- 📅 MÊS -->
+  <div class="top-card">
+    <h6>📅 MÊS</h6>
     <div id="monthSelector" class="month-grid"></div>
     <input type="hidden" id="mesFoco">
   </div>
 
-<h6 class="fw-bold mb-2 text-secondary">📊 Resumo do Mês</h6>
-  <div class="row g-2 mb-3">
-    <div class="col-4"><div class="card-resumo bg-receita small">Receitas<br><span id="resRec">R$0</span></div></div>
-    <div class="col-4"><div class="card-resumo bg-despesa">Despesas<br><span id="resDes">R$0</span></div></div>
-    <div class="col-4"><div class="card-resumo bg-saldo">Saldo<br><span id="resSal">R$0</span></div></div>
-  </div>
-  
-  <div class="container-box">
-  <h6 class="fw-bold mb-3 text-secondary">📊 Status das Despesas</h6>
-
-  <div class="mt-2 small">
-    Pagas: <span id="qtdPago">0</span> |
-    Pendentes: <span id="qtdPendente">0</span>
-  </div>
-
-  <div class="mt-1">
-    <div class="progress">
-      <div id="barDespesaPago"
-           class="progress-bar bg-success"
-           style="width:0%">
-        0%
+  <!-- 📊 RESUMO -->
+  <div class="top-card">
+    <h6>📊 RESUMO</h6>
+    <div class="resumo-grid">
+      <div class="resumo-item bg-receita">
+        Receitas
+        <span id="resRec">R$ 0</span>
+      </div>
+      <div class="resumo-item bg-despesa">
+        Despesas
+        <span id="resDes">R$ 0</span>
+      </div>
+      <div class="resumo-item bg-saldo">
+        Saldo
+        <span id="resSal">R$ 0</span>
       </div>
     </div>
   </div>
 
-<div class="mt-1">
+  <!-- 📊 STATUS -->
+  <div class="top-card">
+    <h6>📊 STATUS</h6>
+
+    <div class="status-info">
+      Pagas: <b id="qtdPago">0</b> |
+      Pendentes: <b id="qtdPendente">0</b>
+    </div>
+
+    <div class="progress mb-1">
+      <div id="barDespesaPago"
+           class="progress-bar bg-success"
+           style="width:0%">0%</div>
+    </div>
+
     <div class="progress">
       <div id="barDespesaPendente"
            class="progress-bar bg-warning"
-           style="width:0%">
-        0%
-      </div>
+           style="width:0%">0%</div>
     </div>
   </div>
+
 </div>
-  
+
+
   
 <!-- 🔁 PARCELAMENTO -->
 <div class="col-md-3">
