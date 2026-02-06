@@ -320,27 +320,17 @@ body{background:#f0f2f5;font-family:'Segoe UI',Tahoma,sans-serif;padding-top:70p
   <!-- LINHA SECUNDÁRIA -->
   <div class="row g-2 align-items-center mt-2">
 
-    <div class="col-md-4 d-flex align-items-center gap-2">
-      <div class="form-check form-switch">
-     <input class="form-check-input"
-       type="checkbox"
-       id="chkParcelado"
-       onchange="toggleParcelamento()">
-        <label class="form-check-label small">
-          Parcelar
-        </label>
-      </div>
+ <div class="col-md-4">
+  <div class="form-check form-switch">
+    <input class="form-check-input"
+           type="checkbox"
+           id="chkRecorrente">
+    <label class="form-check-label small">
+      🔁 Recorrente mensal
+    </label>
+  </div>
+</div>
 
-      <span class="small">x</span>
-
-  <input id="fParcelas"
-       type="number"
-       min="2"
-       value="2"
-       class="form-control form-control-sm"
-       style="width:70px"
-       disabled>
-    </div>
 
   </div>
 </div>
@@ -475,16 +465,6 @@ function logout(){
   location.reload();
 }
 
-  
-/* ========= FUNÇÃO JS PARA MOSTRAR / ESCONDER ========= */
-function toggleParcelamento(){
-  const chk = document.getElementById("chkParcelado");
-  const parcelas = document.getElementById("fParcelas");
-
-  parcelas.disabled = !chk.checked;
-  if (!chk.checked) parcelas.value = 1;
-}
-
  
 /* ========= Ano ========= */  
 function initAnos() {
@@ -602,26 +582,32 @@ function limparFormulario(){
 
   const fParcelas = document.getElementById("fParcelas");
   if(fParcelas) fParcelas.value = "";
+const chkRecorrente = document.getElementById("chkRecorrente");
+if (chkRecorrente) chkRecorrente.checked = false;
 
 }
 
 
 // Ajuste sua função adicionar //
 async function adicionar() {
-  const chkParcelado = document.getElementById("chkParcelado");
-  const fParcelas = document.getElementById("fParcelas");
+  const chkRecorrente = document.getElementById("chkRecorrente");
 
-  const parcelas = chkParcelado.checked
-    ? Math.max(2, parseInt(fParcelas.value || 2))
-    : 1;
+  const data = fData.value;
+  if (!data) {
+    mostrarToast("❌ Informe a data");
+    return;
+  }
+
+  const inicio = data.slice(0, 7); // YYYY-MM
 
   const payload = {
     action: "addLancamento",
-    data: fData.value,
+    data: data,
     desc: fDesc.value,
     valor: Number(fValor.value),
     tipo: fTipo.value,
-    parcelas: parcelas,
+    recorrente: chkRecorrente.checked,
+    inicio: chkRecorrente.checked ? inicio : null,
     user: userNow
   };
 
@@ -638,9 +624,15 @@ async function adicionar() {
   }
 
   limparFormulario();
-  await carregar(); // 🔄 garante sincronização real
-  mostrarToast(parcelas > 1 ? "✅ Parcelamento criado" : "✅ Lançamento salvo");
+  await carregar();
+
+  mostrarToast(
+    chkRecorrente.checked
+      ? "🔁 Recorrência criada"
+      : "✅ Lançamento salvo"
+  );
 }
+
 
 
 
