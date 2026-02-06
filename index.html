@@ -199,45 +199,84 @@ body{background:#f0f2f5;font-family:'Segoe UI',Tahoma,sans-serif;padding-top:70p
   </select>
 </div>
   
-  <div class="container-box">
-    <h6 class="fw-bold mb-3 text-secondary">➕ Novo Lançamento</h6>
- <div class="row g-2">
+<div class="container-box p-3">
+  <h6 class="fw-bold mb-3 text-secondary">➕ Novo Lançamento</h6>
 
-  <div class="col-md-3">
-    <label class="form-label small fw-bold text-secondary">📅 Data</label>
-    <input id="fData" type="date" class="form-control">
-  </div>
+  <!-- LINHA PRINCIPAL -->
+  <div class="row g-2 align-items-end">
 
-  <div class="col-md-4">
-    <label class="form-label small fw-bold text-secondary">📝 Descrição</label>
-    <input id="fDesc" class="form-control" placeholder="Ex: Aluguel, Mercado">
-  </div>
+    <div class="col-md-2">
+      <label class="form-label small">📅 Data</label>
+      <input id="fData" type="date" class="form-control form-control-sm">
+    </div>
 
-  <div class="col-md-2">
-    <label class="form-label small fw-bold text-secondary">💰 Valor</label>
-    <input id="fValor" type="number" class="form-control" placeholder="0,00">
-  </div>
+    <div class="col-md-4">
+      <label class="form-label small">📝 Descrição</label>
+      <input id="fDesc" class="form-control form-control-sm"
+             placeholder="Ex: Aluguel, Mercado">
+    </div>
 
-  <div class="col-md-3">
-    <label class="form-label small fw-bold text-secondary">📌 Tipo</label>
-    <select id="fTipo" class="form-select">
-          <option>Receita</option>
-          <option>Despesa</option>
-        </select>
-      </div>
+    <div class="col-md-2">
+      <label class="form-label small">💰 Valor</label>
+      <input id="fValor" type="number"
+             class="form-control form-control-sm"
+             placeholder="0,00">
+    </div>
 
-      <!----- 💰 Salário / Adiantamento ---->
-      <div class="d-flex gap-2 mt-2">
-<button
-  type="button"
-  class="btn btn-outline-success w-50"
-  onclick="abrirSalario()">
-  💰 Salário / Adiantamento
-</button>
-        <button class="btn btn-dark w-100 fw-bold mt-2" onclick="adicionar()">➕INCLUIR</button>
-      </div>
+    <div class="col-md-2">
+      <label class="form-label small">📌 Tipo</label>
+      <select id="fTipo" class="form-select form-select-sm">
+        <option>Despesa</option>
+        <option>Receita</option>
+      </select>
+    </div>
+
+    <!-- BOTÕES AO LADO DO TIPO -->
+    <div class="col-md-2 d-flex gap-1">
+      <button class="btn btn-success btn-sm w-50"
+              onclick="abrirSalario()">💰</button>
+
+      <button class="btn btn-dark btn-sm w-50"
+              onclick="adicionar()">➕</button>
     </div>
   </div>
+
+  <!-- LINHA SECUNDÁRIA -->
+  <div class="row g-2 align-items-center mt-2">
+
+    <div class="col-md-4 d-flex align-items-center gap-2">
+      <div class="form-check form-switch">
+        <input class="form-check-input"
+               type="checkbox"
+               id="chkParcelado"
+               onchange="toggleParcelamento()">
+        <label class="form-check-label small">
+          Parcelar
+        </label>
+      </div>
+
+      <span class="small">x</span>
+
+      <input id="fParcelas"
+             type="number"
+             min="2"
+             value="2"
+             class="form-control form-control-sm"
+             style="width:70px"
+             disabled>
+    </div>
+
+    <div class="col-md-3 ms-auto">
+      <select id="fRecorrente"
+              class="form-select form-select-sm">
+        <option value="N">Única</option>
+        <option value="S">Recorrente</option>
+      </select>
+    </div>
+
+  </div>
+</div>
+
 
   <div class="container-box table-responsive">
     <h6 class="fw-bold mb-3 text-secondary">📋 Lançamentos do Mês</h6>
@@ -371,14 +410,10 @@ function logout(){
 /* ========= FUNÇÃO JS PARA MOSTRAR / ESCONDER ========= */
 function toggleParcelamento(){
   const chk = document.getElementById("chkParcelado");
-  const box = document.getElementById("boxParcelas");
+  const parcelas = document.getElementById("fParcelas");
 
-  if(chk.checked){
-    box.classList.remove("hidden");
-  } else {
-    box.classList.add("hidden");
-    document.getElementById("fParcelas").value = 1;
-  }
+  parcelas.disabled = !chk.checked;
+  if (!chk.checked) parcelas.value = 1;
 }
   
 /* ========= MESES ========= */
