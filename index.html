@@ -203,6 +203,10 @@ body{background:#f0f2f5;font-family:'Segoe UI',Tahoma,sans-serif;padding-top:70p
 
   <button class="btn btn-light btn-sm fw-bold" onclick="showPage('lan')">💸 LANÇAMENTOS</button>
   <button class="btn btn-light btn-sm fw-bold" onclick="showPage('hist')">📊 HISTÓRICO</button>
+  <button class="btn btn-light btn-sm fw-bold"
+        onclick="showPage('assinaturas')">
+  🔁 ASSINATURAS
+</button>
   <button class="btn btn-outline-danger btn-sm" onclick="logout()">Logout</button>
 </nav>
 
@@ -370,7 +374,7 @@ body{background:#f0f2f5;font-family:'Segoe UI',Tahoma,sans-serif;padding-top:70p
 
   
   
-<!-- HISTÓRICO -->
+<!-- Pag HISTÓRICO -->
 <div id="pg-hist" class="container hidden"> 
 <div class="container-box">
   <h6 class="fw-bold mb-2">Evolução Mensal</h6>
@@ -390,6 +394,30 @@ body{background:#f0f2f5;font-family:'Segoe UI',Tahoma,sans-serif;padding-top:70p
       <tbody id="corpoHist"></tbody>
     </table>
   </div>
+</div>
+
+<!-- Pag ASSINATURAS -->
+<div id="pg-assinaturas" class="container hidden">
+
+  <div class="container-box">
+    <h5 class="fw-bold mb-3">🔁 Assinaturas Mensais</h5>
+
+    <table class="table table-sm table-hover align-middle">
+      <thead class="table-light">
+        <tr>
+          <th>Descrição</th>
+          <th>Valor</th>
+          <th>Tipo</th>
+          <th>Início</th>
+          <th>Meses</th>
+          <th>Status</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody id="corpoAssinaturas"></tbody>
+    </table>
+  </div>
+
 </div>
 
 </div>
@@ -422,10 +450,47 @@ const resSal=document.getElementById("resSal");
 let anoAtual = new Date().getFullYear();
 let db=[],userNow="",chart;
 
+/* ========= ASSINATURAS ========= */
+let assinaturas = [
+  {
+    id: 1,
+    desc: "Internet",
+    valor: 120,
+    tipo: "Despesa",
+    inicio: "2026-01-10",
+    meses: 6,        // número ou "∞"
+    ativa: true
+  },
+  {
+    id: 2,
+    desc: "Netflix",
+    valor: 39.9,
+    tipo: "Despesa",
+    inicio: "2026-02-01",
+    meses: 12,
+    ativa: true
+  },
+  {
+    id: 3,
+    desc: "Salário",
+    valor: 5000,
+    tipo: "Receita",
+    inicio: "2026-01-05",
+    meses: "∞",
+    ativa: true
+  }
+];
+
+
 /* ========= NAV ========= */
 function showPage(p){
-  document.getElementById("pg-lan").classList.toggle("hidden",p!=="lan");
-  document.getElementById("pg-hist").classList.toggle("hidden",p!=="hist");
+  document.getElementById("pg-lan").classList.toggle("hidden", p !== "lan");
+  document.getElementById("pg-hist").classList.toggle("hidden", p !== "hist");
+  document.getElementById("pg-assinaturas").classList.toggle("hidden", p !== "assinaturas");
+
+  if (p === "assinaturas") {
+    renderAssinaturas();
+  }
 }
 
 /* ========= LOGIN ========= */
@@ -853,7 +918,6 @@ if (elQtdPend) elQtdPend.innerText = qtdPendente;
   renderGrafico();
 }
 
-
 async function excluir(id){
   if(!confirm("Excluir este lançamento?")) return;
 
@@ -1045,6 +1109,54 @@ function showToast(msg = "Salvo com sucesso") {
     t.style.opacity = "0";
     setTimeout(() => t.style.display = "none", 400);
   }, 3000);
+}
+
+function renderAssinaturas() {
+  const corpo = document.getElementById("corpoAssinaturas");
+  if (!corpo) return;
+
+  corpo.innerHTML = "";
+
+  assinaturas.forEach(a => {
+    corpo.innerHTML += `
+      <tr>
+        <td>${a.desc}</td>
+
+        <td class="${a.tipo === 'Receita' ? 'val-receita' : 'val-despesa'}">
+          R$ ${Number(a.valor).toFixed(2)}
+        </td>
+
+        <td>${a.tipo}</td>
+
+        <td>${formatarDataBR(a.inicio)}</td>
+
+        <td>${a.meses}</td>
+
+        <td>
+          ${a.ativa
+            ? '<span class="badge bg-success">ATIVA</span>'
+            : '<span class="badge bg-secondary">ENCERRADA</span>'}
+        </td>
+
+        <td>
+          <button class="btn btn-sm btn-outline-danger"
+            onclick="encerrarAssinatura(${a.id})">
+            Encerrar
+          </button>
+        </td>
+      </tr>
+    `;
+  });
+}
+
+function encerrarAssinatura(id) {
+  const a = assinaturas.find(x => x.id === id);
+  if (!a) return;
+
+  if (!confirm("Encerrar esta assinatura?")) return;
+
+  a.ativa = false;
+  renderAssinaturas();
 }
 
   /*-----RESTAURAR LOGIN AO ABRIR A PÁGINA-----*/
