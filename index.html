@@ -424,11 +424,6 @@ let db=[],userNow="",chart;
 function showPage(p){
   document.getElementById("pg-lan").classList.toggle("hidden", p !== "lan");
   document.getElementById("pg-hist").classList.toggle("hidden", p !== "hist");
-  document.getElementById("pg-assinaturas").classList.toggle("hidden", p !== "assinaturas");
-
-  if (p === "assinaturas") {
-    renderAssinaturas();
-  }
 }
 
 /* ========= LOGIN ========= */
