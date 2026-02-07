@@ -450,20 +450,24 @@ async function fazerLogin(){
 
     const j = await r.json();
 
-    if(j.ok){
-  userNow = j.usuario;
-  localStorage.setItem("usuarioLogado", userNow);
+    if (j.ok) {
+      userNow = j.usuario;
+      localStorage.setItem("usuarioLogado", userNow);
 
-  telaLogin.classList.add("hidden");
-  appContent.classList.remove("hidden");
+      telaLogin.classList.add("hidden");
+      appContent.classList.remove("hidden");
 
-  document.getElementById("userLogado").innerText = userNow;
+      document.getElementById("userLogado").innerText = userNow;
 
-  initAnos();      // 👈 ESSENCIAL
-  initMonths();    // 👈 ESSENCIAL
-  carregar();      // 👈 ESSENCIAL
-}
- else {
+      setTimeout(() => {
+        initAnos();
+        initMonths();
+        carregar();
+      }, 0);
+
+    } else {
+      // 🔴 ISSO FALTAVA
+      loginError.innerText = "❌ Usuário ou senha inválidos";
       loginError.classList.remove("hidden");
     }
 
@@ -476,6 +480,7 @@ async function fazerLogin(){
 
 
 
+
 function logout(){
   localStorage.removeItem("usuarioLogado");
   location.reload();
@@ -485,6 +490,8 @@ function logout(){
 /* ========= Ano ========= */  
 function initAnos() {
   const sel = document.getElementById("anoSelector");
+  if (!sel) return; // 🔒 evita quebra do login
+
   sel.innerHTML = "";
 
   const anoInicio = 2026;
@@ -497,6 +504,7 @@ function initAnos() {
       </option>`;
   }
 }
+
   
 /* ========= MESES ========= */
 const MESES_ABREV = [
