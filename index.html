@@ -604,17 +604,19 @@ function limparFormulario(){
   fValor.value = "";
   fTipo.value = "Receita";
 
-const chkRec = document.getElementById("chkRecorrente");
-const qtdRec = document.getElementById("qtdRecorrencia");
+  const chkRec = document.getElementById("chkRecorrente");
+  const qtdRec = document.getElementById("qtdRecorrencia");
 
-if (chkRec) chkRec.checked = false;
-if (qtdRec) {
-  qtdRec.value = 12;
-  qtdRec.disabled = true;
+  if (chkRec) chkRec.checked = false;
+  if (qtdRec) {
+    qtdRec.value = 12;
+    qtdRec.disabled = true;
+  }
 }
 
+
 // ativar/desativar o campo //
-  function toggleRecorrencia(){
+function toggleRecorrencia(){
   const chk = document.getElementById("chkRecorrente");
   const qtd = document.getElementById("qtdRecorrencia");
 
@@ -622,56 +624,45 @@ if (qtdRec) {
   if (!chk.checked) qtd.value = 12;
 }
 
+
 // Ajuste sua função adicionar //
 async function adicionar() {
-  const chkRecorrente = document.getElementById("chkRecorrente");
-  const qtdInput = document.getElementById("qtdRecorrencia");
-
-  if (!fData.value) {
-    mostrarToast("❌ Informe a data");
+  if (!fData.value || !fDesc.value || !fValor.value) {
+    mostrarToast("❌ Preencha todos os campos");
     return;
   }
 
-  const qtdMeses = chkRecorrente.checked
-    ? Math.max(1, Number(qtdInput.value || 1))
+  const chkRec = document.getElementById("chkRecorrente");
+  const qtdRec = document.getElementById("qtdRecorrencia");
+
+  const parcelas = chkRec.checked
+    ? Math.max(1, Number(qtdRec.value || 1))
     : 1;
 
-  const dataBase = new Date(fData.value);
+  const payload = {
+    action: "addLancamento",
+    data: fData.value,
+    desc: fDesc.value,
+    valor: Number(fValor.value),
+    tipo: fTipo.value,
+    parcelas: parcelas,
+    user: userNow
+  };
 
-  for (let i = 0; i < qtdMeses; i++) {
-    const data = new Date(dataBase);
-    data.setMonth(dataBase.getMonth() + i);
-
-    const payload = {
-      action: "addLancamento",
-      data: data.toISOString().slice(0,10),
-      desc: fDesc.value,
-      valor: Number(fValor.value),
-      tipo: fTipo.value,
-      recorrente: chkRecorrente.checked,
-      inicio: dataBase.toISOString().slice(0,7),
-      user: userNow
-    };
-
-    await fetch(URL_API, {
-      method: "POST",
-      body: JSON.stringify(payload)
-    });
-  }
+  await fetch(URL_API, {
+    method: "POST",
+    body: JSON.stringify(payload)
+  });
 
   limparFormulario();
   await carregar();
 
   mostrarToast(
-    chkRecorrente.checked
-      ? `🔁 Recorrência criada (${qtdMeses} meses)`
+    parcelas > 1
+      ? `🔁 Parcelado em ${parcelas} meses`
       : "✅ Lançamento salvo"
   );
 }
-
-
-
-
 
   /*-------FUNÇÃO DO TOAST (OBRIGATÓRIO) ------------*/
 function mostrarToast(msg = "✅ Salvo com sucesso") {
