@@ -451,17 +451,19 @@ async function fazerLogin(){
     const j = await r.json();
 
     if(j.ok){
-      userNow = j.usuario;
-      localStorage.setItem("usuarioLogado", userNow);
+  userNow = j.usuario;
+  localStorage.setItem("usuarioLogado", userNow);
 
-      telaLogin.classList.add("hidden");
-      appContent.classList.remove("hidden");
+  telaLogin.classList.add("hidden");
+  appContent.classList.remove("hidden");
 
-      document.getElementById("userLogado").innerText = userNow;
+  document.getElementById("userLogado").innerText = userNow;
 
-      initMonths();
-      carregar();
-    } else {
+  initAnos();      // 👈 ESSENCIAL
+  initMonths();    // 👈 ESSENCIAL
+  carregar();      // 👈 ESSENCIAL
+}
+ else {
       loginError.classList.remove("hidden");
     }
 
@@ -1058,8 +1060,8 @@ window.onload = () => {
 
     document.getElementById("userLogado").innerText = u;
 
-    initAnos();      // 👈 PRIMEIRO
-    initMonths();    // 👈 DEPOIS
+    initAnos();      // 👈 IGUAL AO LOGIN MANUAL
+    initMonths();
     carregar();
   }
 };
