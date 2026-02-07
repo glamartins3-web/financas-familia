@@ -203,10 +203,6 @@ body{background:#f0f2f5;font-family:'Segoe UI',Tahoma,sans-serif;padding-top:70p
 
   <button class="btn btn-light btn-sm fw-bold" onclick="showPage('lan')">💸 LANÇAMENTOS</button>
   <button class="btn btn-light btn-sm fw-bold" onclick="showPage('hist')">📊 HISTÓRICO</button>
-  <button class="btn btn-light btn-sm fw-bold"
-        onclick="showPage('assinaturas')">
-  🔁 Assinaturas
-</button>
   <button class="btn btn-outline-danger btn-sm" onclick="logout()">Logout</button>
 </nav>
 
@@ -273,9 +269,6 @@ body{background:#f0f2f5;font-family:'Segoe UI',Tahoma,sans-serif;padding-top:70p
   </div>
 
 </div>
-
-
-
 
    <!-- RECORRÊNCIA FIXA (mensal automática) -->
     
@@ -396,77 +389,6 @@ body{background:#f0f2f5;font-family:'Segoe UI',Tahoma,sans-serif;padding-top:70p
   </div>
 </div>
 
-<!-- Pag ASSINATURAS -->
-<div id="pg-assinaturas" class="container hidden">
-
-<div class="container-box mb-3">
-  <h6 class="fw-bold mb-3 text-secondary">➕ Nova Assinatura</h6>
-
-  <div class="row g-2 align-items-end">
-
-    <div class="col-md-4">
-      <label class="form-label small">Descrição</label>
-      <input id="aDesc" class="form-control form-control-sm"
-             placeholder="Ex: Netflix, Internet">
-    </div>
-
-    <div class="col-md-2">
-      <label class="form-label small">Valor</label>
-      <input id="aValor" type="number"
-             class="form-control form-control-sm">
-    </div>
-
-    <div class="col-md-2">
-      <label class="form-label small">Tipo</label>
-      <select id="aTipo" class="form-select form-select-sm">
-        <option>Despesa</option>
-        <option>Receita</option>
-      </select>
-    </div>
-
-    <div class="col-md-2">
-      <label class="form-label small">Início</label>
-      <input id="aInicio" type="date"
-             class="form-control form-control-sm">
-    </div>
-
-    <div class="col-md-1">
-      <label class="form-label small">Meses</label>
-      <input id="aMeses" type="text"
-             class="form-control form-control-sm"
-             placeholder="∞">
-    </div>
-
-    <div class="col-md-1">
-      <button class="btn btn-dark btn-sm w-100"
-              onclick="adicionarAssinatura()">➕</button>
-    </div>
-<div id="pg-assinaturas" class="container hidden">
-
-  <div class="container-box">
-    <h6 class="fw-bold mb-3">🔁 Assinaturas Mensais</h6>
-
-    <div class="table-responsive">
-      <table class="table table-sm table-hover align-middle">
-        <thead class="table-light">
-          <tr>
-            <th style="width:30%">Descrição</th>
-            <th style="width:15%">Valor</th>
-            <th style="width:15%">Tipo</th>
-            <th style="width:15%">Início</th>
-            <th style="width:10%">Meses</th>
-            <th style="width:15%">Ações</th>
-          </tr>
-        </thead>
-        <tbody id="corpoAssinaturas"></tbody>
-      </table>
-    </div>
-  </div>
-
-</div>
-  </div>
-</div>
-
 </div>
 
 <script>
@@ -496,37 +418,6 @@ const resSal=document.getElementById("resSal");
 /* ========= STATE ========= */
 let anoAtual = new Date().getFullYear();
 let db=[],userNow="",chart;
-
-/* ========= ASSINATURAS ========= */
-let assinaturas = [
-  {
-    id: 1,
-    desc: "Internet",
-    valor: 120,
-    tipo: "Despesa",
-    inicio: "2026-01-10",
-    meses: 6,        // número ou "∞"
-    ativa: true
-  },
-  {
-    id: 2,
-    desc: "Netflix",
-    valor: 39.9,
-    tipo: "Despesa",
-    inicio: "2026-02-01",
-    meses: 12,
-    ativa: true
-  },
-  {
-    id: 3,
-    desc: "Salário",
-    valor: 5000,
-    tipo: "Receita",
-    inicio: "2026-01-05",
-    meses: "∞",
-    ativa: true
-  }
-];
 
 
 /* ========= NAV ========= */
@@ -1158,87 +1049,6 @@ function showToast(msg = "Salvo com sucesso") {
   }, 3000);
 }
 
-function renderAssinaturas() {
-  const corpo = document.getElementById("corpoAssinaturas");
-  if (!corpo) return;
-
-  corpo.innerHTML = "";
-
-  assinaturas.forEach(a => {
-    if (!a.ativa) return;
-
-    corpo.innerHTML += `
-      <tr>
-        <td>${a.desc}</td>
-
-        <td class="${a.tipo === 'Receita' ? 'val-receita' : 'val-despesa'}">
-          R$ ${a.valor.toFixed(2)}
-        </td>
-
-        <td>${a.tipo}</td>
-
-        <td>${formatarDataBR(a.inicio)}</td>
-
-        <td>${a.meses}</td>
-
-        <td>
-          <button class="btn btn-sm btn-outline-danger"
-                  onclick="encerrarAssinatura(${a.id})">
-            ⛔ Encerrar
-          </button>
-        </td>
-      </tr>
-    `;
-  });
-}
-
-function adicionarAssinatura() {
-  const desc = document.getElementById("aDesc").value.trim();
-  const valor = Number(document.getElementById("aValor").value);
-  const tipo = document.getElementById("aTipo").value;
-  const inicio = document.getElementById("aInicio").value;
-  const mesesRaw = document.getElementById("aMeses").value.trim();
-
-  if (!desc || !valor || !inicio) {
-    mostrarToast("❌ Preencha os campos obrigatórios");
-    return;
-  }
-
-  const meses = mesesRaw === "" || mesesRaw === "∞"
-    ? "∞"
-    : Math.max(1, Number(mesesRaw));
-
-  assinaturas.push({
-    id: Date.now(),
-    desc,
-    valor,
-    tipo,
-    inicio,
-    meses,
-    ativa: true
-  });
-
-  limparFormAssinatura();
-  renderAssinaturas();
-  mostrarToast("🔁 Assinatura adicionada");
-}
-
-function encerrarAssinatura(id) {
-  const a = assinaturas.find(x => x.id === id);
-  if (!a) return;
-
-  if (!confirm("Encerrar esta assinatura?")) return;
-
-  a.ativa = false;
-  renderAssinaturas();
-}
-
-function limparFormAssinatura() {
-  document.getElementById("aDesc").value = "";
-  document.getElementById("aValor").value = "";
-  document.getElementById("aInicio").value = "";
-  document.getElementById("aMeses").value = "∞";
-}
 
   /*-----RESTAURAR LOGIN AO ABRIR A PÁGINA-----*/
 window.onload = () => {
