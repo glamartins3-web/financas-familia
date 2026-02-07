@@ -624,34 +624,45 @@ async function adicionar() {
   const chkRec = document.getElementById("chkRecorrente");
   const qtdRec = document.getElementById("qtdRecorrencia");
 
-  const parcelas = chkRec.checked
+  const meses = chkRec.checked
     ? Math.max(1, Number(qtdRec.value || 1))
     : 1;
 
-  const payload = {
-    action: "addLancamento",
-    data: fData.value,
-    desc: fDesc.value,
-    valor: Number(fValor.value),
-    tipo: fTipo.value,
-    parcelas: parcelas,
-    user: userNow
-  };
+  const dataBase = new Date(fData.value);
 
-  await fetch(URL_API, {
-    method: "POST",
-    body: JSON.stringify(payload)
-  });
+  for (let i = 0; i < meses; i++) {
+    const d = new Date(dataBase);
+    d.setMonth(d.getMonth() + i);
+
+    const dataISO = d.toISOString().slice(0, 10);
+
+    const payload = {
+      action: "addLancamento",
+      data: dataISO,
+      desc: fDesc.value,
+      valor: Number(fValor.value), // 🔥 NÃO divide
+      tipo: fTipo.value,
+      user: userNow,
+      recorrente: chkRec.checked,
+      inicio: fData.value
+    };
+
+    await fetch(URL_API, {
+      method: "POST",
+      body: JSON.stringify(payload)
+    });
+  }
 
   limparFormulario();
   await carregar();
 
   mostrarToast(
-    parcelas > 1
-      ? `🔁 Parcelado em ${parcelas} meses`
+    meses > 1
+      ? `🔁 Recorrente por ${meses} meses`
       : "✅ Lançamento salvo"
   );
 }
+
 
   /*-------FUNÇÃO DO TOAST (OBRIGATÓRIO) ------------*/
 function mostrarToast(msg = "✅ Salvo com sucesso") {
