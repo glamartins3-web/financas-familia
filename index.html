@@ -318,18 +318,32 @@ body{background:#f0f2f5;font-family:'Segoe UI',Tahoma,sans-serif;padding-top:70p
   </div>
 
   <!-- LINHA SECUNDÁRIA -->
-  <div class="row g-2 align-items-center mt-2">
+<div class="col-md-5 d-flex align-items-center gap-2">
 
- <div class="col-md-4">
   <div class="form-check form-switch">
     <input class="form-check-input"
            type="checkbox"
-           id="chkRecorrente">
+           id="chkRecorrente"
+           onchange="toggleRecorrencia()">
     <label class="form-check-label small">
       🔁 Recorrente mensal
     </label>
   </div>
+
+  <span class="small text-muted">por</span>
+
+  <input id="qtdRecorrencia"
+         type="number"
+         min="2"
+         value="12"
+         class="form-control form-control-sm"
+         style="width:80px"
+         disabled>
+
+  <span class="small text-muted">meses</span>
+
 </div>
+
 
 
   </div>
@@ -580,47 +594,59 @@ function limparFormulario(){
   fValor.value = "";
   fTipo.value = "Receita";
 
-  const fParcelas = document.getElementById("fParcelas");
-  if(fParcelas) fParcelas.value = "";
-const chkRecorrente = document.getElementById("chkRecorrente");
-if (chkRecorrente) chkRecorrente.checked = false;
+const chkRec = document.getElementById("chkRecorrente");
+const qtdRec = document.getElementById("qtdRecorrencia");
 
+if (chkRec) chkRec.checked = false;
+if (qtdRec) {
+  qtdRec.value = 12;
+  qtdRec.disabled = true;
 }
 
+// ativar/desativar o campo //
+  function toggleRecorrencia(){
+  const chk = document.getElementById("chkRecorrente");
+  const qtd = document.getElementById("qtdRecorrencia");
+
+  qtd.disabled = !chk.checked;
+  if (!chk.checked) qtd.value = 12;
+}
 
 // Ajuste sua função adicionar //
 async function adicionar() {
   const chkRecorrente = document.getElementById("chkRecorrente");
+  const qtdInput = document.getElementById("qtdRecorrencia");
 
-  const data = fData.value;
-  if (!data) {
+  if (!fData.value) {
     mostrarToast("❌ Informe a data");
     return;
   }
 
-  const inicio = data.slice(0, 7); // YYYY-MM
+  const qtdMeses = chkRecorrente.checked
+    ? Math.max(1, Number(qtdInput.value || 1))
+    : 1;
 
-  const payload = {
-    action: "addLancamento",
-    data: data,
-    desc: fDesc.value,
-    valor: Number(fValor.value),
-    tipo: fTipo.value,
-    recorrente: chkRecorrente.checked,
-    inicio: chkRecorrente.checked ? inicio : null,
-    user: userNow
-  };
+  const dataBase = new Date(fData.value);
 
-  const resp = await fetch(URL_API, {
-    method: "POST",
-    body: JSON.stringify(payload)
-  });
+  for (let i = 0; i < qtdMeses; i++) {
+    const data = new Date(dataBase);
+    data.setMonth(dataBase.getMonth() + i);
 
-  const json = await resp.json();
+    const payload = {
+      action: "addLancamento",
+      data: data.toISOString().slice(0,10),
+      desc: fDesc.value,
+      valor: Number(fValor.value),
+      tipo: fTipo.value,
+      recorrente: chkRecorrente.checked,
+      inicio: dataBase.toISOString().slice(0,7),
+      user: userNow
+    };
 
-  if (!json.ok) {
-    mostrarToast("❌ Erro ao salvar");
-    return;
+    await fetch(URL_API, {
+      method: "POST",
+      body: JSON.stringify(payload)
+    });
   }
 
   limparFormulario();
@@ -628,10 +654,11 @@ async function adicionar() {
 
   mostrarToast(
     chkRecorrente.checked
-      ? "🔁 Recorrência criada"
+      ? `🔁 Recorrência criada (${qtdMeses} meses)`
       : "✅ Lançamento salvo"
   );
 }
+
 
 
 
@@ -1022,17 +1049,20 @@ function showToast(msg = "Salvo com sucesso") {
   /*-----RESTAURAR LOGIN AO ABRIR A PÁGINA-----*/
 window.onload = () => {
   const u = localStorage.getItem("usuarioLogado");
+
   if (u) {
     userNow = u;
+
     telaLogin.classList.add("hidden");
     appContent.classList.remove("hidden");
+
     document.getElementById("userLogado").innerText = u;
-    initAnos();
-    initMonths();
+
+    initAnos();      // 👈 PRIMEIRO
+    initMonths();    // 👈 DEPOIS
     carregar();
   }
 };
-
 
   
 </script>
