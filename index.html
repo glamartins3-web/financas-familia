@@ -175,43 +175,6 @@ body{background:#f0f2f5;font-family:'Segoe UI',Tahoma,sans-serif;padding-top:70p
 .progress {
   background-color: #e0e0e0;
 }
-.status-line {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  font-size: 0.7rem;
-}
-
-.status-values {
-  font-weight: 600;
-  color: #333;
-}
-
-.status-progress {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.progress-bar {
-  flex: 1;
-  height: 6px;
-  background: #e5e5e5;
-  border-radius: 6px;
-  overflow: hidden;
-}
-
-.progress-fill {
-  height: 100%;
-  background: #dc3545; /* pendente */
-}
-
-.progress-percent {
-  min-width: 32px;
-  font-weight: 600;
-  color: #333;
-  text-align: right;
-}
 
 </style>
 </head>
@@ -298,24 +261,12 @@ body{background:#f0f2f5;font-family:'Segoe UI',Tahoma,sans-serif;padding-top:70p
            style="width:0%">0%</div>
     </div>
 
-<td class="status">
- <div class="status-row">
-  <span class="status-dot pendente"></span>
-
-  <span class="status-text">
-    PENDENTE — R$ 1.200,00 de R$ 2.000,00
-  </span>
-
-  <span class="status-percent">60%</span>
-</div>
-
-<div class="mini-progress">
-  <div class="mini-progress-fill" style="width:60%"></div>
-</div>
-
+    <div class="progress">
+      <div id="barDespesaPendente"
+     class="progress-bar bar-pendente"
+     style="width:0%">0%</div>
+    </div>
   </div>
-</td>
-
 
 </div>
 
