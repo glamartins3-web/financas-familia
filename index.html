@@ -492,13 +492,17 @@ const resSal=document.getElementById("resSal");
 
 /* ========= STATE ========= */
 let anoAtual = new Date().getFullYear();
-let db=[], userNow="", chart;
+let db=[], assinaturasDB=[], userNow="", chart;
 
 /* ========= NAV ========= */
 function showPage(p){
   document.getElementById("pg-lan").classList.toggle("hidden", p !== "lan");
   document.getElementById("pg-hist").classList.toggle("hidden", p !== "hist");
   document.getElementById("pg-ass").classList.toggle("hidden", p !== "ass");
+
+  if (p === "ass") {
+    carregarAssinaturas();
+  }
 }
 
 /* ========= LOGIN ========= */
@@ -1120,6 +1124,10 @@ function showToast(msg = "Salvo com sucesso") {
 }
 
 async function addAssinatura(){
+  if(!aNome.value || !aVenc.value || !aValor.value){
+  mostrarToast("❌ Preencha todos os campos");
+  return;
+}
   const payload = {
     action: "addAssinatura",
     id: Date.now(),
