@@ -492,7 +492,7 @@ const resSal=document.getElementById("resSal");
 
 /* ========= STATE ========= */
 let anoAtual = new Date().getFullYear();
-let db=[], assinaturasDB=[], userNow="", chart;
+let db=[], userNow="", chart;
 
 /* ========= NAV ========= */
 function showPage(p){
@@ -1119,25 +1119,40 @@ function showToast(msg = "Salvo com sucesso") {
   }, 3000);
 }
 
-function addAssinatura(){
-  const nome = aNome.value;
-  const venc = Number(aVenc.value);
-  const valor = Number(aValor.value);
-  const cartao = aCartao.value;
-  const status = aStatus.value;
-
-  if(!nome || !venc || !valor){
-    mostrarToast("❌ Preencha os campos");
-    return;
-  }
-
-  assinaturasDB.push({
+async function addAssinatura(){
+  const payload = {
+    action: "addAssinatura",
     id: Date.now(),
-    nome, venc, valor, cartao, status
+    nome: aNome.value,
+    venc: Number(aVenc.value),
+    valor: Number(aValor.value),
+    cartao: aCartao.value,
+    status: aStatus.value,
+    user: userNow
+  };
+
+  await fetch(URL_API, {
+    method: "POST",
+    body: JSON.stringify(payload)
   });
 
-  aNome.value = aVenc.value = aValor.value = aCartao.value = "";
-  aStatus.value = "Ativo";
+  carregarAssinaturas();
+  mostrarToast("✅ Assinatura salva");
+}
+
+async function carregarAssinaturas(){
+  const r = await fetch(`${URL_API}?action=listarAssinaturas`);
+  const dados = await r.json();
+
+  assinaturasDB = dados.map(l => ({
+    id: l[0],
+    nome: l[1],
+    venc: l[2],
+    valor: Number(l[3]),
+    cartao: l[4],
+    status: l[5],
+    user: l[6]
+  }));
 
   renderAssinaturas();
 }
@@ -1181,18 +1196,31 @@ function renderAssinaturas(){
   totalEl.innerText = `R$ ${total.toFixed(2)}`;
 }
 
-function toggleAss(id, status){
-  const a = assinaturasDB.find(x=>x.id===id);
-  if(a){
-    a.status = status;
-    renderAssinaturas();
-  }
+async function delAss(id){
+  await fetch(URL_API,{
+    method:"POST",
+    body:JSON.stringify({
+      action:"deleteAss",
+      id
+    })
+  });
+
+  carregarAssinaturas();
 }
 
-function delAss(id){
-  assinaturasDB = assinaturasDB.filter(a=>a.id!==id);
-  renderAssinaturas();
+async function toggleAss(id, status){
+  await fetch(URL_API,{
+    method:"POST",
+    body:JSON.stringify({
+      action:"updateStatusAss",
+      id, status
+    })
+  });
+
+  carregarAssinaturas();
 }
+
+
 
   /*-----RESTAURAR LOGIN AO ABRIR A PÁGINA-----*/
 window.onload = () => {
@@ -1209,6 +1237,7 @@ window.onload = () => {
     initAnos();      // 👈 IGUAL AO LOGIN MANUAL
     initMonths();
     carregar();
+    carregarAssinaturas();
   }
 };
 
