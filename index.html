@@ -203,6 +203,9 @@ body{background:#f0f2f5;font-family:'Segoe UI',Tahoma,sans-serif;padding-top:70p
 
   <button class="btn btn-light btn-sm fw-bold" onclick="showPage('lan')">💸 LANÇAMENTOS</button>
   <button class="btn btn-light btn-sm fw-bold" onclick="showPage('hist')">📊 HISTÓRICO</button>
+  <button class="btn btn-light btn-sm fw-bold" onclick="showPage('ass')">
+  🔁 ASSINATURAS
+</button>
   <button class="btn btn-outline-danger btn-sm" onclick="logout()">Logout</button>
 </nav>
 
@@ -389,6 +392,78 @@ body{background:#f0f2f5;font-family:'Segoe UI',Tahoma,sans-serif;padding-top:70p
   </div>
 </div>
 
+<!-- PAG ASSINATURAS -->
+<div id="pg-ass" class="container hidden">
+
+  <!-- CADASTRO -->
+  <div class="container-box">
+    <h6 class="fw-bold mb-3 text-secondary">➕ Nova Assinatura</h6>
+
+    <div class="row g-2">
+      <div class="col-md-3">
+        <label class="form-label small">Assinatura</label>
+        <input id="aNome" class="form-control form-control-sm">
+      </div>
+
+      <div class="col-md-2">
+        <label class="form-label small">Dia Venc.</label>
+        <input id="aVenc" type="number" min="1" max="31"
+               class="form-control form-control-sm">
+      </div>
+
+      <div class="col-md-2">
+        <label class="form-label small">Valor Mensal</label>
+        <input id="aValor" type="number"
+               class="form-control form-control-sm">
+      </div>
+
+      <div class="col-md-2">
+        <label class="form-label small">Cartão</label>
+        <input id="aCartao" class="form-control form-control-sm">
+      </div>
+
+      <div class="col-md-2">
+        <label class="form-label small">Status</label>
+        <select id="aStatus" class="form-select form-select-sm">
+          <option value="Ativo">Ativo</option>
+          <option value="Cancelado">Cancelado</option>
+        </select>
+      </div>
+
+      <div class="col-md-1 d-grid">
+        <button class="btn btn-dark btn-sm mt-4"
+                onclick="addAssinatura()">➕</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- GRID -->
+  <div class="container-box table-responsive">
+    <h6 class="fw-bold mb-3 text-secondary">📋 Assinaturas</h6>
+
+    <table class="table table-sm table-hover">
+      <thead>
+        <tr>
+          <th>Assinatura</th>
+          <th>Venc.</th>
+          <th>Mensal</th>
+          <th>Cartão</th>
+          <th>12x</th>
+          <th>Status</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody id="corpoAss"></tbody>
+      <tfoot>
+        <tr class="fw-bold">
+          <td colspan="2">TOTAL ATIVO</td>
+          <td id="totalAss">R$ 0,00</td>
+          <td colspan="4"></td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+
 </div>
 
 <script>
@@ -417,13 +492,13 @@ const resSal=document.getElementById("resSal");
 
 /* ========= STATE ========= */
 let anoAtual = new Date().getFullYear();
-let db=[],userNow="",chart;
-
+let db=[], assinaturasDB=[], userNow="", chart;
 
 /* ========= NAV ========= */
 function showPage(p){
   document.getElementById("pg-lan").classList.toggle("hidden", p !== "lan");
   document.getElementById("pg-hist").classList.toggle("hidden", p !== "hist");
+  document.getElementById("pg-ass").classList.toggle("hidden", p !== "ass");
 }
 
 /* ========= LOGIN ========= */
@@ -1044,6 +1119,80 @@ function showToast(msg = "Salvo com sucesso") {
   }, 3000);
 }
 
+function addAssinatura(){
+  const nome = aNome.value;
+  const venc = Number(aVenc.value);
+  const valor = Number(aValor.value);
+  const cartao = aCartao.value;
+  const status = aStatus.value;
+
+  if(!nome || !venc || !valor){
+    mostrarToast("❌ Preencha os campos");
+    return;
+  }
+
+  assinaturasDB.push({
+    id: Date.now(),
+    nome, venc, valor, cartao, status
+  });
+
+  aNome.value = aVenc.value = aValor.value = aCartao.value = "";
+  aStatus.value = "Ativo";
+
+  renderAssinaturas();
+}
+
+function renderAssinaturas(){
+  const corpo = document.getElementById("corpoAss");
+  const totalEl = document.getElementById("totalAss");
+
+  corpo.innerHTML = "";
+  let total = 0;
+
+  assinaturasDB.forEach(a=>{
+    const v12 = a.valor * 12;
+
+    if(a.status === "Ativo"){
+      total += a.valor;
+    }
+
+    corpo.innerHTML += `
+      <tr>
+        <td>${a.nome}</td>
+        <td>Dia ${a.venc}</td>
+        <td>R$ ${a.valor.toFixed(2)}</td>
+        <td>${a.cartao}</td>
+        <td>R$ ${v12.toFixed(2)}</td>
+        <td>
+          <select class="form-select form-select-sm"
+                  onchange="toggleAss(${a.id}, this.value)">
+            <option ${a.status==="Ativo"?"selected":""}>Ativo</option>
+            <option ${a.status==="Cancelado"?"selected":""}>Cancelado</option>
+          </select>
+        </td>
+        <td>
+          <button class="btn btn-sm btn-outline-danger"
+                  onclick="delAss(${a.id})">🗑️</button>
+        </td>
+      </tr>
+    `;
+  });
+
+  totalEl.innerText = `R$ ${total.toFixed(2)}`;
+}
+
+function toggleAss(id, status){
+  const a = assinaturasDB.find(x=>x.id===id);
+  if(a){
+    a.status = status;
+    renderAssinaturas();
+  }
+}
+
+function delAss(id){
+  assinaturasDB = assinaturasDB.filter(a=>a.id!==id);
+  renderAssinaturas();
+}
 
   /*-----RESTAURAR LOGIN AO ABRIR A PÁGINA-----*/
 window.onload = () => {
