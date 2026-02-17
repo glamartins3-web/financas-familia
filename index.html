@@ -202,6 +202,11 @@ body{background:#f0f2f5;font-family:'Segoe UI',Tahoma,sans-serif;padding-top:70p
   </span>
 
   <div class="d-flex gap-1">
+    
+    <button class="btn btn-outline-light btn-sm fw-bold"
+  onclick="showPage('menu')">
+  🏠 Menu
+</button>
     <button class="btn btn-light btn-sm fw-bold"
       onclick="showPage('lan')">💸 Lançamentos</button>
 
@@ -211,6 +216,7 @@ body{background:#f0f2f5;font-family:'Segoe UI',Tahoma,sans-serif;padding-top:70p
     <button class="btn btn-light btn-sm fw-bold"
       onclick="showPage('hist')">📊 Histórico</button>
   </div>
+  
 
   <button class="btn btn-outline-danger btn-sm"
     onclick="logout()">Logout</button>
@@ -239,6 +245,10 @@ body{background:#f0f2f5;font-family:'Segoe UI',Tahoma,sans-serif;padding-top:70p
 
 <!-- LANÇAMENTOS -->
 <div id="pg-lan" class="container hidden">
+  <button class="btn btn-outline-secondary btn-sm mb-2"
+  onclick="showPage('menu')">
+  ⬅ Voltar ao Menu
+</button>
 <div class="top-bar">
 
 <!-- 📅 MÊS / ANO -->
@@ -399,7 +409,11 @@ body{background:#f0f2f5;font-family:'Segoe UI',Tahoma,sans-serif;padding-top:70p
   
   
 <!-- Pag HISTÓRICO -->
-<div id="pg-hist" class="container hidden"> 
+<div id="pg-hist" class="container hidden">
+  <button class="btn btn-outline-secondary btn-sm mb-2"
+  onclick="showPage('menu')">
+  ⬅ Voltar ao Menu
+</button>
 <div class="container-box">
   <h6 class="fw-bold mb-2">Evolução Mensal</h6>
   <canvas id="graficoMensal" height="120"></canvas>
@@ -422,6 +436,10 @@ body{background:#f0f2f5;font-family:'Segoe UI',Tahoma,sans-serif;padding-top:70p
 
 <!-- PAG ASSINATURAS -->
 <div id="pg-ass" class="container hidden">
+  <button class="btn btn-outline-secondary btn-sm mb-2"
+  onclick="showPage('menu')">
+  ⬅ Voltar ao Menu
+</button>
 
   <!-- TÍTULO -->
   <div class="container-box">
@@ -532,18 +550,25 @@ let db=[], assinaturasDB=[], userNow="", chart;
 function showPage(pagina) {
   const paginas = ["menu", "lan", "ass", "hist"];
 
+  // esconde todas
   paginas.forEach(p => {
     const el = document.getElementById("pg-" + p);
     if (el) el.classList.add("hidden");
   });
 
+  // mostra a página escolhida
   const alvo = document.getElementById("pg-" + pagina);
   if (alvo) alvo.classList.remove("hidden");
 
-  // destaque do menu superior (se existir)
-  document.querySelectorAll(".nav-top button").forEach(b =>
-    b.classList.remove("btn-dark")
-  );
+  // 🔥 CONTROLE DO MENU SUPERIOR
+  const nav = document.querySelector(".nav-top");
+  if (nav) {
+    if (pagina === "menu") {
+      nav.classList.add("hidden");   // ESCONDE no menu inicial
+    } else {
+      nav.classList.remove("hidden"); // MOSTRA nas demais telas
+    }
+  }
 }
 
 /* ========= LOGIN ========= */
