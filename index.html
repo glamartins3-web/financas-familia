@@ -515,10 +515,17 @@ function showPage(pagina) {
 
   paginas.forEach(p => {
     const el = document.getElementById("pg-" + p);
-    if (el) {
-      el.classList.toggle("hidden", p !== pagina);
-    }
+    if (el) el.classList.toggle("hidden", p !== pagina);
   });
+
+  document.querySelectorAll(".nav-top button").forEach(b =>
+    b.classList.remove("btn-dark")
+  );
+
+  const ativo = document.querySelector(
+    `.nav-top button[onclick="showPage('${pagina}')"]`
+  );
+  if (ativo) ativo.classList.add("btn-dark");
 }
 
 /* ========= LOGIN ========= */
@@ -536,16 +543,20 @@ async function fazerLogin(){
       userNow = j.usuario;
       localStorage.setItem("usuarioLogado", userNow);
 
-      telaLogin.classList.add("hidden");
-      appContent.classList.remove("hidden");
+     telaLogin.classList.add("hidden");
+appContent.classList.remove("hidden");
 
-      document.getElementById("userLogado").innerText = userNow;
+document.getElementById("userLogado").innerText = userNow;
 
-      setTimeout(() => {
-        initAnos();
-        initMonths();
-        carregar();
-      }, 0);
+// 🔥 ISSO É O QUE FALTAVA
+showPage("lan");
+
+setTimeout(() => {
+  initAnos();
+  initMonths();
+  carregar();
+  carregarAssinaturas();
+}, 0);
 
     } else {
       // 🔴 ISSO FALTAVA
@@ -1250,19 +1261,21 @@ async function toggleAss(id, status){
 window.onload = () => {
   const u = localStorage.getItem("usuarioLogado");
 
-  if (u) {
-    userNow = u;
+if (u) {
+  userNow = u;
 
-    telaLogin.classList.add("hidden");
-    appContent.classList.remove("hidden");
+  telaLogin.classList.add("hidden");
+  appContent.classList.remove("hidden");
 
-    document.getElementById("userLogado").innerText = u;
+  document.getElementById("userLogado").innerText = u;
 
-    initAnos();      // 👈 IGUAL AO LOGIN MANUAL
-    initMonths();
-    carregar();
-    carregarAssinaturas();
-  }
+  showPage("lan"); // 🔥 ESSENCIAL
+
+  initAnos();
+  initMonths();
+  carregar();
+  carregarAssinaturas();
+}
 };
 
   
