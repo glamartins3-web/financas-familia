@@ -198,15 +198,22 @@ body{background:#f0f2f5;font-family:'Segoe UI',Tahoma,sans-serif;padding-top:70p
 
 <nav class="nav-top">
   <span style="color:#fff;font-weight:bold">
-    👤<span id="userLogado"></span>
+    👤 <span id="userLogado"></span>
   </span>
 
-  <button class="btn btn-light btn-sm fw-bold" onclick="showPage('lan')">💸 LANÇAMENTOS</button>
-  <button class="btn btn-light btn-sm fw-bold" onclick="showPage('hist')">📊 HISTÓRICO</button>
-  <button class="btn btn-light btn-sm fw-bold" onclick="showPage('ass')">
-  🔁 ASSINATURAS
-</button>
-  <button class="btn btn-outline-danger btn-sm" onclick="logout()">Logout</button>
+  <div class="d-flex gap-1">
+    <button class="btn btn-light btn-sm fw-bold"
+      onclick="showPage('lan')">💸 Lançamentos</button>
+
+    <button class="btn btn-light btn-sm fw-bold"
+      onclick="showPage('ass')">🔁 Assinaturas</button>
+
+    <button class="btn btn-light btn-sm fw-bold"
+      onclick="showPage('hist')">📊 Histórico</button>
+  </div>
+
+  <button class="btn btn-outline-danger btn-sm"
+    onclick="logout()">Logout</button>
 </nav>
 
 <!-- LANÇAMENTOS -->
@@ -394,6 +401,14 @@ body{background:#f0f2f5;font-family:'Segoe UI',Tahoma,sans-serif;padding-top:70p
 
 <!-- PAG ASSINATURAS -->
 <div id="pg-ass" class="container hidden">
+  <div class="container-box">
+    <h6 class="fw-bold mb-3">🔁 Assinaturas</h6>
+
+    <!-- resumo -->
+    <!-- formulário -->
+    <!-- grid -->
+  </div>
+</div>
 
   <!-- CADASTRO -->
   <div class="container-box">
@@ -495,14 +510,15 @@ let anoAtual = new Date().getFullYear();
 let db=[], assinaturasDB=[], userNow="", chart;
 
 /* ========= NAV ========= */
-function showPage(p){
-  document.getElementById("pg-lan").classList.toggle("hidden", p !== "lan");
-  document.getElementById("pg-hist").classList.toggle("hidden", p !== "hist");
-  document.getElementById("pg-ass").classList.toggle("hidden", p !== "ass");
+function showPage(pagina) {
+  const paginas = ["lan", "ass", "hist"];
 
-  if (p === "ass") {
-    carregarAssinaturas();
-  }
+  paginas.forEach(p => {
+    const el = document.getElementById("pg-" + p);
+    if (el) {
+      el.classList.toggle("hidden", p !== pagina);
+    }
+  });
 }
 
 /* ========= LOGIN ========= */
