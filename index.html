@@ -414,6 +414,32 @@ body{background:#f0f2f5;font-family:'Segoe UI',Tahoma,sans-serif;padding-top:70p
   onclick="showPage('menu')">
   ⬅ Voltar ao Menu
 </button>
+<!-- FILTROS HISTÓRICO -->
+<div class="container-box mb-3">
+  <div class="row g-2 align-items-end">
+
+    <div class="col-md-4">
+      <label class="form-label small fw-bold">📊 Tipo de filtro</label>
+      <select id="histFiltro"
+              class="form-select form-select-sm"
+              onchange="renderHistorico()">
+        <option value="anual">Anual</option>
+        <option value="s1">1º Semestre</option>
+        <option value="s2">2º Semestre</option>
+      </select>
+    </div>
+
+    <div class="col-md-4">
+      <label class="form-label small fw-bold">📅 Ano</label>
+      <select id="histAno"
+              class="form-select form-select-sm"
+              onchange="renderHistorico()">
+      </select>
+    </div>
+
+  </div>
+</div>
+
 <div class="container-box">
   <h6 class="fw-bold mb-2">Evolução Mensal</h6>
   <canvas id="graficoMensal" height="120"></canvas>
@@ -641,6 +667,20 @@ function initAnos() {
   }
 }
 
+function initHistAnos(){
+  const sel = document.getElementById("histAno");
+  if(!sel) return;
+
+  sel.innerHTML = "";
+
+  const anoAtual = new Date().getFullYear();
+  for(let a = anoAtual - 3; a <= anoAtual + 1; a++){
+    sel.innerHTML += `
+      <option value="${a}" ${a === anoAtual ? "selected" : ""}>
+        ${a}
+      </option>`;
+  }
+}
   
 /* ========= MESES ========= */
 const MESES_ABREV = [
@@ -1038,26 +1078,51 @@ function editar(id){
 
 /* ========= HISTÓRICO ========= */
 function renderHistorico(){
-  const hist={},corpo=document.getElementById("corpoHist");
-  corpo.innerHTML="";
-  db.forEach(l=>{
-    if(!l.data)return;
-    const m=l.data.substring(0,7);
-    hist[m]=hist[m]||{r:0,d:0};
-    l.tipo==="Receita"?hist[m].r+=l.valor:hist[m].d+=l.valor;
+  const filtro = document.getElementById("histFiltro")?.value || "anual";
+  const ano = Number(document.getElementById("histAno")?.value || new Date().getFullYear());
+
+  const hist = {};
+  const corpo = document.getElementById("corpoHist");
+  corpo.innerHTML = "";
+
+  db.forEach(l => {
+    if(!l.data) return;
+
+    const [y, m] = l.data.split("-").map(Number);
+
+    if (y !== ano) return;
+
+    // 🎯 FILTRO SEMESTRAL
+    if (filtro === "s1" && m > 6) return;
+    if (filtro === "s2" && m <= 6) return;
+
+    const chave = `${y}-${String(m).padStart(2,"0")}`;
+
+    if(!hist[chave]) hist[chave] = { r: 0, d: 0 };
+
+    l.tipo === "Receita"
+      ? hist[chave].r += l.valor
+      : hist[chave].d += l.valor;
   });
-  const meses=Object.keys(hist).sort();
-  meses.forEach(m=>{
-    const s=hist[m].r-hist[m].d;
-    corpo.innerHTML+=`
-    <tr>
-      <td>${m.substring(5,7)}/${m.substring(0,4)}</td>
-      <td class="val-receita">R$ ${hist[m].r.toFixed(2)}</td>
-      <td class="val-despesa">R$ ${hist[m].d.toFixed(2)}</td>
-      <td class="${s>=0?'val-receita':'val-despesa'}">R$ ${s.toFixed(2)}</td>
-    </tr>`;
+
+  const meses = Object.keys(hist).sort();
+
+  meses.forEach(m => {
+    const s = hist[m].r - hist[m].d;
+
+    corpo.innerHTML += `
+      <tr>
+        <td>${m.substring(5,7)}/${m.substring(0,4)}</td>
+        <td class="val-receita">R$ ${hist[m].r.toFixed(2)}</td>
+        <td class="val-despesa">R$ ${hist[m].d.toFixed(2)}</td>
+        <td class="${s >= 0 ? 'val-receita' : 'val-despesa'}">
+          R$ ${s.toFixed(2)}
+        </td>
+      </tr>
+    `;
   });
-  renderGrafico(hist,meses);
+
+  renderGraficoHistorico(hist, meses);
 }
 
 let grafico;
@@ -1121,6 +1186,32 @@ function renderGrafico(){
 });
 
 }
+function renderGraficoHistorico(hist, meses){
+  const receitas = meses.map(m => hist[m].r);
+  const despesas = meses.map(m => hist[m].d);
+  const saldo = meses.map((m,i) => receitas[i] - despesas[i]);
+
+  const ctx = document.getElementById("graficoMensal").getContext("2d");
+  if(grafico) grafico.destroy();
+
+  grafico = new Chart(ctx,{
+    type: "bar",
+    data: {
+      labels: meses.map(m => m.substring(5,7) + "/" + m.substring(0,4)),
+      datasets: [
+        { label: "Receitas", data: receitas, backgroundColor: "#27ae60" },
+        { label: "Despesas", data: despesas, backgroundColor: "#e74c3c" },
+        { label: "Saldo", data: saldo, backgroundColor: "#6c5ce7" }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { position: "bottom" } },
+      scales: { y: { beginAtZero: true } }
+    }
+  });
+}
+
 
 function abrirSalario(){
   new bootstrap.Modal(document.getElementById("modalSalario")).show();
@@ -1315,6 +1406,7 @@ if (u) {
   showPage("menu"); // 🔥 ESSENCIAL
 
   initAnos();
+  initHistAnos();
   initMonths();
   carregar();
   carregarAssinaturas();
