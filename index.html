@@ -1,1493 +1,651 @@
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Controle Financeiro</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Controle Financeiro</title>
 
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<style>
-body{background:#f0f2f5;font-family:'Segoe UI',Tahoma,sans-serif;padding-top:70px}
-.hidden{display:none!important}
-.nav-top{position:fixed;top:0;width:100%;background:#1a252f;padding:12px;display:flex;justify-content:center;gap:10px;z-index:1000}
-.container-box{background:#fff;border-radius:16px;padding:20px;box-shadow:0 6px 18px rgba(0,0,0,.08);margin-bottom:20px}
-#tela-login{position:fixed;inset:0;background:#1a252f;display:flex;align-items:center;justify-content:center;z-index:9999}
-.login-box{background:#fff;padding:30px;border-radius:18px;max-width:360px;width:100%}
-/* 📊 Resumo do Mês — compacto */
-.card-resumo {
-  padding: 10px;
-  font-size: 0.75rem;
-  line-height: 1.1;
-}
+    <style>
+        /* --- LAYOUT BASE --- */
+        body { background: #f0f2f5; font-family: 'Segoe UI', Tahoma, sans-serif; padding-top: 70px; }
+        .hidden { display: none !important; }
+        .container-box { background: #fff; border-radius: 16px; padding: 20px; box-shadow: 0 6px 18px rgba(0, 0, 0, .08); margin-bottom: 20px; }
 
-.card-resumo span {
-  font-size: 0.85rem;
-}
+        /* --- LOGIN & NAV --- */
+        #tela-login { position: fixed; inset: 0; background: #1a252f; display: flex; align-items: center; justify-content: center; z-index: 9999; }
+        .login-box { background: #fff; padding: 30px; border-radius: 18px; max-width: 360px; width: 100%; }
+        .nav-top { position: fixed; top: 0; width: 100%; background: #1a252f; padding: 12px; display: flex; justify-content: center; gap: 10px; z-index: 1000; }
 
-.bg-receita{background:linear-gradient(135deg,#2ecc71,#27ae60)}
-.bg-despesa{background:linear-gradient(135deg,#ff7675,#e74c3c)}
-.bg-saldo{background:linear-gradient(135deg,#6c5ce7,#341f97)}
-.val-receita{color:#27ae60;font-weight:bold}
-.val-despesa{color:#e74c3c;font-weight:bold}
-.status-pago{color:#27ae60;font-weight:bold}
-.status-pendente{color:#f39c12;font-weight:bold}
-/* 📅 Selecionar Mês — compacto */
-.month-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(56px, 1fr));
-  gap: 6px;
-}
+        /* --- DASHBOARD / TOP BAR --- */
+        .top-bar { display: grid; grid-template-columns: 1.2fr 1fr 1.3fr; gap: 12px; margin-bottom: 14px; }
+        .top-card { background: #fff; border-radius: 14px; padding: 12px; box-shadow: 0 4px 14px rgba(0, 0, 0, .08); }
+        .top-card h6 { font-size: 0.75rem; font-weight: bold; color: #6c757d; margin-bottom: 6px; }
 
-.btn-month {
-  padding: 4px 6px;
-  font-size: 0.75rem;
-  border-radius: 8px;
-}
-.container-box h6 {
-  margin-bottom: 8px;
-}
+        /* --- SELEÇÃO DE MÊS --- */
+        .month-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; }
+        .btn-month { padding: 4px; font-size: 0.7rem; border-radius: 8px; border: 1px solid #ddd; background: #fff; }
+        .btn-month.active { background: #1a252f; color: #fff; border-color: #1a252f; }
 
-.progress {
-  height: 10px;
-}
+        /* --- RESUMO E STATUS --- */
+        .resumo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+        .resumo-item { border-radius: 10px; padding: 8px; color: #fff; font-size: 0.7rem; text-align: center; font-weight: bold; }
+        .resumo-item span { display: block; font-size: 0.8rem; margin-top: 2px; }
+        .bg-receita { background: linear-gradient(135deg, #2ecc71, #27ae60); }
+        .bg-despesa { background: linear-gradient(135deg, #ff7675, #e74c3c); }
+        .bg-saldo { background: linear-gradient(135deg, #6c5ce7, #341f97); }
+        .status-info { font-size: 0.7rem; margin-bottom: 4px; }
+        .progress { height: 10px; background-color: #e0e0e0; }
+        .bar-pendente { background-color: #e74c3c !important; color: #fff; font-weight: bold; }
 
-.progress-bar {
-  font-size: 0.65rem;
-}
-.btn-month.active{background:#1a252f;color:#fff}
-  /* 🔽 Fonte menor no grid de lançamentos */
-#corpoItens td {font-size: 0.85rem; /* padrão ~1rem */}
-@media (max-width: 768px) {
-  #corpoItens td {
-    font-size: 0.8rem;
-    padding: 6px 4px;
-  }
-}
-/* 🎯 STATUS DE VENCIMENTO */
-.vencida {
-  background: #ffe6e6;
-  color: #c0392b;
-  font-weight: bold;
-}
+        /* --- TABELAS E CORES --- */
+        #corpoItens td { font-size: 0.85rem; }
+        .val-receita { color: #27ae60; font-weight: bold; }
+        .val-despesa { color: #e74c3c; font-weight: bold; }
+        .status-pago { color: #27ae60; font-weight: bold; }
+        .status-pendente { color: #f39c12; font-weight: bold; }
 
-.hoje {
-  background: #fff7cc;
-  color: #f39c12;
-  font-weight: bold;
-}
+        /* --- STATUS DE VENCIMENTO --- */
+        .vencida { background: #ffe6e6; color: #c0392b; font-weight: bold; }
+        .hoje { background: #fff7cc; color: #f39c12; font-weight: bold; }
+        .futura { background: #e8f8f0; color: #27ae60; }
 
-.futura {
-  background: #e8f8f0;
-  color: #27ae60;
-}
-  #pg-lan .container-box {
-  padding: 14px;
-  margin-bottom: 14px;
-}
-  /* 🔝 BARRA SUPERIOR UNIFICADA */
-.top-bar {
-  display: grid;
-  grid-template-columns: 1.2fr 1fr 1.3fr;
-  gap: 12px;
-  margin-bottom: 14px;
-}
+        /* TOAST PERSONALIZADO */
+        #toast { position: fixed; bottom: 20px; right: 20px; z-index: 9999; display: none; padding: 15px 25px; background: #333; color: #fff; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
 
-.top-card {
-  background: #fff;
-  border-radius: 14px;
-  padding: 12px;
-  box-shadow: 0 4px 14px rgba(0,0,0,.08);
-}
-
-/* 📅 MÊS */
-.top-card h6 {
-  font-size: 0.75rem;
-  font-weight: bold;
-  color: #6c757d;
-  margin-bottom: 6px;
-}
-
-.month-grid {
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 4px;
-}
-
-.btn-month {
-  padding: 4px;
-  font-size: 0.7rem;
-  border-radius: 8px;
-}
-
-/* 📊 RESUMO */
-.resumo-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 6px;
-}
-
-.resumo-item {
-  border-radius: 10px;
-  padding: 8px;
-  color: #fff;
-  font-size: 0.7rem;
-  text-align: center;
-  font-weight: bold;
-}
-
-.resumo-item span {
-  display: block;
-  font-size: 0.8rem;
-  margin-top: 2px;
-}
-
-/* 📊 STATUS */
-.status-info {
-  font-size: 0.7rem;
-  margin-bottom: 4px;
-}
-
-.progress {
-  height: 8px;
-}
-
-.progress-bar {
-  font-size: 0.6rem;
-}
-
-/* 📱 MOBILE */
-@media (max-width: 768px) {
-  .top-bar {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* 🔴 Barra pendente personalizada */
-.bar-pendente {
-  background-color: #e74c3c !important; /* vermelho */
-  color: #fff;
-  font-weight: bold;
-}
-
-/* ⚪ Fundo cinza da barra */
-.progress {
-  background-color: #e0e0e0;
-}
-
-</style>
+        @media (max-width: 768px) {
+            .top-bar { grid-template-columns: 1fr; }
+            #corpoItens td { font-size: 0.8rem; padding: 6px 4px; }
+        }
+    </style>
 </head>
 
 <body>
 
-<!-- LOGIN -->
-<div id="tela-login">
-  <div class="login-box text-center">
-    <div class="mb-2" style="font-size: 3rem;">🏦</div>
-    <h4 class="fw-bold mb-3">Bem-vindo</h4>
-    <input id="userInput" class="form-control mb-2" placeholder="Usuário">
-    <input id="passInput" type="password" class="form-control mb-3" placeholder="Senha">
-    <button class="btn btn-dark w-100 fw-bold" onclick="fazerLogin()">ENTRAR NO SISTEMA</button>
-    <div id="loginError" class="text-danger mt-2 small hidden">❌ Dados de acesso inválidos</div>
-  </div>
-</div>
+    <div id="toast"></div>
 
-<!-- APP -->
-<div id="appContent" class="hidden">
-
-<nav class="nav-top">
-  <span style="color:#fff;font-weight:bold">
-    👤 <span id="userLogado"></span>
-  </span>
-
-  <div class="d-flex gap-1">
-    
-   <!----- <button class="btn btn-outline-light btn-sm fw-bold"
-  onclick="showPage('menu')">
-  🏠 Menu
-</button>
-    <button class="btn btn-light btn-sm fw-bold"
-      onclick="showPage('lan')">💸 Lançamentos</button>
-
-    <button class="btn btn-light btn-sm fw-bold"
-      onclick="showPage('ass')">🔁 Assinaturas</button>
-
-    <button class="btn btn-light btn-sm fw-bold"
-      onclick="showPage('hist')">📊 Histórico</button>
-  </div> --->
-  
-
-  <button class="btn btn-outline-danger btn-sm"
-    onclick="logout()">Logout</button>
-</nav>
-
-<!-- ✅ MENU INICIAL (AGORA NO LUGAR CERTO) -->
-<div id="pg-menu" class="container hidden">
-  <div class="container-box text-center">
-    <h5 class="fw-bold mb-3">📌 Menu Principal</h5>
-    <p class="text-muted small mb-4">
-      Escolha o que deseja acessar
-    </p>
-
-    <div class="d-grid gap-3 col-10 col-md-6 mx-auto">
-      <button class="btn btn-dark btn-lg"
-        onclick="showPage('lan')">💸 Lançamentos</button>
-
-      <button class="btn btn-secondary btn-lg"
-        onclick="showPage('ass')">🔁 Assinaturas</button>
-
-      <button class="btn btn-outline-dark btn-lg"
-        onclick="showPage('hist')">📊 Histórico</button>
-
-       <button class="btn btn-outline-danger btn-sm"
-    onclick="logout()">Logout</button>
-      
-    </div>
-  </div>
-  </div>
-
-<!-- LANÇAMENTOS -->
-<div id="pg-lan" class="container hidden">
-  <button class="btn btn-outline-secondary btn-sm mb-2"
-  onclick="showPage('menu')">
-  ⬅ Voltar ao Menu
-</button>
-<div class="top-bar">
-
-<!-- 📅 MÊS / ANO -->
-<div class="top-card">
-  <h6>📅 MÊS / ANO</h6>
-
-  <!-- ANO -->
-  <select id="anoSelector"
-          class="form-select form-select-sm mb-2"
-          onchange="setAno(this.value)">
-  </select>
-
-  <!-- MESES -->
-  <div id="monthSelector" class="month-grid"></div>
-
-  <input type="hidden" id="mesFoco">
-</div>
-
-
-  <!-- 📊 RESUMO -->
-  <div class="top-card">
-    <h6>📊 RESUMO</h6>
-    <div class="resumo-grid">
-      <div class="resumo-item bg-receita">
-        Receitas
-        <span id="resRec">R$ 0</span>
-      </div>
-      <div class="resumo-item bg-despesa">
-        Despesas
-        <span id="resDes">R$ 0</span>
-      </div>
-      <div class="resumo-item bg-saldo">
-        Saldo
-        <span id="resSal">R$ 0</span>
-      </div>
-    </div>
-  </div>
-
-  <!-- 📊 STATUS -->
-  <div class="top-card">
-    <h6>📊 STATUS</h6>
-
-    <div class="status-info">
-      Pagas: <b id="qtdPago">0</b> |
-      Pendentes: <b id="qtdPendente">0</b>
+    <div id="tela-login">
+        <div class="login-box text-center">
+            <div class="mb-2" style="font-size: 3rem;">🏦</div>
+            <h4 class="fw-bold mb-3">Bem-vindo</h4>
+            <input id="userInput" class="form-control mb-2" placeholder="Usuário">
+            <input id="passInput" type="password" class="form-control mb-3" placeholder="Senha">
+            <button class="btn btn-dark w-100 fw-bold" onclick="fazerLogin()">ENTRAR NO SISTEMA</button>
+            <div id="loginError" class="text-danger mt-2 small hidden"></div>
+        </div>
     </div>
 
-    <div class="progress mb-1">
-      <div id="barDespesaPago"
-           class="progress-bar bg-success"
-           style="width:0%">0%</div>
+    <div id="appContent" class="hidden">
+
+        <nav class="nav-top">
+            <span style="color:#fff;font-weight:bold">👤 <span id="userLogado"></span></span>
+            <button class="btn btn-outline-danger btn-sm" onclick="logout()">Logout</button>
+        </nav>
+
+        <div id="pg-menu" class="container hidden">
+            <div class="container-box text-center">
+                <h5 class="fw-bold mb-3">📌 Menu Principal</h5>
+                <p class="text-muted small mb-4">Escolha o que deseja acessar</p>
+                <div class="d-grid gap-3 col-10 col-md-6 mx-auto">
+                    <button class="btn btn-dark btn-lg" onclick="showPage('lan')">💸 Lançamentos</button>
+                    <button class="btn btn-secondary btn-lg" onclick="showPage('ass')">🔁 Assinaturas</button>
+                    <button class="btn btn-outline-dark btn-lg" onclick="showPage('hist')">📊 Histórico</button>
+                    <button class="btn btn-outline-danger btn-sm" onclick="logout()">Sair</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="pg-lan" class="container hidden">
+            <button class="btn btn-outline-secondary btn-sm mb-2" onclick="showPage('menu')">⬅ Voltar ao Menu</button>
+
+            <div class="top-bar">
+                <div class="top-card">
+                    <h6>📅 MÊS / ANO</h6>
+                    <select id="anoSelector" class="form-select form-select-sm mb-2" onchange="setAno(this.value)"></select>
+                    <div id="monthSelector" class="month-grid"></div>
+                    <input type="hidden" id="mesFoco">
+                </div>
+
+                <div class="top-card">
+                    <h6>📊 RESUMO</h6>
+                    <div class="resumo-grid">
+                        <div class="resumo-item bg-receita">Receitas <span id="resRec">R$ 0</span></div>
+                        <div class="resumo-item bg-despesa">Despesas <span id="resDes">R$ 0</span></div>
+                        <div class="resumo-item bg-saldo">Saldo <span id="resSal">R$ 0</span></div>
+                    </div>
+                </div>
+
+                <div class="top-card">
+                    <h6>📊 STATUS</h6>
+                    <div class="status-info">Pagas: <b id="qtdPago">0</b> | Pendentes: <b id="qtdPendente">0</b></div>
+                    <div class="progress mb-1">
+                        <div id="barDespesaPago" class="progress-bar bg-success" style="width:0%">0%</div>
+                    </div>
+                    <div class="progress">
+                        <div id="barDespesaPendente" class="progress-bar bar-pendente" style="width:0%">0%</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="container-box p-3">
+                <h6 class="fw-bold mb-3 text-secondary">➕ Novo Lançamento</h6>
+                <div class="row g-2 align-items-end mb-3">
+                    <div class="col-md-2">
+                        <label class="form-label small">📅 Data</label>
+                        <input id="fData" type="date" class="form-control form-control-sm">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small">📝 Descrição</label>
+                        <input id="fDesc" class="form-control form-control-sm" placeholder="Ex: Aluguel, Mercado">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small">💰 Valor</label>
+                        <input id="fValor" type="number" class="form-control form-control-sm" placeholder="0,00">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small">📌 Tipo</label>
+                        <select id="fTipo" class="form-select form-select-sm">
+                            <option>Despesa</option>
+                            <option>Receita</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2 d-flex gap-1">
+                        <button class="btn btn-success btn-sm w-50" onclick="abrirSalario()">💰</button>
+                        <button class="btn btn-dark btn-sm w-50" onclick="adicionar()">➕</button>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="chkRecorrente" onchange="toggleRecorrencia()">
+                        <label class="form-check-label small">🔁 Recorrente mensal</label>
+                    </div>
+                    <span class="small text-muted">por</span>
+                    <input id="qtdRecorrencia" type="number" min="2" value="12" class="form-control form-control-sm" style="width:80px" disabled>
+                    <span class="small text-muted">meses</span>
+                </div>
+            </div>
+
+            <div class="container-box table-responsive">
+                <h6 class="fw-bold mb-3 text-secondary">📋 Lançamentos do Mês</h6>
+                <table class="table table-sm table-hover">
+                    <thead>
+                        <tr>
+                            <th>Pago</th>
+                            <th>Data</th>
+                            <th>Descrição</th>
+                            <th>Tipo</th>
+                            <th>Valor</th>
+                            <th>Status</th>
+                            <th>Usuário</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="corpoItens"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="pg-hist" class="container hidden">
+            <button class="btn btn-outline-secondary btn-sm mb-2" onclick="showPage('menu')">⬅ Voltar ao Menu</button>
+            <div class="container-box mb-3">
+                <div class="row g-2 align-items-end">
+                    <div class="col-md-4">
+                        <label class="form-label small fw-bold">📊 Tipo de filtro</label>
+                        <select id="histFiltro" class="form-select form-select-sm" onchange="renderHistorico()">
+                            <option value="anual">Anual</option>
+                            <option value="s1">1º Semestre</option>
+                            <option value="s2">2º Semestre</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small fw-bold">📅 Ano</label>
+                        <select id="histAno" class="form-select form-select-sm" onchange="renderHistorico()"></select>
+                    </div>
+                </div>
+            </div>
+            <div class="container-box">
+                <h6 class="fw-bold mb-2">Evolução Mensal</h6>
+                <canvas id="graficoMensal" height="120"></canvas>
+            </div>
+            <div class="container-box table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Mês/Ano</th>
+                            <th>Receita</th>
+                            <th>Despesa</th>
+                            <th>Saldo</th>
+                        </tr>
+                    </thead>
+                    <tbody id="corpoHist"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="pg-ass" class="container hidden">
+            <button class="btn btn-outline-secondary btn-sm mb-2" onclick="showPage('menu')">⬅ Voltar ao Menu</button>
+            <div class="container-box">
+                <h6 class="fw-bold mb-3 text-secondary">➕ Nova Assinatura</h6>
+                <div class="row g-2">
+                    <div class="col-md-3">
+                        <label class="form-label small">Assinatura</label>
+                        <input id="aNome" class="form-control form-control-sm">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small">Dia Venc.</label>
+                        <input id="aVenc" type="number" min="1" max="31" class="form-control form-control-sm">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small">Valor Mensal</label>
+                        <input id="aValor" type="number" class="form-control form-control-sm">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small">Cartão</label>
+                        <input id="aCartao" class="form-control form-control-sm">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small">Status</label>
+                        <select id="aStatus" class="form-select form-select-sm">
+                            <option value="Ativo">Ativo</option>
+                            <option value="Cancelado">Cancelado</option>
+                        </select>
+                    </div>
+                    <div class="col-md-1 d-grid">
+                        <button class="btn btn-dark btn-sm mt-4" onclick="addAssinatura()">➕</button>
+                    </div>
+                </div>
+            </div>
+            <div class="container-box table-responsive">
+                <h6 class="fw-bold mb-3 text-secondary">📋 Assinaturas</h6>
+                <table class="table table-sm table-hover">
+                    <thead>
+                        <tr>
+                            <th>Assinatura</th>
+                            <th>Venc.</th>
+                            <th>Mensal</th>
+                            <th>Cartão</th>
+                            <th>12x</th>
+                            <th>Status</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="corpoAss"></tbody>
+                    <tfoot>
+                        <tr class="fw-bold">
+                            <td colspan="2">TOTAL ATIVO</td>
+                            <td id="totalAss">R$ 0,00</td>
+                            <td colspan="4"></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
     </div>
 
-    <div class="progress">
-      <div id="barDespesaPendente"
-     class="progress-bar bar-pendente"
-     style="width:0%">0%</div>
-    </div>
-  </div>
-
-</div>
-
-   <!-- RECORRÊNCIA FIXA (mensal automática) -->
-    
-<div class="container-box p-3">
-  <h6 class="fw-bold mb-3 text-secondary">➕ Novo Lançamento</h6>
-
-  <!-- LINHA PRINCIPAL -->
-  <div class="row g-2 align-items-end">
-
-    <div class="col-md-2">
-      <label class="form-label small">📅 Data</label>
-      <input id="fData" type="date" class="form-control form-control-sm">
-    </div>
-
-    <div class="col-md-4">
-      <label class="form-label small">📝 Descrição</label>
-      <input id="fDesc" class="form-control form-control-sm"
-             placeholder="Ex: Aluguel, Mercado">
+    <div class="modal fade" id="modalSalario" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Configurar Salários</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Valor Dia 05</label>
+                        <input type="number" id="sal05" class="form-control" placeholder="0.00">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Valor Dia 20</label>
+                        <input type="number" id="sal20" class="form-control" placeholder="0.00">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-success w-100" onclick="salvarSalario()" data-bs-dismiss="modal">Salvar Salários</button>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <div class="col-md-2">
-      <label class="form-label small">💰 Valor</label>
-      <input id="fValor" type="number"
-             class="form-control form-control-sm"
-             placeholder="0,00">
-    </div>
-
-    <div class="col-md-2">
-      <label class="form-label small">📌 Tipo</label>
-      <select id="fTipo" class="form-select form-select-sm">
-        <option>Despesa</option>
-        <option>Receita</option>
-      </select>
-    </div>
-
-    <!-- BOTÕES AO LADO DO TIPO -->
-    <div class="col-md-2 d-flex gap-1">
-      <button class="btn btn-success btn-sm w-50"
-              onclick="abrirSalario()">💰</button>
-
-      <button class="btn btn-dark btn-sm w-50"
-              onclick="adicionar()">➕</button>
-    </div>
-  </div>
-
-  <!-- LINHA SECUNDÁRIA -->
-<div class="col-md-5 d-flex align-items-center gap-2">
-
-  <div class="form-check form-switch">
-    <input class="form-check-input"
-           type="checkbox"
-           id="chkRecorrente"
-           onchange="toggleRecorrencia()">
-    <label class="form-check-label small">
-      🔁 Recorrente mensal
-    </label>
-  </div>
-
-  <span class="small text-muted">por</span>
-
-  <input id="qtdRecorrencia"
-         type="number"
-         min="2"
-         value="12"
-         class="form-control form-control-sm"
-         style="width:80px"
-         disabled>
-
-  <span class="small text-muted">meses</span>
-
-</div>
-
- </div>
-
-
-  <div class="container-box table-responsive">
-    <h6 class="fw-bold mb-3 text-secondary">📋 Lançamentos do Mês</h6>
-    <table class="table table-sm table-hover">
-<thead>
-  <tr>
-    <th>Pago</th>
-    <th>Data</th>
-    <th>Descrição</th>
-    <th>Tipo</th> <!-- 👈 NOVA -->
-    <th>Valor</th>
-    <th>Status</th>
-    <th>Usuário</th>
-    <th>Ações</th>
-  </tr>
-</thead>
-
-      <tbody id="corpoItens"></tbody>
-    </table>
-  </div>
-</div>
-
-  
-  
-<!-- Pag HISTÓRICO -->
-<div id="pg-hist" class="container hidden">
-  <button class="btn btn-outline-secondary btn-sm mb-2"
-  onclick="showPage('menu')">
-  ⬅ Voltar ao Menu
-</button>
-<!-- FILTROS HISTÓRICO -->
-<div class="container-box mb-3">
-  <div class="row g-2 align-items-end">
-
-    <div class="col-md-4">
-      <label class="form-label small fw-bold">📊 Tipo de filtro</label>
-      <select id="histFiltro"
-              class="form-select form-select-sm"
-              onchange="renderHistorico()">
-        <option value="anual">Anual</option>
-        <option value="s1">1º Semestre</option>
-        <option value="s2">2º Semestre</option>
-      </select>
-    </div>
-
-    <div class="col-md-4">
-      <label class="form-label small fw-bold">📅 Ano</label>
-      <select id="histAno"
-              class="form-select form-select-sm"
-              onchange="renderHistorico()">
-      </select>
-    </div>
-
-  </div>
-</div>
-
-<div class="container-box">
-  <h6 class="fw-bold mb-2">Evolução Mensal</h6>
-  <canvas id="graficoMensal" height="120"></canvas>
-</div>
-  
-  <div class="container-box table-responsive">
-    <table class="table table-hover">
-      <thead class="table-dark">
-        <tr>
-          <th>Mês/Ano</th>
-          <th>Receita</th>
-          <th>Despesa</th>
-          <th>Saldo</th>
-        </tr>
-      </thead>
-      <tbody id="corpoHist"></tbody>
-    </table>
-  </div>
-</div>
-
-<!-- PAG ASSINATURAS -->
-<div id="pg-ass" class="container hidden">
-  <button class="btn btn-outline-secondary btn-sm mb-2"
-  onclick="showPage('menu')">
-  ⬅ Voltar ao Menu
-</button>
-
-  <!-- TÍTULO --<div class="container-box">
-    <h6 class="fw-bold mb-3">🔁 Assinaturas</h6>
-  </div>--->
-
-  <!-- CADASTRO -->
-  <div class="container-box">
-    <h6 class="fw-bold mb-3 text-secondary">➕ Nova Assinatura</h6>
-
-    <div class="row g-2">
-      <div class="col-md-3">
-        <label class="form-label small">Assinatura</label>
-        <input id="aNome" class="form-control form-control-sm">
-      </div>
-
-      <div class="col-md-2">
-        <label class="form-label small">Dia Venc.</label>
-        <input id="aVenc" type="number" min="1" max="31"
-               class="form-control form-control-sm">
-      </div>
-
-      <div class="col-md-2">
-        <label class="form-label small">Valor Mensal</label>
-        <input id="aValor" type="number"
-               class="form-control form-control-sm">
-      </div>
-
-      <div class="col-md-2">
-        <label class="form-label small">Cartão</label>
-        <input id="aCartao" class="form-control form-control-sm">
-      </div>
-
-      <div class="col-md-2">
-        <label class="form-label small">Status</label>
-        <select id="aStatus" class="form-select form-select-sm">
-          <option value="Ativo">Ativo</option>
-          <option value="Cancelado">Cancelado</option>
-        </select>
-      </div>
-
-      <div class="col-md-1 d-grid">
-        <button class="btn btn-dark btn-sm mt-4"
-                onclick="addAssinatura()">➕</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- GRID -->
-  <div class="container-box table-responsive">
-    <h6 class="fw-bold mb-3 text-secondary">📋 Assinaturas</h6>
-
-    <table class="table table-sm table-hover">
-      <thead>
-        <tr>
-          <th>Assinatura</th>
-          <th>Venc.</th>
-          <th>Mensal</th>
-          <th>Cartão</th>
-          <th>12x</th>
-          <th>Status</th>
-          <th>Ações</th>
-        </tr>
-      </thead>
-      <tbody id="corpoAss"></tbody>
-      <tfoot>
-        <tr class="fw-bold">
-          <td colspan="2">TOTAL ATIVO</td>
-          <td id="totalAss">R$ 0,00</td>
-          <td colspan="4"></td>
-        </tr>
-      </tfoot>
-    </table>
-  </div>
-
-</div>
-
-
-<script>
-/* ========= CONFIG ========= */
-const URL_API="https://script.google.com/macros/s/AKfycbxHjTzh9gF0yfw9LW7EGYTAshfKQJyRV7TCmhmJIQr9pVw4f00bmnZpwbhvtO2e7Fon5Q/exec";
-
-/* ========= DOM ========= */
-const userInput=document.getElementById("userInput");
-const passInput=document.getElementById("passInput");
-const telaLogin=document.getElementById("tela-login");
-const appContent=document.getElementById("appContent");
-const loginError=document.getElementById("loginError");
-const TEMPO_MAX_LOGIN = 10; // minutos
-const monthSelector=document.getElementById("monthSelector");
-const mesFoco=document.getElementById("mesFoco");
-
-const fData=document.getElementById("fData");
-const fDesc=document.getElementById("fDesc");
-const fValor=document.getElementById("fValor");
-const fTipo=document.getElementById("fTipo");
-
-const corpoItens=document.getElementById("corpoItens");
-const resRec=document.getElementById("resRec");
-const resDes=document.getElementById("resDes");
-const resSal=document.getElementById("resSal");
-
-/* ========= STATE ========= */
-let anoAtual = new Date().getFullYear();
-let db=[], assinaturasDB=[], userNow="", chart;
-
-/* ========= NAV ========= */
-function showPage(pagina) {
-  const paginas = ["menu", "lan", "ass", "hist"];
-
-  // esconde todas
-  paginas.forEach(p => {
-    const el = document.getElementById("pg-" + p);
-    if (el) el.classList.add("hidden");
-  });
-
-  // mostra a página escolhida
-  const alvo = document.getElementById("pg-" + pagina);
-  if (alvo) alvo.classList.remove("hidden");
-
-  // 🔥 CONTROLE DO MENU SUPERIOR
-  const nav = document.querySelector(".nav-top");
-  if (nav) {
-    if (pagina === "menu") {
-      nav.classList.add("hidden");   // ESCONDE no menu inicial
-    } else {
-      nav.classList.remove("hidden"); // MOSTRA nas demais telas
-    }
-  }
-}
-
-/* ========= LOGIN ========= */
-async function fazerLogin(){
-  loginError.classList.add("hidden");
-
-  try {
-    const r = await fetch(
-      `${URL_API}?action=login&user=${encodeURIComponent(userInput.value)}&pass=${encodeURIComponent(passInput.value)}`
-    );
-
-    const j = await r.json();
-
-    if (j.ok) {
-      userNow = j.usuario;
-      localStorage.setItem("usuarioLogado", userNow);
-
-     telaLogin.classList.add("hidden");
-appContent.classList.remove("hidden");
-
-document.getElementById("userLogado").innerText = userNow;
-
-// 🔥 ISSO É O QUE FALTAVA
-showPage("menu");
-
-setTimeout(() => {
-  initAnos();
-  initMonths();
-  carregar();
-  carregarAssinaturas();
-}, 0);
-
-    } else {
-      // 🔴 ISSO FALTAVA
-      loginError.innerText = "❌ Usuário ou senha inválidos";
-      loginError.classList.remove("hidden");
-    }
-
-  } catch (e) {
-    console.error("Erro no login:", e);
-    loginError.innerText = "❌ Erro de conexão com o servidor";
-    loginError.classList.remove("hidden");
-  }
-}
-
-
-//Nova funcao----22:11--->
-function loginSucesso(usuario) {
-  localStorage.setItem("usuarioLogado", usuario);
-  localStorage.setItem("loginTime", Date.now());
-  mostrarMenu(); // em vez de ir direto pra lançamentos
-}
-
-function verificarSessao() {
-  const loginTime = localStorage.getItem("loginTime");
-  if (!loginTime) return false;
-
-  const agora = Date.now();
-  const minutos = (agora - Number(loginTime)) / 60000;
-
-  if (minutos > TEMPO_MAX_LOGIN) {
-    logout();
-    return false;
-  }
-  return true;
-}
-
-function navegar(tela) {
-  if (!verificarSessao()) return;
-
-  esconderTudo();
-  document.getElementById(tela).style.display = "block";
-}
-
-  function logout(){
-  localStorage.removeItem("usuarioLogado");
-  location.reload();
-  }
- 
-/* ========= Ano ========= */  
-function initAnos() {
-  const sel = document.getElementById("anoSelector");
-  if (!sel) return; // 🔒 evita quebra do login
-
-  sel.innerHTML = "";
-
-  const anoInicio = 2026;
-  const anoFim = new Date().getFullYear() + 2;
-
-  for (let a = anoInicio; a <= anoFim; a++) {
-    sel.innerHTML += `
-      <option value="${a}" ${a === anoAtual ? "selected" : ""}>
-        ${a}
-      </option>`;
-  }
-}
-
-function initHistAnos(){
-  const sel = document.getElementById("histAno");
-  if(!sel) return;
-
-  sel.innerHTML = "";
-
-  const anoAtual = new Date().getFullYear();
-  for(let a = anoAtual - 3; a <= anoAtual + 1; a++){
-    sel.innerHTML += `
-      <option value="${a}" ${a === anoAtual ? "selected" : ""}>
-        ${a}
-      </option>`;
-  }
-}
-  
-/* ========= MESES ========= */
-const MESES_ABREV = [
-  "Jan","Fev","Mar","Abr","Mai","Jun",
-  "Jul","Ago","Set","Out","Nov","Dez"
-];
-  
-function initMonths() {
-  monthSelector.innerHTML = "";
-
-  const hoje = new Date();
-  const mesHoje = hoje.getMonth();
-
-  for (let i = 0; i < 12; i++) {
-    const v = `${anoAtual}-${String(i + 1).padStart(2, "0")}`;
-
-    monthSelector.innerHTML += `
-      <button class="btn-month ${i === mesHoje ? "active" : ""}"
-        onclick="setMes('${v}', this)">
-        ${MESES_ABREV[i]}
-      </button>`;
-  }
-
-  mesFoco.value = `${anoAtual}-${String(mesHoje + 1).padStart(2, "0")}`;
-}
-
-  
-function setAno(a) {
-  anoAtual = Number(a);
-  initMonths();
-  render();
-}
-
-function setMes(v,b){
-  document.querySelectorAll(".btn-month").forEach(x=>x.classList.remove("active"));
-  b.classList.add("active");
-  mesFoco.value=v;
-  render();
-}
-/*--Criar uma função de formatação de data-*/
-  function formatarDataBR(data) {
-  if (!data) return "";
-
-  // Se já for Date
-  if (data instanceof Date) {
-    const d = String(data.getDate()).padStart(2, "0");
-    const m = String(data.getMonth() + 1).padStart(2, "0");
-    const a = String(data.getFullYear()).slice(2);
-    return `${d}/${m}/${a}`;
-  }
-
-  // Se vier como string ISO ou ISO com hora
-  if (typeof data === "string") {
-    // pega só a parte da data (YYYY-MM-DD)
-    const iso = data.split("T")[0];
-    const [y, m, d] = iso.split("-");
-    if (!y || !m || !d) return data;
-    return `${d}/${m}/${y.slice(2)}`;
-  }
-
-  return data;
-}
-  
-/* ========= DADOS ========= */
-async function carregar(){
-  const r = await fetch(`${URL_API}?action=listar`);
-  const d = await r.json();
-
-  db = d.map(l => {
-    let dataISO = "";
-
-    if (l[2] instanceof Date) {
-      dataISO = l[2].toISOString().slice(0,10);
-    } else if (typeof l[2] === "string") {
-      dataISO = l[2].split("T")[0];
-    }
-
-    return {
-      id: l[0],
-      data: dataISO,
-      desc: l[3],
-      valor: Number(l[4]),
-      tipo: l[5],
-      status: l[6] || "PENDENTE",
-      user: l[7] || ""
-    };
-  });
-
-  render();
-  renderHistorico();
-}
-
-
-function limparFormulario(){
-  fData.value = "";
-  fDesc.value = "";
-  fValor.value = "";
-  fTipo.value = "Receita";
-
-  const chkRec = document.getElementById("chkRecorrente");
-  const qtdRec = document.getElementById("qtdRecorrencia");
-
-  if (chkRec) chkRec.checked = false;
-  if (qtdRec) {
-    qtdRec.value = 12;
-    qtdRec.disabled = true;
-  }
-}
-
-
-// ativar/desativar o campo //
-function toggleRecorrencia(){
-  const chk = document.getElementById("chkRecorrente");
-  const qtd = document.getElementById("qtdRecorrencia");
-
-  qtd.disabled = !chk.checked;
-  if (!chk.checked) qtd.value = 12;
-}
-
-
-// Ajuste sua função adicionar //
-async function adicionar() {
-  if (!fData.value || !fDesc.value || !fValor.value) {
-    mostrarToast("❌ Preencha todos os campos");
-    return;
-  }
-
-  const chkRec = document.getElementById("chkRecorrente");
-  const qtdRec = document.getElementById("qtdRecorrencia");
-
-  const meses = chkRec.checked
-    ? Math.max(1, Number(qtdRec.value || 1))
-    : 1;
-
-  const dataBase = new Date(fData.value);
-
-  for (let i = 0; i < meses; i++) {
-    const d = new Date(dataBase);
-    d.setMonth(d.getMonth() + i);
-
-    const dataISO = d.toISOString().slice(0, 10);
-
-    const payload = {
-      action: "addLancamento",
-      data: dataISO,
-      desc: fDesc.value,
-      valor: Number(fValor.value), // 🔥 NÃO divide
-      tipo: fTipo.value,
-      user: userNow,
-      recorrente: chkRec.checked,
-      inicio: fData.value
-    };
-
-    await fetch(URL_API, {
-      method: "POST",
-      body: JSON.stringify(payload)
-    });
-  }
-
-  limparFormulario();
-  await carregar();
-
-  mostrarToast(
-    meses > 1
-      ? `🔁 Recorrente por ${meses} meses`
-      : "✅ Lançamento salvo"
-  );
-}
-
-
-  /*-------FUNÇÃO DO TOAST (OBRIGATÓRIO) ------------*/
-function mostrarToast(msg = "✅ Salvo com sucesso") {
-  const toast = document.getElementById("toast");
-  if (!toast) return;
-
-  toast.innerText = msg;
-  toast.style.display = "block";
-
-  setTimeout(() => {
-    toast.style.display = "none";
-  }, 2500);
-}
-  
-/* ========= Caixa de Seleção pago ========= */
-async function togglePago(id) {
-  const item = db.find(x => String(x.id) === String(id));
-  if (!item) return;
-
-  item.status = item.status === "PAGO" ? "PENDENTE" : "PAGO";
-
-  await fetch(URL_API, {
-    method: "POST",
-    body: JSON.stringify({
-      action: "updatePago",
-      id: item.id,
-      status: item.status
-    })
-  });
-
-  render();          // 🔥 ESSENCIAL
-  renderHistorico(); // 🔥 ESSENCIAL
-}
-
-function classeVencimento(item) {
-  if (!item || item.tipo !== "Despesa" || !item.data) return "";
-
-  const dataItem = new Date(item.data);
-  if (isNaN(dataItem.getTime())) return "";
-
-  const hoje = new Date();
-  hoje.setHours(0,0,0,0);
-  dataItem.setHours(0,0,0,0);
-
-  if (dataItem < hoje) return "vencida";
-  if (dataItem.getTime() === hoje.getTime()) return "hoje";
-  return "futura";
-}
-
-
-
-/* ========= LANÇAMENTOS ========= */
-function render(){
-  corpoItens.innerHTML="";
-  let r=0,d=0;
-  let despPago = 0; /*--Novoscampos--*/
-  let despPendente = 0;
-  let qtdPago = 0;
-  let qtdPendente = 0; /*--Novoscampos--*/
-
-  const mesAtual = mesFoco.value;
-  
-  // 🔁 CLONE do banco (não altera o original)
-const listaOrdenada = [...db].sort((a, b) => {
-  // Receitas sempre depois
-  if (a.tipo === "Receita" && b.tipo !== "Receita") return 1;
-  if (a.tipo !== "Receita" && b.tipo === "Receita") return -1;
-
-  // Ambas são despesas → ordenar por data
-  if (a.tipo === "Despesa" && b.tipo === "Despesa") {
-    return new Date(a.data) - new Date(b.data);
-  }
-
-  return 0;
-});
-
-  listaOrdenada.forEach(i => {
-    if(!i.data) return;
-
-    const mesItem = i.data.slice(0,7);
-    const mesInicio = i.inicio ? i.inicio.slice(0,7) : mesItem;
-
-    const aparece =
-      i.recorrente
-        ? mesAtual >= mesInicio
-        : mesItem === mesAtual;
-
-    if(!aparece) return;
-
-    i.tipo==="Receita" ? r+=i.valor : d+=i.valor;
-    
-    // 📊 CONTROLE DAS DESPESAS (para barra de status)
-if (i.tipo === "Despesa") {
-  if (i.status === "PAGO") {
-    despPago += i.valor;
-    qtdPago++;
-  } else {
-    despPendente += i.valor;
-    qtdPendente++;
-  }
-}
-
-corpoItens.innerHTML += `
-<tr class="${typeof classeVencimento === 'function' ? classeVencimento(i) : ''}">
-
-  <!-- Pago -->
-  <td>
-    <input type="checkbox"
-      ${i.status === "PAGO" ? "checked" : ""}
-      onclick="togglePago('${i.id}')">
-  </td>
-
-  <!-- Data -->
-  <td>${formatarDataBR(i.data)}</td>
-
-  <!-- Descrição -->
-<td>
-  ${i.desc === "Salário" || i.desc === "Adiantamento"
-    ? "💰 " + i.desc
-    : i.desc}
-</td>
-
-<!-- Tipo -->
-<td class="${i.tipo === 'Receita' ? 'val-receita' : 'val-despesa'}">
-  ${i.tipo === 'Receita' ? 'Receita' : 'Despesa'}
-</td>
-
-
-  <!-- Valor -->
-  <td class="${i.tipo==='Receita'?'val-receita':'val-despesa'}">
-    R$ ${i.valor.toFixed(2)}
-  </td>
-
-  <!-- Status -->
-  <td>
-    ${i.status === "PAGO"
-      ? '<span class="status-pago">PAGO</span>'
-      : '<span class="status-pendente">PENDENTE</span>'}
-  </td>
-
-  <!-- 👤 USUÁRIO -->
-  <td>${i.user || "-"}</td>
-
-  <!-- ⚙️ AÇÕES -->
-  <td>
-    <button class="btn btn-sm btn-outline-primary"
-      onclick="editar('${i.id}')">✏️ Editar</button>
-
-    <button class="btn btn-sm btn-outline-danger"
-      onclick="excluir('${i.id}')">🗑️ Excluir</button>
-  </td>
-
-</tr>`;
-
-
-  });
-
-  resRec.innerText=`R$ ${r.toFixed(2)}`;
-  resDes.innerText=`R$ ${d.toFixed(2)}`;
-  resSal.innerText=`R$ ${(r-d).toFixed(2)}`;
-
-// 📊 ATUALIZA BARRAS DE PROGRESSO DAS DESPESAS
-const totalDesp = despPago + despPendente;
-
-const percPago = totalDesp > 0
-  ? Math.round((despPago / totalDesp) * 100)
-  : 0;
-
-const percPend = 100 - percPago;
-
-const barPago = document.getElementById("barDespesaPago");
-const barPend = document.getElementById("barDespesaPendente");
-
-if (barPago && barPend) {
-  barPago.style.width = percPago + "%";
-  barPago.innerText = `${percPago}% (R$ ${despPago.toFixed(2)})`;
-
-  barPend.style.width = percPend + "%";
-  barPend.innerText = `${percPend}% (R$ ${despPendente.toFixed(2)})`;
-}
-
-const elQtdPago = document.getElementById("qtdPago");
-const elQtdPend = document.getElementById("qtdPendente");
-
-if (elQtdPago) elQtdPago.innerText = qtdPago;
-if (elQtdPend) elQtdPend.innerText = qtdPendente;
-
-  renderGrafico();
-}
-
-async function excluir(id){
-  if(!confirm("Excluir este lançamento?")) return;
-
-  await fetch(URL_API,{
-    method:"POST",
-    body: JSON.stringify({
-      action:"deleteLancamento",
-      id:id
-    })
-  });
-
-  db = db.filter(x => String(x.id) !== String(id));
-
-  render();
-  renderHistorico();
-  mostrarToast("🗑️ Excluído");
-}
-
-let editandoId = null;
-  
-function editar(id){
-  const i = db.find(x => String(x.id) === String(id));
-  if(!i) return;
-
-  editandoId = i.id; // 🔑 guarda o ID
-
-  fData.value  = i.data;
-  fDesc.value  = i.desc;
-  fValor.value = i.valor;
-  fTipo.value  = i.tipo;
-
-  mostrarToast("✏️ Editando lançamento");
-}
-
-
-
-/* ========= HISTÓRICO ========= */
-function renderHistorico(){
-  const filtro = document.getElementById("histFiltro")?.value || "anual";
-  const ano = Number(document.getElementById("histAno")?.value || new Date().getFullYear());
-
-  const hist = {};
-  const corpo = document.getElementById("corpoHist");
-  corpo.innerHTML = "";
-
-  db.forEach(l => {
-    if(!l.data) return;
-
-    const [y, m] = l.data.split("-").map(Number);
-
-    if (y !== ano) return;
-
-    // 🎯 FILTRO SEMESTRAL
-    if (filtro === "s1" && m > 6) return;
-    if (filtro === "s2" && m <= 6) return;
-
-    const chave = `${y}-${String(m).padStart(2,"0")}`;
-
-    if(!hist[chave]) hist[chave] = { r: 0, d: 0 };
-
-    l.tipo === "Receita"
-      ? hist[chave].r += l.valor
-      : hist[chave].d += l.valor;
-  });
-
-  const meses = Object.keys(hist).sort();
-
-  meses.forEach(m => {
-    const s = hist[m].r - hist[m].d;
-
-    corpo.innerHTML += `
-      <tr>
-        <td>${m.substring(5,7)}/${m.substring(0,4)}</td>
-        <td class="val-receita">R$ ${hist[m].r.toFixed(2)}</td>
-        <td class="val-despesa">R$ ${hist[m].d.toFixed(2)}</td>
-        <td class="${s >= 0 ? 'val-receita' : 'val-despesa'}">
-          R$ ${s.toFixed(2)}
-        </td>
-      </tr>
-    `;
-  });
-
-  renderGraficoHistorico(hist, meses);
-}
-
-let grafico;
-
-function renderGrafico(){
-  const mapa = {};
-
-  db.forEach(i=>{
-    if(!i.data) return;
-    const mes = i.data.slice(0,7);
-    if(!mapa[mes]) mapa[mes]={r:0,d:0};
-    i.tipo==="Receita"
-      ? mapa[mes].r+=i.valor
-      : mapa[mes].d+=i.valor;
-  });
-
-  const meses = Object.keys(mapa).sort();
-  const receitas = meses.map(m=>mapa[m].r);
-  const despesas = meses.map(m=>mapa[m].d);
-  const saldo = meses.map((m,i)=>receitas[i]-despesas[i]);
-
-  const ctx = document.getElementById("graficoMensal").getContext("2d");
-  if(grafico) grafico.destroy();
-
-  grafico = new Chart(ctx,{
-  type: "bar",
-  data: {
-    labels: meses,
-    datasets: [
-     {
-  label: "Receitas",
-  data: receitas,
-  backgroundColor: "#27ae60",
-  borderRadius: 6
-},
-      {
-        label: "Despesas",
-        data: despesas,
-        backgroundColor: "#e74c3c"
-      },
-      {
-        label: "Saldo",
-        data: saldo,
-        backgroundColor: "#6c5ce7"
-      }
-    ]
-  },
-  options: {
-    responsive: true,
-    plugins: {
-      legend: {
-        position: "bottom"
-      }
-    },
-    scales: {
-      y: {
-        beginAtZero: true
-      }
-    }
-  }
-});
-
-}
-function renderGraficoHistorico(hist, meses){
-  const receitas = meses.map(m => hist[m].r);
-  const despesas = meses.map(m => hist[m].d);
-  const saldo = meses.map((m,i) => receitas[i] - despesas[i]);
-
-  const ctx = document.getElementById("graficoMensal").getContext("2d");
-  if(grafico) grafico.destroy();
-
-  grafico = new Chart(ctx,{
-    type: "bar",
-    data: {
-      labels: meses.map(m => m.substring(5,7) + "/" + m.substring(0,4)),
-      datasets: [
-        { label: "Receitas", data: receitas, backgroundColor: "#27ae60" },
-        { label: "Despesas", data: despesas, backgroundColor: "#e74c3c" },
-        { label: "Saldo", data: saldo, backgroundColor: "#6c5ce7" }
-      ]
-    },
-    options: {
-      responsive: true,
-      plugins: { legend: { position: "bottom" } },
-      scales: { y: { beginAtZero: true } }
-    }
-  });
-}
-
-
-function abrirSalario(){
-  new bootstrap.Modal(document.getElementById("modalSalario")).show();
-}
-
-  /*---funções do salário---*/
-async function salvarSalario(){
-  const s05 = Number(document.getElementById("sal05").value || 0);
-  const s20 = Number(document.getElementById("sal20").value || 0);
-
-  const hoje = new Date();
-  const mes = hoje.toISOString().slice(0,7);
-
-  const registros = [];
-
-  if(s05 > 0){
-    registros.push({
-  id: Date.now()+1,
-  data: `${mes}-05`,
-  desc: "Salário",
-  valor: s05,
-  tipo: "Receita",
-  recorrente: true,
-  inicio: mes
-});
-
-  }
-
-  if(s20 > 0){
-    registros.push({
-  id: Date.now()+2,
-  data: `${mes}-20`,
-  desc: "Adiantamento",
-  valor: s20,
-  tipo: "Receita",
-  recorrente: true,
-  inicio: mes
-});
-
-  }
-
-  for(const r of registros){
-    r.user = userNow;
-    db.push({...r,status:"PENDENTE"});
-
-    await fetch(URL_API,{
-      method:"POST",
-      body:JSON.stringify({
-        action:"addLancamento",
-        ...r
-      })
-    });
-  }
-
-  render();
-  renderHistorico();
-  mostrarToast("💰 Salário registrado");
-}
-
-  
-function showToast(msg = "Salvo com sucesso") {
-  const t = document.getElementById("toast");
-  t.innerText = "✅ " + msg;
-  t.style.display = "block";
-  t.style.opacity = "1";
-
-  setTimeout(() => {
-    t.style.opacity = "0";
-    setTimeout(() => t.style.display = "none", 400);
-  }, 3000);
-}
-
-async function addAssinatura(){
-  if(!aNome.value || !aVenc.value || !aValor.value){
-  mostrarToast("❌ Preencha todos os campos");
-  return;
-}
-  const payload = {
-    action: "addAssinatura",
-    id: Date.now(),
-    nome: aNome.value,
-    venc: Number(aVenc.value),
-    valor: Number(aValor.value),
-    cartao: aCartao.value,
-    status: aStatus.value,
-    user: userNow
-  };
-
-  await fetch(URL_API, {
-    method: "POST",
-    body: JSON.stringify(payload)
-  });
-
-  carregarAssinaturas();
-  mostrarToast("✅ Assinatura salva");
-}
-
-async function carregarAssinaturas(){
-  const r = await fetch(`${URL_API}?action=listarAssinaturas`);
-  const dados = await r.json();
-
-  assinaturasDB = dados.map(l => ({
-    id: l[0],
-    nome: l[1],
-    venc: l[2],
-    valor: Number(l[3]),
-    cartao: l[4],
-    status: l[5],
-    user: l[6]
-  }));
-
-  renderAssinaturas();
-}
-
-function renderAssinaturas(){
-  const corpo = document.getElementById("corpoAss");
-  const totalEl = document.getElementById("totalAss");
-
-  corpo.innerHTML = "";
-  let total = 0;
-
-  assinaturasDB.forEach(a=>{
-    const v12 = a.valor * 12;
-
-    if(a.status === "Ativo"){
-      total += a.valor;
-    }
-
-    corpo.innerHTML += `
-      <tr>
-        <td>${a.nome}</td>
-        <td>Dia ${a.venc}</td>
-        <td>R$ ${a.valor.toFixed(2)}</td>
-        <td>${a.cartao}</td>
-        <td>R$ ${v12.toFixed(2)}</td>
-        <td>
-          <select class="form-select form-select-sm"
-                  onchange="toggleAss(${a.id}, this.value)">
-            <option ${a.status==="Ativo"?"selected":""}>Ativo</option>
-            <option ${a.status==="Cancelado"?"selected":""}>Cancelado</option>
-          </select>
-        </td>
-        <td>
-          <button class="btn btn-sm btn-outline-danger"
-                  onclick="delAss(${a.id})">🗑️</button>
-        </td>
-      </tr>
-    `;
-  });
-
-  totalEl.innerText = `R$ ${total.toFixed(2)}`;
-}
-
-async function delAss(id){
-  await fetch(URL_API,{
-    method:"POST",
-    body:JSON.stringify({
-      action:"deleteAss",
-      id
-    })
-  });
-
-  carregarAssinaturas();
-}
-
-async function toggleAss(id, status){
-  await fetch(URL_API,{
-    method:"POST",
-    body:JSON.stringify({
-      action:"updateStatusAss",
-      id, status
-    })
-  });
-
-  carregarAssinaturas();
-}
-
-
-
-  /*-----RESTAURAR LOGIN AO ABRIR A PÁGINA-----*/
-window.onload = () => {
-  const u = localStorage.getItem("usuarioLogado");
-
-if (u) {
-  userNow = u;
-
-  telaLogin.classList.add("hidden");
-  appContent.classList.remove("hidden");
-
-  document.getElementById("userLogado").innerText = u;
-
-  showPage("menu"); // 🔥 ESSENCIAL
-
-  initAnos();
-  initHistAnos();
-  initMonths();
-  carregar();
-  carregarAssinaturas();
-}
-};
-
-  
-</script>
-
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-  
-<div class="modal fade" id="modalSalario">
-  <div class="modal-dialog modal-sm modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">💰 Salário</h5>
-        <button class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
-
-      <div class="modal-body">
-        <label>Salário (dia 05)</label>
-        <input id="sal05" type="number" class="form-control mb-2">
-
-        <label>Adiantamento (dia 20)</label>
-        <input id="sal20" type="number" class="form-control">
-      </div>
-
-      <div class="modal-footer">
-        <button class="btn btn-success w-100" onclick="salvarSalario()">
-          Registrar
-        </button>
-      </div>
-    </div>
-  </div>
-</div>
-
-  
-<!-- TOAST -->
-<div id="toast" style="
-  position:fixed;
-  bottom:20px;
-  right:20px;
-  background:#2ecc71;
-  color:#fff;
-  padding:14px 18px;
-  border-radius:12px;
-  font-weight:bold;
-  box-shadow:0 6px 18px rgba(0,0,0,.2);
-  display:none;
-  z-index:99999;
-">
-  ✅ Salvo com sucesso
-</div>
- 
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const URL_API = "https://script.google.com/macros/s/AKfycbxHjTzh9gF0yfw9LW7EGYTAshfKQJyRV7TCmhmJIQr9pVw4f00bmnZpwbhvtO2e7Fon5Q/exec";
+
+        /* --- DOM ELEMENTS --- */
+        const userInput = document.getElementById("userInput");
+        const passInput = document.getElementById("passInput");
+        const telaLogin = document.getElementById("tela-login");
+        const appContent = document.getElementById("appContent");
+        const loginError = document.getElementById("loginError");
+        const monthSelector = document.getElementById("monthSelector");
+        const mesFoco = document.getElementById("mesFoco");
+        const fData = document.getElementById("fData");
+        const fDesc = document.getElementById("fDesc");
+        const fValor = document.getElementById("fValor");
+        const fTipo = document.getElementById("fTipo");
+        const corpoItens = document.getElementById("corpoItens");
+        const resRec = document.getElementById("resRec");
+        const resDes = document.getElementById("resDes");
+        const resSal = document.getElementById("resSal");
+
+        /* --- STATE --- */
+        let anoAtual = new Date().getFullYear();
+        let db = [], assinaturasDB = [], userNow = "", chart;
+        const TEMPO_MAX_LOGIN = 10; // minutos
+        const AVISO_EXPIRACAO = 2;  // minutos
+        const MESES_ABREV = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+
+        /* --- NAVEGAÇÃO --- */
+        function showPage(pagina) {
+            const paginas = ["menu", "lan", "ass", "hist"];
+            paginas.forEach(p => {
+                const el = document.getElementById("pg-" + p);
+                if (el) el.classList.add("hidden");
+            });
+
+            const alvo = document.getElementById("pg-" + pagina);
+            if (alvo) alvo.classList.remove("hidden");
+
+            const nav = document.querySelector(".nav-top");
+            if (nav) {
+                pagina === "menu" ? nav.classList.add("hidden") : nav.classList.remove("hidden");
+            }
+        }
+
+        /* --- LOGIN --- */
+        async function fazerLogin() {
+            loginError.classList.add("hidden");
+            try {
+                const r = await fetch(`${URL_API}?action=login&user=${encodeURIComponent(userInput.value)}&pass=${encodeURIComponent(passInput.value)}`);
+                const j = await r.json();
+
+                if (j.ok) {
+                    userNow = j.usuario;
+                    localStorage.setItem("usuarioLogado", userNow);
+                    localStorage.setItem("loginTime", Date.now());
+                    telaLogin.classList.add("hidden");
+                    appContent.classList.remove("hidden");
+                    document.getElementById("userLogado").innerText = userNow;
+                    showPage("menu");
+                    
+                    initAnos();
+                    initMonths();
+                    initHistAnos();
+                    carregar();
+                    carregarAssinaturas();
+                } else {
+                    loginError.innerText = "❌ Usuário ou senha inválidos";
+                    loginError.classList.remove("hidden");
+                }
+            } catch (e) {
+                loginError.innerText = "❌ Erro de conexão";
+                loginError.classList.remove("hidden");
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem("usuarioLogado");
+            localStorage.removeItem("loginTime");
+            location.reload();
+        }
+
+        /* --- CONFIGURAÇÕES CALENDÁRIO --- */
+        function initAnos() {
+            const sel = document.getElementById("anoSelector");
+            if (!sel) return;
+            sel.innerHTML = "";
+            const anoInicio = 2026;
+            const anoFim = new Date().getFullYear() + 2;
+            for (let a = anoInicio; a <= anoFim; a++) {
+                sel.innerHTML += `<option value="${a}" ${a === anoAtual ? "selected" : ""}>${a}</option>`;
+            }
+        }
+
+        function initHistAnos() {
+            const sel = document.getElementById("histAno");
+            if (!sel) return;
+            sel.innerHTML = "";
+            const aBase = new Date().getFullYear();
+            for (let a = aBase - 3; a <= aBase + 1; a++) {
+                sel.innerHTML += `<option value="${a}" ${a === aBase ? "selected" : ""}>${a}</option>`;
+            }
+        }
+
+        function initMonths() {
+            monthSelector.innerHTML = "";
+            const mesHoje = new Date().getMonth();
+            for (let i = 0; i < 12; i++) {
+                const v = `${anoAtual}-${String(i + 1).padStart(2, "0")}`;
+                monthSelector.innerHTML += `
+                    <button class="btn-month ${i === mesHoje ? "active" : ""}" onclick="setMes('${v}', this)">
+                        ${MESES_ABREV[i]}
+                    </button>`;
+            }
+            mesFoco.value = `${anoAtual}-${String(mesHoje + 1).padStart(2, "0")}`;
+        }
+
+        function setAno(a) { anoAtual = Number(a); initMonths(); render(); }
+        function setMes(v, b) {
+            document.querySelectorAll(".btn-month").forEach(x => x.classList.remove("active"));
+            b.classList.add("active");
+            mesFoco.value = v;
+            render();
+        }
+
+        /* --- UTILITÁRIOS --- */
+        function formatarDataBR(data) {
+            if (!data) return "";
+            const iso = typeof data === "string" ? data.split("T")[0] : data.toISOString().split("T")[0];
+            const [y, m, d] = iso.split("-");
+            return `${d}/${m}/${y.slice(2)}`;
+        }
+
+        function mostrarToast(msg) {
+            const t = document.getElementById("toast");
+            t.innerText = msg;
+            t.style.display = "block";
+            setTimeout(() => { t.style.display = "none"; }, 3000);
+        }
+
+        /* --- DADOS E RENDERS --- */
+        async function carregar() {
+            const r = await fetch(`${URL_API}?action=listar`);
+            const d = await r.json();
+            db = d.map(l => ({
+                id: l[0],
+                data: (l[2] instanceof Date) ? l[2].toISOString().slice(0, 10) : l[2].split("T")[0],
+                desc: l[3],
+                valor: Number(l[4]),
+                tipo: l[5],
+                status: l[6] || "PENDENTE",
+                user: l[7] || ""
+            }));
+            render();
+            renderHistorico();
+        }
+
+        function render() {
+            corpoItens.innerHTML = "";
+            let rTotal = 0, dTotal = 0, dPago = 0, dPend = 0, qPago = 0, qPend = 0;
+            const mesAtual = mesFoco.value;
+
+            const lista = [...db].sort((a, b) => {
+                if (a.tipo === "Receita" && b.tipo !== "Receita") return 1;
+                if (a.tipo !== "Receita" && b.tipo === "Receita") return -1;
+                return new Date(a.data) - new Date(b.data);
+            });
+
+            lista.forEach(i => {
+                if (!i.data || i.data.slice(0, 7) !== mesAtual) return;
+
+                i.tipo === "Receita" ? rTotal += i.valor : dTotal += i.valor;
+                if (i.tipo === "Despesa") {
+                    if (i.status === "PAGO") { dPago += i.valor; qPago++; }
+                    else { dPend += i.valor; qPend++; }
+                }
+
+                corpoItens.innerHTML += `
+                    <tr class="${classeVencimento(i)}">
+                        <td><input type="checkbox" ${i.status === "PAGO" ? "checked" : ""} onclick="togglePago('${i.id}')"></td>
+                        <td>${formatarDataBR(i.data)}</td>
+                        <td>${i.desc}</td>
+                        <td class="${i.tipo === 'Receita' ? 'val-receita' : 'val-despesa'}">${i.tipo}</td>
+                        <td class="${i.tipo === 'Receita' ? 'val-receita' : 'val-despesa'}">R$ ${i.valor.toFixed(2)}</td>
+                        <td><span class="${i.status === 'PAGO' ? 'status-pago' : 'status-pendente'}">${i.status}</span></td>
+                        <td>${i.user}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary" onclick="editar('${i.id}')">✏️</button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="excluir('${i.id}')">🗑️</button>
+                        </td>
+                    </tr>`;
+            });
+
+            resRec.innerText = `R$ ${rTotal.toFixed(2)}`;
+            resDes.innerText = `R$ ${dTotal.toFixed(2)}`;
+            resSal.innerText = `R$ ${(rTotal - dTotal).toFixed(2)}`;
+
+            const percP = dTotal > 0 ? Math.round((dPago / dTotal) * 100) : 0;
+            const barP = document.getElementById("barDespesaPago");
+            const barD = document.getElementById("barDespesaPendente");
+            
+            if(barP) { barP.style.width = percP + "%"; barP.innerText = percP + "%"; }
+            if(barD) { barD.style.width = (100 - percP) + "%"; barD.innerText = (100 - percP) + "%"; }
+            
+            document.getElementById("qtdPago").innerText = qPago;
+            document.getElementById("qtdPendente").innerText = qPend;
+        }
+
+        function classeVencimento(item) {
+            if (item.tipo !== "Despesa" || item.status === "PAGO") return "";
+            const dItem = new Date(item.data + "T12:00:00");
+            const hoje = new Date(); hoje.setHours(0,0,0,0); dItem.setHours(0,0,0,0);
+            if (dItem < hoje) return "vencida";
+            if (dItem.getTime() === hoje.getTime()) return "hoje";
+            return "futura";
+        }
+
+        async function adicionar() {
+            if (!fData.value || !fDesc.value || !fValor.value) return mostrarToast("❌ Preencha tudo");
+            const chkRec = document.getElementById("chkRecorrente").checked;
+            const qtd = chkRec ? Number(document.getElementById("qtdRecorrencia").value) : 1;
+            
+            for (let i = 0; i < qtd; i++) {
+                const d = new Date(fData.value + "T12:00:00");
+                d.setMonth(d.getMonth() + i);
+                const payload = {
+                    action: "addLancamento",
+                    data: d.toISOString().slice(0, 10),
+                    desc: fDesc.value,
+                    valor: Number(fValor.value),
+                    tipo: fTipo.value,
+                    user: userNow
+                };
+                await fetch(URL_API, { method: "POST", body: JSON.stringify(payload) });
+            }
+            carregar();
+            mostrarToast("✅ Salvo");
+        }
+
+        async function togglePago(id) {
+            const item = db.find(x => String(x.id) === String(id));
+            if (!item) return;
+            item.status = (item.status === "PAGO" ? "PENDENTE" : "PAGO");
+            await fetch(URL_API, { method: "POST", body: JSON.stringify({ action: "updatePago", id: id, status: item.status }) });
+            render();
+        }
+
+        async function excluir(id) {
+            if (!confirm("Excluir?")) return;
+            await fetch(URL_API, { method: "POST", body: JSON.stringify({ action: "deleteLancamento", id: id }) });
+            db = db.filter(x => String(x.id) !== String(id));
+            render();
+        }
+
+        function toggleRecorrencia() {
+            document.getElementById("qtdRecorrencia").disabled = !document.getElementById("chkRecorrente").checked;
+        }
+
+        async function abrirSalario() { new bootstrap.Modal(document.getElementById('modalSalario')).show(); }
+
+        async function salvarSalario() {
+            const s05 = document.getElementById("sal05").value;
+            const s20 = document.getElementById("sal20").value;
+            const mes = new Date().toISOString().slice(0, 7);
+            
+            if(s05 > 0) await fetch(URL_API, { method: "POST", body: JSON.stringify({ action: "addLancamento", data: `${mes}-05`, desc: "Salário", valor: Number(s05), tipo: "Receita", user: userNow })});
+            if(s20 > 0) await fetch(URL_API, { method: "POST", body: JSON.stringify({ action: "addLancamento", data: `${mes}-20`, desc: "Adiantamento", valor: Number(s20), tipo: "Receita", user: userNow })});
+            
+            carregar();
+        }
+
+        function renderHistorico() {
+            const filtro = document.getElementById("histFiltro").value;
+            const ano = Number(document.getElementById("histAno").value);
+            const corpo = document.getElementById("corpoHist");
+            corpo.innerHTML = "";
+            const hist = {};
+
+            db.forEach(l => {
+                const [y, m] = l.data.split("-").map(Number);
+                if (y !== ano) return;
+                if (filtro === "s1" && m > 6) return;
+                if (filtro === "s2" && m <= 6) return;
+                const chave = `${y}-${String(m).padStart(2, "0")}`;
+                if (!hist[chave]) hist[chave] = { r: 0, d: 0 };
+                l.tipo === "Receita" ? hist[chave].r += l.valor : hist[chave].d += l.valor;
+            });
+
+            const meses = Object.keys(hist).sort();
+            meses.forEach(m => {
+                const s = hist[m].r - hist[m].d;
+                corpo.innerHTML += `<tr><td>${m}</td><td class="val-receita">R$ ${hist[m].r.toFixed(2)}</td><td class="val-despesa">R$ ${hist[m].d.toFixed(2)}</td><td class="${s >= 0 ? 'val-receita' : 'val-despesa'}">R$ ${s.toFixed(2)}</td></tr>`;
+            });
+            renderGraficoHistorico(hist, meses);
+        }
+
+        function renderGraficoHistorico(hist, meses) {
+            const ctx = document.getElementById("graficoMensal").getContext("2d");
+            if (chart) chart.destroy();
+            chart = new Chart(ctx, {
+                type: "bar",
+                data: {
+                    labels: meses,
+                    datasets: [
+                        { label: "Receitas", data: meses.map(m => hist[m].r), backgroundColor: "#27ae60" },
+                        { label: "Despesas", data: meses.map(m => hist[m].d), backgroundColor: "#e74c3c" }
+                    ]
+                }
+            });
+        }
+
+        async function carregarAssinaturas() {
+            const r = await fetch(`${URL_API}?action=listarAssinaturas`);
+            const dados = await r.json();
+            const corpo = document.getElementById("corpoAss");
+            corpo.innerHTML = "";
+            let total = 0;
+            dados.forEach(a => {
+                if(a[6] === "Ativo") total += Number(a[3]);
+                corpo.innerHTML += `<tr><td>${a[1]}</td><td>${a[2]}</td><td>R$ ${Number(a[3]).toFixed(2)}</td><td>${a[4]}</td><td>R$ ${(a[3]*12).toFixed(2)}</td><td>${a[6]}</td><td><button class="btn btn-sm btn-danger" onclick="excluirAss('${a[0]}')">🗑️</button></td></tr>`;
+            });
+            document.getElementById("totalAss").innerText = `R$ ${total.toFixed(2)}`;
+        }
+        
+        async function addAssinatura() {
+            const payload = {
+                action: "addAssinatura",
+                nome: document.getElementById("aNome").value,
+                venc: document.getElementById("aVenc").value,
+                valor: document.getElementById("aValor").value,
+                cartao: document.getElementById("aCartao").value,
+                status: document.getElementById("aStatus").value,
+                user: userNow
+            };
+            await fetch(URL_API, { method: "POST", body: JSON.stringify(payload) });
+            carregarAssinaturas();
+        }
+    </script>
 </body>
 </html>
