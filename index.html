@@ -554,7 +554,7 @@ const passInput=document.getElementById("passInput");
 const telaLogin=document.getElementById("tela-login");
 const appContent=document.getElementById("appContent");
 const loginError=document.getElementById("loginError");
-
+const TEMPO_MAX_LOGIN = 10; // minutos
 const monthSelector=document.getElementById("monthSelector");
 const mesFoco=document.getElementById("mesFoco");
 
@@ -641,13 +641,41 @@ setTimeout(() => {
 }
 
 
-
-
-function logout(){
-  localStorage.removeItem("usuarioLogado");
-  location.reload();
+//Nova funcao----22:11--->
+function loginSucesso(usuario) {
+  localStorage.setItem("usuarioLogado", usuario);
+  localStorage.setItem("loginTime", Date.now());
+  mostrarMenu(); // em vez de ir direto pra lançamentos
 }
 
+function verificarSessao() {
+  const loginTime = localStorage.getItem("loginTime");
+  if (!loginTime) return false;
+
+  const agora = Date.now();
+  const minutos = (agora - Number(loginTime)) / 60000;
+
+  if (minutos > TEMPO_MAX_LOGIN) {
+    logout();
+    return false;
+  }
+  return true;
+}
+
+function logout() {
+  localStorage.clear();
+  alert("Sessão expirada. Faça login novamente.");
+  mostrarLogin();
+}
+
+function navegar(tela) {
+  if (!verificarSessao()) return;
+
+  esconderTudo();
+  document.getElementById(tela).style.display = "block";
+}
+
+  //* function logout(){ localStorage.removeItem("usuarioLogado"); location.reload();}
  
 /* ========= Ano ========= */  
 function initAnos() {
