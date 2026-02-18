@@ -219,7 +219,7 @@ body{background:#f0f2f5;font-family:'Segoe UI',Tahoma,sans-serif;padding-top:70p
   
 
   <button class="btn btn-outline-danger btn-sm"
-    onclick="logout()">Logout</button>
+    onclick="logout_()">Logout</button>
 </nav>
 
 <!-- ✅ MENU INICIAL (AGORA NO LUGAR CERTO) -->
@@ -675,7 +675,10 @@ function navegar(tela) {
   document.getElementById(tela).style.display = "block";
 }
 
-  //* function logout(){ localStorage.removeItem("usuarioLogado"); location.reload();}
+  function logout_(){
+  localStorage.removeItem("usuarioLogado");
+  location.reload();
+  }
  
 /* ========= Ano ========= */  
 function initAnos() {
