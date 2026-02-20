@@ -620,18 +620,65 @@
             });
         }
 
-        async function carregarAssinaturas() {
-            const r = await fetch(`${URL_API}?action=listarAssinaturas`);
-            const dados = await r.json();
-            const corpo = document.getElementById("corpoAss");
-            corpo.innerHTML = "";
-            let total = 0;
-            dados.forEach(a => {
-                if(a[6] === "Ativo") total += Number(a[3]);
-                corpo.innerHTML += `<tr><td>${a[1]}</td><td>${a[2]}</td><td>R$ ${Number(a[3]).toFixed(2)}</td><td>${a[4]}</td><td>R$ ${(a[3]*12).toFixed(2)}</td><td>${a[6]}</td><td><button class="btn btn-sm btn-danger" onclick="excluirAss('${a[0]}')">🗑️</button></td></tr>`;
-            });
-            document.getElementById("totalAss").innerText = `R$ ${total.toFixed(2)}`;
-        }
+      async function carregarAssinaturas() {
+  try {
+    const r = await fetch(`${URL_API}?action=listarAssinaturas`);
+    const dados = await r.json();
+    const corpo = document.getElementById("corpoAss");
+    const totalEl = document.getElementById("totalAss");
+    
+    corpo.innerHTML = "";
+    let somaAtivas = 0;
+
+    dados.forEach(a => {
+      // a[0]:id, a[1]:nome, a[2]:venc, a[3]:valor, a[4]:cartao, a[5]:user, a[6]:status
+      const id = a[0];
+      const nome = a[1];
+      const venc = a[2];
+      const valor = Number(a[3]) || 0;
+      const cartao = a[4] || "-";
+      const status = a[6] || "Ativo";
+
+      if (status === "Ativo") {
+        somaAtivas += valor;
+      }
+
+      corpo.innerHTML += `
+        <tr>
+          <td>${nome}</td>
+          <td>Dia ${venc}</td>
+          <td class="fw-bold">R$ ${valor.toFixed(2)}</td>
+          <td><span class="badge bg-light text-dark">${cartao}</span></td>
+          <td class="text-muted">R$ ${(valor * 12).toFixed(2)}</td>
+          <td>
+            <span class="badge ${status === 'Ativo' ? 'bg-success' : 'bg-danger'}">
+              ${status}
+            </span>
+          </td>
+          <td>
+            <button class="btn btn-sm btn-outline-danger" onclick="excluirAssinatura('${id}')">🗑️</button>
+          </td>
+        </tr>`;
+    });
+
+    totalEl.innerText = `R$ ${somaAtivas.toFixed(2)}`;
+    totalEl.classList.add("val-receita"); // Dá a cor verde ao total
+
+  } catch (e) {
+    console.error("Erro ao carregar assinaturas:", e);
+  }
+}
+
+// Função para excluir assinatura (caso não tenha)
+async function excluirAssinatura(id) {
+  if (!confirm("Deseja remover esta assinatura?")) return;
+  await fetch(URL_API, {
+    method: "POST",
+    body: JSON.stringify({ action: "deleteAssinatura", id: id })
+  });
+  carregarAssinaturas();
+  mostrarToast("🗑️ Assinatura removida");
+}
         
         async function addAssinatura() {
             const payload = {
