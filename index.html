@@ -605,7 +605,7 @@
             renderGraficoHistorico(hist, meses);
         }
 
-        /*----function renderGraficoHistorico(hist, meses) {
+         function renderGraficoHistorico(hist, meses) {
             const ctx = document.getElementById("graficoMensal").getContext("2d");
             if (chart) chart.destroy();
             chart = new Chart(ctx, {
@@ -618,11 +618,11 @@
                     ]
                 }
             });
-        } */
+        }
 
       let grafico; // Certifique-se de declarar no escopo global ou topo do script
 
-function renderGraficoHistorico(hist, meses) {
+    function renderGraficoHistorico(hist, meses) {
     const ctx = document.getElementById("graficoMensal").getContext("2d");
     
     // Destrói o gráfico anterior se existir para evitar bugs visuais
