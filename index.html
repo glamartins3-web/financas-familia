@@ -620,11 +620,15 @@
             });
         } */
 
-       function renderGraficoHistorico(hist, meses) {
+      let grafico; // Certifique-se de declarar no escopo global ou topo do script
+
+function renderGraficoHistorico(hist, meses) {
     const ctx = document.getElementById("graficoMensal").getContext("2d");
     
-    // Destrói o gráfico anterior se existir para não sobrepor
-    if (grafico) grafico.destroy();
+    // Destrói o gráfico anterior se existir para evitar bugs visuais
+    if (grafico) {
+        grafico.destroy();
+    }
 
     const labels = meses.map(m => {
         const [y, mes] = m.split("-");
@@ -634,11 +638,6 @@
     const receitas = meses.map(m => hist[m].r);
     const despesas = meses.map(m => hist[m].d);
     const saldos = meses.map(m => hist[m].r - hist[m].d);
-
-    // Cálculo da métrica de eficiência (% de gastos sobre receita)
-    const totalR = receitas.reduce((a, b) => a + b, 0);
-    const totalD = despesas.reduce((a, b) => a + b, 0);
-    const percGasto = totalR > 0 ? ((totalD / totalR) * 100).toFixed(1) : 0;
 
     grafico = new Chart(ctx, {
         data: {
@@ -676,17 +675,18 @@
         options: {
             responsive: true,
             plugins: {
-                legend: { position: 'bottom' },
-                title: {
-                    display: true,
-                    text: `Comprometimento de Renda: ${percGasto}%`,
-                    color: percGasto > 80 ? '#e74c3c' : '#2c3e50',
-                    font: { size: 16, weight: 'bold' }
-                }
+                legend: { position: 'top' },
+                tooltip: { mode: 'index', intersect: false }
             },
             scales: {
-                y: { beginAtZero: true, grid: { color: '#f0f0f0' } },
-                x: { grid: { display: false } }
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return 'R$ ' + value.toLocaleString('pt-br');
+                        }
+                    }
+                }
             }
         }
     });
