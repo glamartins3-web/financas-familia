@@ -469,54 +469,7 @@
             renderHistorico();
         }
 
-        
-function render() {
-    corpoItens.innerHTML = "";
-    // Adicionamos a variável dPend para somar os valores
-    let rTotal = 0, dTotal = 0, dPago = 0, dPend = 0, qPago = 0, qPend = 0;
-    const mesAtual = mesFoco.value;
-
-    // ... (sua lógica de ordenação da lista continua igual)
-
-    listaGeral.forEach(i => {
-        if (!i.data || i.data.slice(0, 7) !== mesAtual) return;
-
-        if (i.tipo === "Receita") {
-            rTotal += i.valor;
-        } else {
-            dTotal += i.valor;
-            if (i.status === "PAGO") {
-                dPago += i.valor;
-                qPago++;
-            } else {
-                // SOMA O VALOR DAS DESPESAS PENDENTES
-                dPend += i.valor; 
-                qPend++;
-            }
-        }
-        
-        // ... (sua lógica de criar as linhas <tr> continua igual)
-    });
-
-    // ATUALIZAÇÃO DOS CAMPOS NA TELA
-    document.getElementById("resRec").innerText = `R$ ${rTotal.toFixed(2)}`;
-    document.getElementById("resDes").innerText = `R$ ${dTotal.toFixed(2)}`;
-    document.getElementById("resSal").innerText = `R$ ${(rTotal - dTotal).toFixed(2)}`;
-
-    // Novos campos de Status
-    document.getElementById("qtdPago").innerText = qPago;
-    document.getElementById("qtdPendente").innerText = qPend;
-    document.getElementById("valPendente").innerText = `R$ ${dPend.toFixed(2)}`; // Exibe o valor em R$
-
-    // Atualização das barras de progresso
-    const percP = dTotal > 0 ? Math.round((dPago / dTotal) * 100) : 0;
-    const barP = document.getElementById("barDespesaPago");
-    const barD = document.getElementById("barDespesaPendente");
-    
-    if(barP) { barP.style.width = percP + "%"; barP.innerText = percP + "%"; }
-    if(barD) { barD.style.width = (100 - percP) + "%"; barD.innerText = (100 - percP) + "%"; }
-}
-        /* function render() {
+       function render() {
             corpoItens.innerHTML = "";
             let rTotal = 0, dTotal = 0, dPago = 0, dPend = 0, qPago = 0, qPend = 0;
             const mesAtual = mesFoco.value;
@@ -565,7 +518,7 @@ function render() {
             
             document.getElementById("qtdPago").innerText = qPago;
             document.getElementById("qtdPendente").innerText = qPend;
-        }*/
+        }
 
         function classeVencimento(item) {
             if (item.tipo !== "Despesa" || item.status === "PAGO") return "";
