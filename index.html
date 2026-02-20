@@ -605,7 +605,7 @@
             renderGraficoHistorico(hist, meses);
         }
 
-        function renderGraficoHistorico(hist, meses) {
+        /*----function renderGraficoHistorico(hist, meses) {
             const ctx = document.getElementById("graficoMensal").getContext("2d");
             if (chart) chart.destroy();
             chart = new Chart(ctx, {
@@ -618,8 +618,83 @@
                     ]
                 }
             });
-        }
+        } */
 
+function renderGraficoHistorico(hist, meses) {
+  const ctx = document.getElementById("graficoMensal").getContext("2d");
+  if (grafico) grafico.destroy();
+
+  const labels = meses.map(m => {
+    const [y, mes] = m.split("-");
+    return MESES_ABREV[parseInt(mes) - 1] + "/" + y.slice(2);
+  });
+
+  const receitas = meses.map(m => hist[m].r);
+  const despesas = meses.map(m => hist[m].d);
+  const saldos = meses.map(m => hist[m].r - hist[m].d);
+
+  // Cálculo de % médio de gastos (para o título ou legenda)
+  const totalR = receitas.reduce((a, b) => a + b, 0);
+  const totalD = despesas.reduce((a, b) => a + b, 0);
+  const percGasto = totalR > 0 ? ((totalD / totalR) * 100).toFixed(1) : 0;
+
+  grafico = new Chart(ctx, {
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          type: 'line',
+          label: 'Tendência de Saldo',
+          data: saldos,
+          borderColor: '#6c5ce7',
+          backgroundColor: '#6c5ce7',
+          borderWidth: 3,
+          pointRadius: 5,
+          fill: false,
+          tension: 0.4,
+          order: 1
+        },
+        {
+          type: 'bar',
+          label: 'Receitas',
+          data: receitas,
+          backgroundColor: '#2ecc71',
+          borderRadius: 8,
+          barPercentage: 0.6,
+          order: 2
+        },
+        {
+          type: 'bar',
+          label: 'Despesas',
+          data: despesas,
+          backgroundColor: '#ff7675',
+          borderRadius: 8,
+          barPercentage: 0.6,
+          order: 3
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { position: 'bottom' },
+        title: {
+          display: true,
+          text: `Eficiência de Gastos: ${percGasto}% da Receita`,
+          font: { size: 14, weight: 'bold' }
+        }
+      },
+      scales: {
+        y: { 
+          beginAtZero: true,
+          grid: { display: false }
+        },
+        x: { grid: { display: false } }
+      }
+    }
+  });
+}
+        
       async function carregarAssinaturas() {
   try {
     const r = await fetch(`${URL_API}?action=listarAssinaturas`);
