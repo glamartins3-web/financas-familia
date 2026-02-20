@@ -620,139 +620,123 @@
             });
         } */
 
-function renderGraficoHistorico(hist, meses) {
-  const ctx = document.getElementById("graficoMensal").getContext("2d");
-  if (grafico) grafico.destroy();
-
-  const labels = meses.map(m => {
-    const [y, mes] = m.split("-");
-    return MESES_ABREV[parseInt(mes) - 1] + "/" + y.slice(2);
-  });
-
-  const receitas = meses.map(m => hist[m].r);
-  const despesas = meses.map(m => hist[m].d);
-  const saldos = meses.map(m => hist[m].r - hist[m].d);
-
-  // Cálculo de % médio de gastos (para o título ou legenda)
-  const totalR = receitas.reduce((a, b) => a + b, 0);
-  const totalD = despesas.reduce((a, b) => a + b, 0);
-  const percGasto = totalR > 0 ? ((totalD / totalR) * 100).toFixed(1) : 0;
-
-  grafico = new Chart(ctx, {
-    data: {
-      labels: labels,
-      datasets: [
-        {
-          type: 'line',
-          label: 'Tendência de Saldo',
-          data: saldos,
-          borderColor: '#6c5ce7',
-          backgroundColor: '#6c5ce7',
-          borderWidth: 3,
-          pointRadius: 5,
-          fill: false,
-          tension: 0.4,
-          order: 1
-        },
-        {
-          type: 'bar',
-          label: 'Receitas',
-          data: receitas,
-          backgroundColor: '#2ecc71',
-          borderRadius: 8,
-          barPercentage: 0.6,
-          order: 2
-        },
-        {
-          type: 'bar',
-          label: 'Despesas',
-          data: despesas,
-          backgroundColor: '#ff7675',
-          borderRadius: 8,
-          barPercentage: 0.6,
-          order: 3
-        }
-      ]
-    },
-    options: {
-      responsive: true,
-      plugins: {
-        legend: { position: 'bottom' },
-        title: {
-          display: true,
-          text: `Eficiência de Gastos: ${percGasto}% da Receita`,
-          font: { size: 14, weight: 'bold' }
-        }
-      },
-      scales: {
-        y: { 
-          beginAtZero: true,
-          grid: { display: false }
-        },
-        x: { grid: { display: false } }
-      }
-    }
-  });
-}
-        
-      async function carregarAssinaturas() {
-  try {
-    const r = await fetch(`${URL_API}?action=listarAssinaturas`);
-    const dados = await r.json();
-    const corpo = document.getElementById("corpoAss");
-    const totalEl = document.getElementById("totalAss");
+       function renderGraficoHistorico(hist, meses) {
+    const ctx = document.getElementById("graficoMensal").getContext("2d");
     
-    corpo.innerHTML = "";
-    let somaAtivas = 0;
+    // Destrói o gráfico anterior se existir para não sobrepor
+    if (grafico) grafico.destroy();
 
-    dados.forEach(a => {
-      // a[0]:id, a[1]:nome, a[2]:venc, a[3]:valor, a[4]:cartao, a[5]:user, a[6]:status
-      const id = a[0];
-      const nome = a[1];
-      const venc = a[2];
-      const valor = Number(a[3]) || 0;
-      const cartao = a[4] || "-";
-      const status = a[6] || "Ativo";
-
-      if (status === "Ativo") {
-        somaAtivas += valor;
-      }
-
-      corpo.innerHTML += `
-        <tr>
-          <td>${nome}</td>
-          <td>Dia ${venc}</td>
-          <td class="fw-bold">R$ ${valor.toFixed(2)}</td>
-          <td><span class="badge bg-light text-dark">${cartao}</span></td>
-          <td class="text-muted">R$ ${(valor * 12).toFixed(2)}</td>
-          <td>
-            <span class="badge ${status === 'Ativo' ? 'bg-success' : 'bg-danger'}">
-              ${status}
-            </span>
-          </td>
-          <td>
-            <button class="btn btn-sm btn-outline-danger" onclick="excluirAssinatura('${id}')">🗑️</button>
-          </td>
-        </tr>`;
+    const labels = meses.map(m => {
+        const [y, mes] = m.split("-");
+        return MESES_ABREV[parseInt(mes) - 1] + "/" + y.slice(2);
     });
 
-    totalEl.innerText = `R$ ${somaAtivas.toFixed(2)}`;
-    totalEl.classList.add("val-receita"); // Dá a cor verde ao total
+    const receitas = meses.map(m => hist[m].r);
+    const despesas = meses.map(m => hist[m].d);
+    const saldos = meses.map(m => hist[m].r - hist[m].d);
 
-  } catch (e) {
-    console.error("Erro ao carregar assinaturas:", e);
-  }
+    // Cálculo da métrica de eficiência (% de gastos sobre receita)
+    const totalR = receitas.reduce((a, b) => a + b, 0);
+    const totalD = despesas.reduce((a, b) => a + b, 0);
+    const percGasto = totalR > 0 ? ((totalD / totalR) * 100).toFixed(1) : 0;
+
+    grafico = new Chart(ctx, {
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    type: 'line',
+                    label: 'Saldo Líquido',
+                    data: saldos,
+                    borderColor: '#6c5ce7',
+                    backgroundColor: '#6c5ce7',
+                    borderWidth: 3,
+                    pointRadius: 4,
+                    tension: 0.4,
+                    order: 1
+                },
+                {
+                    type: 'bar',
+                    label: 'Receitas',
+                    data: receitas,
+                    backgroundColor: '#2ecc71',
+                    borderRadius: 5,
+                    order: 2
+                },
+                {
+                    type: 'bar',
+                    label: 'Despesas',
+                    data: despesas,
+                    backgroundColor: '#ff7675',
+                    borderRadius: 5,
+                    order: 3
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { position: 'bottom' },
+                title: {
+                    display: true,
+                    text: `Comprometimento de Renda: ${percGasto}%`,
+                    color: percGasto > 80 ? '#e74c3c' : '#2c3e50',
+                    font: { size: 16, weight: 'bold' }
+                }
+            },
+            scales: {
+                y: { beginAtZero: true, grid: { color: '#f0f0f0' } },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+}
+        
+async function carregarAssinaturas() {
+    try {
+        const r = await fetch(`${URL_API}?action=listarAssinaturas`);
+        const dados = await r.json();
+        const corpo = document.getElementById("corpoAss");
+        const totalEl = document.getElementById("totalAss");
+        
+        corpo.innerHTML = "";
+        let somaAtivas = 0;
+
+        dados.forEach(a => {
+            // Estrutura: [ID, Nome, DiaVenc, Valor, Cartao, User, Status]
+            const valor = Number(a[3]) || 0;
+            const status = a[6] || "Ativo";
+
+            if (status === "Ativo") {
+                somaAtivas += valor;
+            }
+
+            corpo.innerHTML += `
+                <tr>
+                    <td>${a[1]}</td>
+                    <td>Dia ${a[2]}</td>
+                    <td class="fw-bold">R$ ${valor.toFixed(2)}</td>
+                    <td><span class="badge bg-light text-dark">${a[4] || '-'}</span></td>
+                    <td class="text-muted">R$ ${(valor * 12).toFixed(2)}</td>
+                    <td><span class="badge ${status === 'Ativo' ? 'bg-success' : 'bg-danger'}">${status}</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-danger" onclick="excluirAssinatura('${a[0]}')">🗑️</button>
+                    </td>
+                </tr>`;
+        });
+
+        totalEl.innerText = `R$ ${somaAtivas.toFixed(2)}`;
+    } catch (e) {
+        console.error("Erro ao carregar assinaturas:", e);
+    }
 }
 
-// Função para excluir assinatura (caso não tenha)
+// Lembre-se de adicionar a função de excluir para as assinaturas também
 async function excluirAssinatura(id) {
-  if (!confirm("Deseja remover esta assinatura?")) return;
-  await fetch(URL_API, {
-    method: "POST",
-    body: JSON.stringify({ action: "deleteAssinatura", id: id })
-  });
-  carregarAssinaturas();
-  mostrarToast("🗑️ Assinatura removida");
+    if (!confirm("Remover esta assinatura?")) return;
+    await fetch(URL_API, { method: "POST", body: JSON.stringify({ action: "deleteAssinatura", id: id }) });
+    carregarAssinaturas();
+    mostrarToast("🗑️ Assinatura removida");
 }
         
         async function addAssinatura() {
