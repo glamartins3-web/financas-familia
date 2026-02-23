@@ -60,6 +60,41 @@
             .top-bar { grid-template-columns: 1fr; }
             #corpoItens td { font-size: 0.8rem; padding: 6px 4px; }
         }
+
+/* Diminui o espaço interno lateral das células da tabela */
+.table-sm th, 
+.table-sm td {
+    padding-left: 4px !important;  /* Ajuste esse valor conforme desejar */
+    padding-right: 4px !important; /* Ajuste esse valor conforme desejar */
+    white-space: nowrap;           /* Evita que o texto quebre em duas linhas */
+}
+
+/* Opcional: Ajustar larguras específicas para colunas pequenas */
+.col-min {
+    width: 1%;
+    white-space: nowrap;
+}
+
+        /* Cores blindadas para os totais e status */
+.txt-pago { 
+    color: #27ae60 !important; 
+    font-weight: bold !important; 
+}
+.txt-pendente { 
+    color: #f39c12 !important; 
+    font-weight: bold !important; 
+}
+
+/* Estilo do container dos totais */
+.container-totais {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 8px 15px;
+    display: flex;
+    gap: 20px;
+    align-items: center;
+}
     </style>
 </head>
 
@@ -100,7 +135,7 @@
 
         <div id="pg-lan" class="container hidden">
             <button class="btn btn-outline-secondary btn-sm mb-2" onclick="showPage('menu')">⬅ Voltar ao Menu</button>
-
+            <div class="container-box p-3">
             <div class="top-bar">
                 <div class="top-card">
                     <h6>📅 MÊS / ANO</h6>
@@ -115,11 +150,7 @@
                         <div class="resumo-item bg-receita">Receitas <span id="resRec">R$ 0</span></div>
                         <div class="resumo-item bg-despesa">Despesas <span id="resDes">R$ 0</span></div>
                         <div class="resumo-item bg-saldo">Saldo <span id="resSal">R$ 0</span></div>
-                    </div>
-                </div>
-
-                <div class="top-card">
-                    <h6>📊 STATUS</h6>
+                        </div>
                     <div class="status-info">Pagas: <b id="qtdPago">0</b> | Pendentes: <b id="qtdPendente">0</b></div>
                     <div class="progress mb-1">
                         <div id="barDespesaPago" class="progress-bar bg-success" style="width:0%">0%</div>
@@ -130,7 +161,6 @@
                 </div>
             </div>
 
-            <div class="container-box p-3">
                 <h6 class="fw-bold mb-3 text-secondary">➕ Novo Lançamento</h6>
                 <div class="row g-2 align-items-end mb-3">
                     <div class="col-md-2">
@@ -169,18 +199,31 @@
             </div>
 
             <div class="container-box table-responsive">
-                <h6 class="fw-bold mb-3 text-secondary">📋 Lançamentos do Mês</h6>
+            <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
+            <h6 class="fw-bold text-secondary m-0">📋 Lançamentos do Mês</h6>
+            <div class="container-totais shadow-sm">
+            <div class="small fw-bold">
+            <span style="color: #27ae60;">PAGO:</span> 
+            <span id="txtTotalPago" class="txt-pago">R$ 0,00</span>
+            </div>
+            <div class="vr"></div>
+            <div class="small fw-bold">
+            <span style="color: #f31212;">PENDENTE:</span> 
+            <span id="txtTotalPendente" class="txt-pendente">R$ 0,00</span>
+        </div>
+        </div>
+            </div>
                 <table class="table table-sm table-hover">
                     <thead>
                         <tr>
-                            <th>Pago</th>
-                            <th>Data</th>
-                            <th>Descrição</th>
-                            <th>Tipo</th>
-                            <th>Valor</th>
-                            <th>Status</th>
-                            <th>Usuário</th>
-                            <th>Ações</th>
+                            <th class="col-min">Pago</th>
+                            <th class="col-min">Data</th>
+                            <th class="col-min">Descrição</th>
+                            <th class="col-min">Tipo</th>
+                            <th class="col-min">Valor</th>
+                            <th class="col-min">Status</th>
+                            <th class="col-min">Usuário</th>
+                            <th class="col-min">Ações</th>
                         </tr>
                     </thead>
                     <tbody id="corpoItens"></tbody>
@@ -214,10 +257,10 @@
                 <table class="table table-hover">
                     <thead class="table-dark">
                         <tr>
-                            <th>Mês/Ano</th>
-                            <th>Receita</th>
-                            <th>Despesa</th>
-                            <th>Saldo</th>
+                            <th class="col-min">Mês/Ano</th>
+                            <th class="col-min">Receita</th>
+                            <th class="col-min">Despesa</th>
+                            <th class="col-min">Saldo</th>
                         </tr>
                     </thead>
                     <tbody id="corpoHist"></tbody>
@@ -263,22 +306,21 @@
                 <table class="table table-sm table-hover">
                     <thead>
                         <tr>
-                            <th>Assinatura</th>
-                            <th>Venc.</th>
-                            <th>Mensal</th>
-                            <th>Cartão</th>
-                            <th>12x</th>
-                            <th>Status</th>
-                            <th>Ações</th>
+                            <th class="col-min">Assinatura</th>
+                            <th class="col-min">Venc.</th>
+                            <th class="col-min">Mensal</th>
+                            <th class="col-min">Cartão</th>
+                            <th class="col-min">12x</th>
+                            <th class="col-min">Status</th>
+                            <th class="col-min">Ações</th>
                         </tr>
                     </thead>
-                    <tbody id="corpoAss"></tbody>
-                    <tfoot>
-                        <tr class="fw-bold">
-                            <td colspan="2">TOTAL ATIVO</td>
-                            <td id="totalAss">R$ 0,00</td>
-                            <td colspan="4"></td>
-                        </tr>
+                   <tbody id="corpoAss"></tbody> <tfoot>
+        <tr class="table-dark">
+            <td colspan="2" class="text-end fw-bold">TOTAL ATIVO</td>
+            <td id="totalAss" class="fw-bold">R$ 0,00</td> 
+            <td colspan="4"></td>
+        </tr>
                     </tfoot>
                 </table>
             </div>
@@ -466,56 +508,76 @@
             renderHistorico();
         }
 
-       function render() {
-            corpoItens.innerHTML = "";
-            let rTotal = 0, dTotal = 0, dPago = 0, dPend = 0, qPago = 0, qPend = 0;
-            const mesAtual = mesFoco.value;
+function render() {
+    const corpo = document.getElementById("corpoItens");
+    const mesFoco = document.getElementById("mesFoco").value; // Ex: "2024-02"
+    
+    corpo.innerHTML = ""; // Limpa a tabela
+    
+    // Variáveis de soma
+    let rTotal = 0, dTotal = 0, dPago = 0, dPend = 0, qPago = 0, qPend = 0;
 
-            const lista = [...db].sort((a, b) => {
-                if (a.tipo === "Receita" && b.tipo !== "Receita") return 1;
-                if (a.tipo !== "Receita" && b.tipo === "Receita") return -1;
-                return new Date(a.data) - new Date(b.data);
-            });
+    // 1. Filtra os dados pelo mês selecionado e Ordena (Despesa primeiro, depois Receita)
+    const listaFiltrada = db.filter(i => i.data && i.data.startsWith(mesFoco))
+                            .sort((a, b) => {
+                                if (a.tipo === "Despesa" && b.tipo === "Receita") return -1;
+                                if (a.tipo === "Receita" && b.tipo === "Despesa") return 1;
+                                return new Date(a.data) - new Date(b.data);
+                            });
 
-            lista.forEach(i => {
-                if (!i.data || i.data.slice(0, 7) !== mesAtual) return;
-
-                i.tipo === "Receita" ? rTotal += i.valor : dTotal += i.valor;
-                if (i.tipo === "Despesa") {
-                    if (i.status === "PAGO") { dPago += i.valor; qPago++; }
-                    else { dPend += i.valor; qPend++; }
-                }
-
-                corpoItens.innerHTML += `
-                    <tr class="${classeVencimento(i)}">
-                        <td><input type="checkbox" ${i.status === "PAGO" ? "checked" : ""} onclick="togglePago('${i.id}')"></td>
-                        <td>${formatarDataBR(i.data)}</td>
-                        <td>${i.desc}</td>
-                        <td class="${i.tipo === 'Receita' ? 'val-receita' : 'val-despesa'}">${i.tipo}</td>
-                        <td class="${i.tipo === 'Receita' ? 'val-receita' : 'val-despesa'}">R$ ${i.valor.toFixed(2)}</td>
-                        <td><span class="${i.status === 'PAGO' ? 'status-pago' : 'status-pendente'}">${i.status}</span></td>
-                        <td>${i.user}</td>
-                        <td>
-                            <button class="btn btn-sm btn-outline-primary" onclick="editar('${i.id}')">✏️</button>
-                            <button class="btn btn-sm btn-outline-danger" onclick="excluir('${i.id}')">🗑️</button>
-                        </td>
-                    </tr>`;
-            });
-
-            resRec.innerText = `R$ ${rTotal.toFixed(2)}`;
-            resDes.innerText = `R$ ${dTotal.toFixed(2)}`;
-            resSal.innerText = `R$ ${(rTotal - dTotal).toFixed(2)}`;
-
-            const percP = dTotal > 0 ? Math.round((dPago / dTotal) * 100) : 0;
-            const barP = document.getElementById("barDespesaPago");
-            const barD = document.getElementById("barDespesaPendente");
-            
-            if(barP) { barP.style.width = percP + "%"; barP.innerText = percP + "%"; }
-            if(barD) { barD.style.width = (100 - percP) + "%"; barD.innerText = (100 - percP) + "%"; }
-            
-            document.getElementById("qtdPago").innerText = qPago;
-            document.getElementById("qtdPendente").innerText = qPend;
+    // 2. Loop principal
+    listaFiltrada.forEach(i => {
+        // Soma valores
+        if (i.tipo === "Receita") {
+            rTotal += i.valor;
+        } else {
+            dTotal += i.valor;
+            if (i.status === "PAGO") { 
+                dPago += i.valor; 
+                qPago++; 
+            } else { 
+                dPend += i.valor; 
+                qPend++; 
+            }
         }
+
+        // 3. Monta a linha da tabela
+        corpo.innerHTML += `
+            <tr class="${classeVencimento(i)}">
+                <td><input type="checkbox" ${i.status === "PAGO" ? "checked" : ""} onclick="togglePago('${i.id}')"></td>
+                <td>${formatarDataBR(i.data)}</td>
+                <td>${i.desc}</td>
+                <td class="${i.tipo === 'Receita' ? 'val-receita' : 'val-despesa'}">${i.tipo}</td>
+                <td class="${i.tipo === 'Receita' ? 'val-receita' : 'val-despesa'}">R$ ${i.valor.toFixed(2)}</td>
+                <td><span class="${i.status === 'PAGO' ? 'status-pago' : 'status-pendente'}">${i.status}</span></td>
+                <td>${i.user}</td>
+                <td>
+                    <button class="btn btn-sm btn-light" onclick="editar('${i.id}')">✏️</button>
+                    <button class="btn btn-sm btn-light text-danger" onclick="excluir('${i.id}')">🗑️</button>
+                </td>
+            </tr>`;
+    });
+
+    // 4. Atualiza os cards de resumo (Top Bar)
+    document.getElementById("resRec").innerText = `R$ ${rTotal.toFixed(2)}`;
+    document.getElementById("resDes").innerText = `R$ ${dTotal.toFixed(2)}`;
+    document.getElementById("resSal").innerText = `R$ ${(rTotal - dTotal).toFixed(2)}`;
+
+    // 5. ATUALIZA OS NOVOS TOTAIS DO GRID (O que você pediu)
+    document.getElementById("txtTotalPago").innerText = dPago.toLocaleString('pt-br', {style: 'currency', currency: 'BRL'});
+    document.getElementById("txtTotalPendente").innerText = dPend.toLocaleString('pt-br', {style: 'currency', currency: 'BRL'});
+
+    // 6. Atualiza as barras de progresso e quantidades
+    const percP = dTotal > 0 ? Math.round((dPago / dTotal) * 100) : 0;
+    const barP = document.getElementById("barDespesaPago");
+    const barD = document.getElementById("barDespesaPendente");
+    
+    if(barP) { barP.style.width = percP + "%"; barP.innerText = percP + "%"; }
+    if(barD) { barD.style.width = (100 - percP) + "%"; barD.innerText = (100 - percP) + "%"; }
+    
+    document.getElementById("qtdPago").innerText = qPago;
+    document.getElementById("qtdPendente").innerText = qPend;
+}
 
         function classeVencimento(item) {
             if (item.tipo !== "Despesa" || item.status === "PAGO") return "";
@@ -696,16 +758,28 @@ async function carregarAssinaturas() {
     try {
         const r = await fetch(`${URL_API}?action=listarAssinaturas`);
         const dados = await r.json();
+        
+        console.log("Dados recebidos das assinaturas:", dados); // Veja isso no F12 do navegador
+
         const corpo = document.getElementById("corpoAss");
         const totalEl = document.getElementById("totalAss");
         
+        if (!corpo || !totalEl) {
+            console.error("IDs 'corpoAss' ou 'totalAss' não encontrados no HTML");
+            return;
+        }
+
         corpo.innerHTML = "";
         let somaAtivas = 0;
 
         dados.forEach(a => {
-            // Estrutura: [ID, Nome, DiaVenc, Valor, Cartao, User, Status]
-            const valor = Number(a[3]) || 0;
-            const status = a[6] || "Ativo";
+            // Se a planilha tiver cabeçalho, a[0] pode ser "ID". 
+            // Verifique se o valor numérico não é NaN (Not a Number)
+            const valorRaw = String(a[3]).replace(',', '.'); // Troca vírgula por ponto se vier formatado
+            const valor = parseFloat(valorRaw) || 0;
+            
+            // Verifique se o Status está mesmo na coluna 6 (sétima coluna)
+            const status = (a[6] || "").trim(); 
 
             if (status === "Ativo") {
                 somaAtivas += valor;
@@ -725,7 +799,9 @@ async function carregarAssinaturas() {
                 </tr>`;
         });
 
-        totalEl.innerText = `R$ ${somaAtivas.toFixed(2)}`;
+        // Exibe o total formatado
+        totalEl.innerText = somaAtivas.toLocaleString('pt-br', {style: 'currency', currency: 'BRL'});
+        
     } catch (e) {
         console.error("Erro ao carregar assinaturas:", e);
     }
