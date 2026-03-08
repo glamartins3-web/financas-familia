@@ -7,7 +7,9 @@
     <title>Controle Financeiro</title>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
 
     <style>
         /* --- LAYOUT BASE --- */
@@ -31,7 +33,7 @@
         .btn-month.active { background: #1a252f; color: #fff; border-color: #1a252f; }
 
         /* --- RESUMO E STATUS --- */
-        .resumo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+        .resumo-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
         .resumo-item { border-radius: 10px; padding: 8px; color: #fff; font-size: 0.7rem; text-align: center; font-weight: bold; }
         .resumo-item span { display: block; font-size: 0.8rem; margin-top: 2px; }
         .bg-receita { background: linear-gradient(135deg, #2ecc71, #27ae60); }
@@ -49,7 +51,7 @@
         .status-pendente { color: #f39c12; font-weight: bold; }
 
         /* --- STATUS DE VENCIMENTO --- */
-        .vencida { background: #ffe6e6; color: #c0392b; font-weight: bold; }
+        .vencida {background: #ffe6e6;color: #c0392b;font-weight: bold;border-left: 5px solid #e74c3c;}
         .hoje { background: #fff7cc; color: #f39c12; font-weight: bold; }
         .futura { background: #e8f8f0; color: #27ae60; }
 
@@ -61,57 +63,48 @@
             #corpoItens td { font-size: 0.8rem; padding: 6px 4px; }
         }
 
-/* Diminui o espaço interno lateral das células da tabela */
-.table-sm th, 
-.table-sm td {
-    padding-left: 4px !important;  /* Ajuste esse valor conforme desejar */
-    padding-right: 4px !important; /* Ajuste esse valor conforme desejar */
-    white-space: nowrap;           /* Evita que o texto quebre em duas linhas */
-}
+        /* Diminui o espaço interno lateral das células da tabela */
+        .table-sm th, 
+        .table-sm td {
+            padding-left: 4px !important;
+            padding-right: 4px !important;
+            white-space: nowrap;
+        }
 
-/* Opcional: Ajustar larguras específicas para colunas pequenas */
-.col-min {
-    width: 1%;
-    white-space: nowrap;
-}
+        /* Ajustar larguras específicas para colunas pequenas */
+        .col-min { width: 1%; white-space: nowrap; }
 
         /* Cores blindadas para os totais e status */
-.txt-pago { 
-    color: #27ae60 !important; 
-    font-weight: bold !important; 
-}
-.txt-pendente { 
-    color: #f39c12 !important; 
-    font-weight: bold !important; 
-}
+        .txt-pago { color: #27ae60 !important; font-weight: bold !important; }
+        .txt-pendente { color: #f39c12 !important; font-weight: bold !important; }
 
-/* Estilo do container dos totais */
-.container-totais {
-    background: #f8f9fa;
-    border: 1px solid #dee2e6;
-    border-radius: 8px;
-    padding: 8px 15px;
-    display: flex;
-    gap: 20px;
-    align-items: center;
-}
+        /* Estilo do container dos totais */
+        .container-totais {
+            background: #f8f9fa; border: 1px solid #dee2e6;
+            border-radius: 8px; padding: 8px 15px;
+            display: flex; gap: 20px; align-items: center;
+        }
+
     </style>
 </head>
 
 <body>
-
     <div id="toast"></div>
 
     <div id="tela-login">
-        <div class="login-box text-center">
-            <div class="mb-2" style="font-size: 3rem;">🏦</div>
-            <h4 class="fw-bold mb-3">Bem-vindo</h4>
-            <input id="userInput" class="form-control mb-2" placeholder="Usuário">
-            <input id="passInput" type="password" class="form-control mb-3" placeholder="Senha">
-            <button class="btn btn-dark w-100 fw-bold" onclick="fazerLogin()">ENTRAR NO SISTEMA</button>
-            <div id="loginError" class="text-danger mt-2 small hidden"></div>
-        </div>
+    <div class="login-box text-center">
+        <div class="mb-2" style="font-size: 3rem;">🏦</div>
+        <h4 class="fw-bold mb-3">Bem-vindo</h4>
+
+        <input id="userInput" class="form-control mb-2" placeholder="Usuário" onkeydown="enterLogin(event)">
+
+        <input id="passInput" type="password" class="form-control mb-3" placeholder="Senha" onkeydown="enterLogin(event)">
+
+        <button class="btn btn-dark w-100 fw-bold" onclick="fazerLogin()">ENTRAR NO SISTEMA</button>
+
+        <div id="loginError" class="text-danger mt-2 small hidden"></div>
     </div>
+</div>
 
     <div id="appContent" class="hidden">
 
@@ -136,30 +129,61 @@
         <div id="pg-lan" class="container hidden">
             <button class="btn btn-outline-secondary btn-sm mb-2" onclick="showPage('menu')">⬅ Voltar ao Menu</button>
             <div class="container-box p-3">
-            <div class="top-bar">
-                <div class="top-card">
-                    <h6>📅 MÊS / ANO</h6>
-                    <select id="anoSelector" class="form-select form-select-sm mb-2" onchange="setAno(this.value)"></select>
-                    <div id="monthSelector" class="month-grid"></div>
-                    <input type="hidden" id="mesFoco">
-                </div>
+                
+                <div class="top-bar">
+                    <div class="top-card">
+                        <h6>📅 MÊS / ANO</h6>
+                        <select id="anoSelector" class="form-select form-select-sm mb-2" onchange="setAno(this.value)"></select>
+                        <div id="monthSelector" class="month-grid"></div>
+                        <input type="hidden" id="mesFoco">
+                    </div>
 
-                <div class="top-card">
-                    <h6>📊 RESUMO</h6>
-                    <div class="resumo-grid">
-                        <div class="resumo-item bg-receita">Receitas <span id="resRec">R$ 0</span></div>
-                        <div class="resumo-item bg-despesa">Despesas <span id="resDes">R$ 0</span></div>
-                        <div class="resumo-item bg-saldo">Saldo <span id="resSal">R$ 0</span></div>
+                    <div class="top-card">
+                        <h6>📊 RESUMO</h6>
+                        <div class="resumo-grid">
+                        <div class="resumo-item bg-receita">
+                        Receitas
+                         <span id="resRec">R$ 0</span>
                         </div>
-                    <div class="status-info">Pagas: <b id="qtdPago">0</b> | Pendentes: <b id="qtdPendente">0</b></div>
-                    <div class="progress mb-1">
-                        <div id="barDespesaPago" class="progress-bar bg-success" style="width:0%">0%</div>
-                    </div>
+
+                         <div class="resumo-item bg-despesa">
+                        Despesas
+                        <span id="resDes">R$ 0</span>
+                         </div>
+
+                             <div class="resumo-item bg-saldo">
+                             Saldo Atual
+                             <span id="resSal">R$ 0</span>
+                              </div>
+
+                        <div class="resumo-item bg-saldo">
+                       Saldo Previsto
+                         <span id="resPrev">R$ 0</span>
+                        </div>
+                            </div>
+
+
+                            
+                        <div class="status-info mt-2">Pagas: <b id="qtdPago">0</b> | Pendentes: <b id="qtdPendente">0</b></div>
+                        <div class="progress mb-1">
+                            <div id="barDespesaPago" class="progress-bar bg-success" style="width:0%">0%</div>
+                        </div>
                         <div class="progress">
-                        <div id="barDespesaPendente" class="progress-bar bar-pendente" style="width:0%">0%</div>
+                            <div id="barDespesaPendente" class="progress-bar bar-pendente" style="width:0%">0%</div>
+                        </div>
                     </div>
+
+                            <div class="top-card">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6 class="fw-bold small m-0 text-secondary">📅 Peso por Vencimento (Despesas)</h6>
+                             <span class="badge bg-light text-muted border" style="font-size: 0.6rem;">POR DIA</span>
+                            </div>
+                             <div style="height: 180px;"> 
+                             <canvas id="graficoDias"></canvas>
+                            </div>
+                            </div>
+
                 </div>
-            </div>
 
                 <h6 class="fw-bold mb-3 text-secondary">➕ Novo Lançamento</h6>
                 <div class="row g-2 align-items-end mb-3">
@@ -173,7 +197,7 @@
                     </div>
                     <div class="col-md-2">
                         <label class="form-label small">💰 Valor</label>
-                        <input id="fValor" type="number" class="form-control form-control-sm" placeholder="0,00">
+                        <input id="fValor" type="text" class="form-control form-control-sm" placeholder="0,00">
                     </div>
                     <div class="col-md-2">
                         <label class="form-label small">📌 Tipo</label>
@@ -198,21 +222,22 @@
                 </div>
             </div>
 
+
             <div class="container-box table-responsive">
-            <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
-            <h6 class="fw-bold text-secondary m-0">📋 Lançamentos do Mês</h6>
-            <div class="container-totais shadow-sm">
-            <div class="small fw-bold">
-            <span style="color: #27ae60;">PAGO:</span> 
-            <span id="txtTotalPago" class="txt-pago">R$ 0,00</span>
-            </div>
-            <div class="vr"></div>
-            <div class="small fw-bold">
-            <span style="color: #f31212;">PENDENTE:</span> 
-            <span id="txtTotalPendente" class="txt-pendente">R$ 0,00</span>
-        </div>
-        </div>
-            </div>
+                <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
+                    <h6 class="fw-bold text-secondary m-0">📋 Lançamentos do Mês</h6>
+                    <div class="container-totais shadow-sm">
+                        <div class="small fw-bold">
+                            <span style="color: #27ae60;">PAGO:</span> 
+                            <span id="txtTotalPago" class="txt-pago">R$ 0,00</span>
+                        </div>
+                        <div class="vr"></div>
+                        <div class="small fw-bold">
+                            <span style="color: #f39c12;">PENDENTE:</span> 
+                            <span id="txtTotalPendente" class="txt-pendente">R$ 0,00</span>
+                        </div>
+                    </div>
+                </div>
                 <table class="table table-sm table-hover">
                     <thead>
                         <tr>
@@ -222,7 +247,6 @@
                             <th class="col-min">Tipo</th>
                             <th class="col-min">Valor</th>
                             <th class="col-min">Status</th>
-                            <th class="col-min">Usuário</th>
                             <th class="col-min">Ações</th>
                         </tr>
                     </thead>
@@ -315,12 +339,13 @@
                             <th class="col-min">Ações</th>
                         </tr>
                     </thead>
-                   <tbody id="corpoAss"></tbody> <tfoot>
-        <tr class="table-dark">
-            <td colspan="2" class="text-end fw-bold">TOTAL ATIVO</td>
-            <td id="totalAss" class="fw-bold">R$ 0,00</td> 
-            <td colspan="4"></td>
-        </tr>
+                    <tbody id="corpoAss"></tbody> 
+                    <tfoot>
+                        <tr class="table-dark">
+                            <td colspan="2" class="text-end fw-bold">TOTAL ATIVO</td>
+                            <td id="totalAss" class="fw-bold">R$ 0,00</td> 
+                            <td colspan="4"></td>
+                        </tr>
                     </tfoot>
                 </table>
             </div>
@@ -375,8 +400,11 @@
         /* --- STATE --- */
         let anoAtual = new Date().getFullYear();
         let db = [], assinaturasDB = [], userNow = "", chart;
-        const TEMPO_MAX_LOGIN = 10; // minutos
-        const AVISO_EXPIRACAO = 2;  // minutos
+        let idEditando = null;
+        let meuGraficoDias = null; // Para o gráfico horizontal de dias
+        
+        const TEMPO_MAX_LOGIN = 10; 
+        const AVISO_EXPIRACAO = 2;  
         const MESES_ABREV = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 
         /* --- NAVEGAÇÃO --- */
@@ -427,6 +455,12 @@
             }
         }
 
+
+                function enterLogin(e) {
+                if (e.key === "Enter") {
+                fazerLogin();
+                 }
+                }
         function logout() {
             localStorage.removeItem("usuarioLogado");
             localStorage.removeItem("loginTime");
@@ -438,7 +472,7 @@
             const sel = document.getElementById("anoSelector");
             if (!sel) return;
             sel.innerHTML = "";
-            const anoInicio = 2026;
+            const anoInicio = 2024; // Ajustado para ver os retroativos
             const anoFim = new Date().getFullYear() + 2;
             for (let a = anoInicio; a <= anoFim; a++) {
                 sel.innerHTML += `<option value="${a}" ${a === anoAtual ? "selected" : ""}>${a}</option>`;
@@ -508,88 +542,274 @@
             renderHistorico();
         }
 
-function render() {
-    const corpo = document.getElementById("corpoItens");
-    const mesFoco = document.getElementById("mesFoco").value; // Ex: "2024-02"
-    
-    corpo.innerHTML = ""; // Limpa a tabela
-    
-    // Variáveis de soma
-    let rTotal = 0, dTotal = 0, dPago = 0, dPend = 0, qPago = 0, qPend = 0;
+            function render() {
 
-    // 1. Filtra os dados pelo mês selecionado e Ordena (Despesa primeiro, depois Receita)
-    const listaFiltrada = db.filter(i => i.data && i.data.startsWith(mesFoco))
-                            .sort((a, b) => {
-                                if (a.tipo === "Despesa" && b.tipo === "Receita") return -1;
-                                if (a.tipo === "Receita" && b.tipo === "Despesa") return 1;
-                                return new Date(a.data) - new Date(b.data);
-                            });
+            const corpo = document.getElementById("corpoItens");
+            const mesAtual = document.getElementById("mesFoco").value;
 
-    // 2. Loop principal
+            corpo.innerHTML = ""; // proteção
+
+            let html = "";
+
+            let rTotal = 0, dTotal = 0, dPago = 0, dPend = 0, qPago = 0, qPend = 0;
+
+            const hoje = new Date();
+            hoje.setHours(0,0,0,0);
+
+            const listaFiltrada = db.filter(i => {
+
+    if(!i.data) return false;
+
+    const dataItem = new Date(i.data + "T12:00:00");
+
+    const ehDoMes = i.data.startsWith(mesAtual);
+
+    const despesaAtrasada =
+        i.tipo === "Despesa" &&
+        i.status !== "PAGO" &&
+        dataItem < hoje;
+
+    return ehDoMes || despesaAtrasada;
+
+}).sort((a, b) => {
+    if (a.tipo === "Despesa" && b.tipo === "Receita") return -1;
+    if (a.tipo === "Receita" && b.tipo === "Despesa") return 1;
+    return new Date(a.data) - new Date(b.data);
+});
+
+listaFiltrada.forEach(i => {
+
+   if (i.tipo === "Receita") {
+       rTotal += i.valor;
+   } else {
+       dTotal += i.valor;
+
+       if (i.status === "PAGO") {
+           dPago += i.valor;
+           qPago++;
+       } else {
+           dPend += i.valor;
+           qPend++;
+       }
+   }
+
+   html += `
+<tr class="${classeVencimento(i)}">
+<td><input type="checkbox" ${i.status === "PAGO" ? "checked" : ""} onclick="togglePago('${i.id}')"></td>
+<td>${formatarDataBR(i.data)}</td>
+<td>${i.desc}</td>
+<td class="${i.tipo === 'Receita' ? 'val-receita' : 'val-despesa'}">${i.tipo}</td>
+<td class="${i.tipo === 'Receita' ? 'val-receita' : 'val-despesa'}">R$ ${i.valor.toFixed(2)}</td>
+<td><span class="${i.status === 'PAGO' ? 'status-pago' : 'status-pendente'}">${i.status}</span></td>
+<td>
+<div class="d-flex gap-1">
+<button class="btn btn-sm btn-light" onclick="editar('${i.id}')">✏️</button>
+<button class="btn btn-sm btn-light text-danger" onclick="excluir('${i.id}')">🗑️</button>
+</div>
+</td>
+</tr>`;
+});
+
+corpo.innerHTML = html;   // ✔ CORRETO
+
+            const saldoAtual = rTotal - dPago;
+            const saldoPrevisto = rTotal - dTotal;
+
+            // CHAMADA DO GRÁFICO HORIZONTAL (Garante que exibe os dados do mês correto)
+            gerarGraficoPorDia(listaFiltrada, dTotal);
+
+            // Atualiza Top Bar e Totais
+            document.getElementById("resRec").innerText = `R$ ${rTotal.toFixed(2)}`;
+            document.getElementById("resDes").innerText = `R$ ${dTotal.toFixed(2)}`;
+            document.getElementById("resSal").innerText =
+            saldoAtual.toLocaleString('pt-br',{style:'currency',currency:'BRL'});
+
+            document.getElementById("resPrev").innerText =
+            saldoPrevisto.toLocaleString('pt-br',{style:'currency',currency:'BRL'});
+
+            document.getElementById("txtTotalPago").innerText = dPago.toLocaleString('pt-br', {style: 'currency', currency: 'BRL'});
+            document.getElementById("txtTotalPendente").innerText = dPend.toLocaleString('pt-br', {style: 'currency', currency: 'BRL'});
+
+            const percP = dTotal > 0 ? Math.round((dPago / dTotal) * 100) : 0;
+            const barP = document.getElementById("barDespesaPago");
+            const barD = document.getElementById("barDespesaPendente");
+            
+            if(barP) { barP.style.width = percP + "%"; barP.innerText = percP + "%"; }
+            if(barD) { barD.style.width = (100 - percP) + "%"; barD.innerText = (100 - percP) + "%"; }
+            
+            document.getElementById("qtdPago").innerText = qPago;
+            document.getElementById("qtdPendente").innerText = qPend;
+        }
+
+        // --- FUNÇÃO DO GRÁFICO HORIZONTAL CLEAN ---
+ function gerarGraficoPorDia(listaFiltrada, totalDespesaMes) {
+
+    const canvas = document.getElementById('graficoDias');
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+
+    const diasAgrupados = {};
+
     listaFiltrada.forEach(i => {
-        // Soma valores
-        if (i.tipo === "Receita") {
-            rTotal += i.valor;
-        } else {
-            dTotal += i.valor;
-            if (i.status === "PAGO") { 
-                dPago += i.valor; 
-                qPago++; 
-            } else { 
-                dPend += i.valor; 
-                qPend++; 
+
+        if (i.tipo === "Despesa") {
+
+            const partesData = i.data.split('-');
+
+            if (partesData.length === 3) {
+
+                const dia = partesData[2];
+
+                if (!diasAgrupados[dia]) diasAgrupados[dia] = { valor: 0 };
+
+                diasAgrupados[dia].valor += i.valor;
+
             }
         }
 
-        // 3. Monta a linha da tabela
-        corpo.innerHTML += `
-            <tr class="${classeVencimento(i)}">
-                <td><input type="checkbox" ${i.status === "PAGO" ? "checked" : ""} onclick="togglePago('${i.id}')"></td>
-                <td>${formatarDataBR(i.data)}</td>
-                <td>${i.desc}</td>
-                <td class="${i.tipo === 'Receita' ? 'val-receita' : 'val-despesa'}">${i.tipo}</td>
-                <td class="${i.tipo === 'Receita' ? 'val-receita' : 'val-despesa'}">R$ ${i.valor.toFixed(2)}</td>
-                <td><span class="${i.status === 'PAGO' ? 'status-pago' : 'status-pendente'}">${i.status}</span></td>
-                <td>${i.user}</td>
-                <td>
-                    <button class="btn btn-sm btn-light" onclick="editar('${i.id}')">✏️</button>
-                    <button class="btn btn-sm btn-light text-danger" onclick="excluir('${i.id}')">🗑️</button>
-                </td>
-            </tr>`;
     });
 
-    // 4. Atualiza os cards de resumo (Top Bar)
-    document.getElementById("resRec").innerText = `R$ ${rTotal.toFixed(2)}`;
-    document.getElementById("resDes").innerText = `R$ ${dTotal.toFixed(2)}`;
-    document.getElementById("resSal").innerText = `R$ ${(rTotal - dTotal).toFixed(2)}`;
+    const labels = Object.keys(diasAgrupados).sort();
+    const valores = labels.map(d => diasAgrupados[d].valor);
 
-    // 5. ATUALIZA OS NOVOS TOTAIS DO GRID (O que você pediu)
-    document.getElementById("txtTotalPago").innerText = dPago.toLocaleString('pt-br', {style: 'currency', currency: 'BRL'});
-    document.getElementById("txtTotalPendente").innerText = dPend.toLocaleString('pt-br', {style: 'currency', currency: 'BRL'});
+    // proteção caso não exista dados
+    if(labels.length === 0){
 
-    // 6. Atualiza as barras de progresso e quantidades
-    const percP = dTotal > 0 ? Math.round((dPago / dTotal) * 100) : 0;
-    const barP = document.getElementById("barDespesaPago");
-    const barD = document.getElementById("barDespesaPendente");
-    
-    if(barP) { barP.style.width = percP + "%"; barP.innerText = percP + "%"; }
-    if(barD) { barD.style.width = (100 - percP) + "%"; barD.innerText = (100 - percP) + "%"; }
-    
-    document.getElementById("qtdPago").innerText = qPago;
-    document.getElementById("qtdPendente").innerText = qPend;
+        if(meuGraficoDias){
+            meuGraficoDias.destroy();
+        }
+
+        return;
+    }
+
+    if (meuGraficoDias) {
+        meuGraficoDias.destroy();
+    }
+
+    meuGraficoDias = new Chart(ctx, {
+
+        type: 'bar',
+
+        plugins: [ChartDataLabels],
+
+        data: {
+            labels: labels.map(l => "Dia " + l),
+            datasets: [{
+                data: valores,
+                backgroundColor: 'rgba(52, 152, 219, 0.2)',
+                borderColor: '#3498db',
+                borderWidth: 1,
+                borderRadius: 4,
+                barThickness: 15
+            }]
+        },
+
+        options: {
+
+            indexAxis: 'y',
+
+            responsive: true,
+            maintainAspectRatio: false,
+
+            plugins: {
+
+                legend: { display: false },
+
+                datalabels: {
+                    anchor: 'end',
+                    align: 'right',
+                    color: '#2c3e50',
+                    font: { size: 10, weight: 'bold' },
+
+                    formatter: (value) => {
+
+                        const perc = totalDespesaMes > 0
+                            ? ((value / totalDespesaMes) * 100).toFixed(1)
+                            : 0;
+
+                        return `R$ ${value.toFixed(0)} (${perc}%)`;
+
+                    }
+
+                }
+
+            },
+
+            scales: {
+
+                x: {
+                    display: false,
+                    grid: { display: false }
+                },
+
+                y: {
+                    grid: { display: false },
+                    ticks: { font: { size: 10 } }
+                }
+
+            }
+
+        }
+
+    });
+
 }
 
-        function classeVencimento(item) {
-            if (item.tipo !== "Despesa" || item.status === "PAGO") return "";
-            const dItem = new Date(item.data + "T12:00:00");
-            const hoje = new Date(); hoje.setHours(0,0,0,0); dItem.setHours(0,0,0,0);
-            if (dItem < hoje) return "vencida";
-            if (dItem.getTime() === hoje.getTime()) return "hoje";
-            return "futura";
+ function classeVencimento(item) {
+
+    if (item.tipo !== "Despesa" || item.status === "PAGO") return "";
+
+    if (!item.data) return "";
+
+    const dItem = new Date(item.data + "T12:00:00");
+    const hoje = new Date();
+
+    hoje.setHours(0,0,0,0);
+    dItem.setHours(0,0,0,0);
+
+    if (dItem < hoje) return "vencida";
+
+    if (dItem.getTime() === hoje.getTime()) return "hoje";
+
+    return "futura";
+}
+
+        function editar(id) {
+            const item = db.find(x => String(x.id) === String(id));
+            if(!item) return;
+            idEditando = id;
+            document.getElementById("fData").value = item.data;
+            document.getElementById("fDesc").value = item.desc;
+            document.getElementById("fValor").value = item.valor;
+            document.getElementById("fTipo").value = item.tipo;
+            document.getElementById("chkRecorrente").disabled = true; // Desabilita recorrência ao editar
+            window.scrollTo({ top: 0, behavior: 'smooth' }); // Sobe a tela para o form
         }
 
         async function adicionar() {
             if (!fData.value || !fDesc.value || !fValor.value) return mostrarToast("❌ Preencha tudo");
+            
+            // SE FOR MODO EDIÇÃO
+            if (idEditando) {
+                const payload = {
+                    action: "updateLancamento", id: idEditando, 
+                    data: fData.value, desc: fDesc.value, valor: parseFloat(
+    fValor.value
+    .replace(/\./g,"")
+    .replace(",",".")
+), tipo: fTipo.value, user: userNow
+                };
+                await fetch(URL_API, { method: "POST", body: JSON.stringify(payload) });
+                idEditando = null;
+                document.getElementById("chkRecorrente").disabled = false;
+                
+                limparFormulario(); // limpa form
+                carregar();
+                return mostrarToast("✅ Atualizado com Sucesso");
+            }
+
+            // SE FOR MODO ADIÇÃO NORMAL
             const chkRec = document.getElementById("chkRecorrente").checked;
             const qtd = chkRec ? Number(document.getElementById("qtdRecorrencia").value) : 1;
             
@@ -600,16 +820,31 @@ function render() {
                     action: "addLancamento",
                     data: d.toISOString().slice(0, 10),
                     desc: fDesc.value,
-                    valor: Number(fValor.value),
+                    valor: parseFloat(fValor.value.replace(/\./g,"").replace(",",".")),
                     tipo: fTipo.value,
                     user: userNow
                 };
                 await fetch(URL_API, { method: "POST", body: JSON.stringify(payload) });
             }
+            limparFormulario();
             carregar();
             mostrarToast("✅ Salvo");
         }
 
+
+        function limparFormulario(){
+
+    fData.value = "";
+    fDesc.value = "";
+    fValor.value = "";
+    fTipo.value = "Despesa";
+
+    document.getElementById("chkRecorrente").checked = false;
+    document.getElementById("qtdRecorrencia").value = 12;
+    document.getElementById("qtdRecorrencia").disabled = true;
+
+    fDesc.focus(); // volta cursor para descrição
+}
         async function togglePago(id) {
             const item = db.find(x => String(x.id) === String(id));
             if (!item) return;
@@ -619,7 +854,7 @@ function render() {
         }
 
         async function excluir(id) {
-            if (!confirm("Excluir?")) return;
+            if (!confirm("Excluir lançamento?")) return;
             await fetch(URL_API, { method: "POST", body: JSON.stringify({ action: "deleteLancamento", id: id }) });
             db = db.filter(x => String(x.id) !== String(id));
             render();
@@ -634,7 +869,7 @@ function render() {
         async function salvarSalario() {
             const s05 = document.getElementById("sal05").value;
             const s20 = document.getElementById("sal20").value;
-            const mes = new Date().toISOString().slice(0, 7);
+            const mes = document.getElementById("mesFoco").value; 
             
             if(s05 > 0) await fetch(URL_API, { method: "POST", body: JSON.stringify({ action: "addLancamento", data: `${mes}-05`, desc: "Salário", valor: Number(s05), tipo: "Receita", user: userNow })});
             if(s20 > 0) await fetch(URL_API, { method: "POST", body: JSON.stringify({ action: "addLancamento", data: `${mes}-20`, desc: "Adiantamento", valor: Number(s20), tipo: "Receita", user: userNow })});
@@ -642,6 +877,7 @@ function render() {
             carregar();
         }
 
+        /* --- HISTÓRICO --- */
         function renderHistorico() {
             const filtro = document.getElementById("histFiltro").value;
             const ano = Number(document.getElementById("histAno").value);
@@ -650,7 +886,11 @@ function render() {
             const hist = {};
 
             db.forEach(l => {
-                const [y, m] = l.data.split("-").map(Number);
+                const partes = l.data.split("-");
+                if(partes.length < 2) return;
+                const y = Number(partes[0]);
+                const m = Number(partes[1]);
+                
                 if (y !== ano) return;
                 if (filtro === "s1" && m > 6) return;
                 if (filtro === "s2" && m <= 6) return;
@@ -667,167 +907,165 @@ function render() {
             renderGraficoHistorico(hist, meses);
         }
 
-         function renderGraficoHistorico(hist, meses) {
+        function renderGraficoHistorico(hist, meses) {
             const ctx = document.getElementById("graficoMensal").getContext("2d");
             if (chart) chart.destroy();
+            
             chart = new Chart(ctx, {
-                type: "bar",
+                type: 'bar',
                 data: {
-                    labels: meses,
+                    labels: meses.map(m => m.split('-')[1] + '/' + m.split('-')[0]), // Formata para Mês/Ano
                     datasets: [
-                        { label: "Receitas", data: meses.map(m => hist[m].r), backgroundColor: "#27ae60" },
-                        { label: "Despesas", data: meses.map(m => hist[m].d), backgroundColor: "#e74c3c" }
+                        { type: 'line', label: 'Saldo', data: meses.map(m => hist[m].r - hist[m].d), borderColor: '#6c5ce7', borderWidth: 2, tension: 0.3 },
+                        { label: 'Receitas', data: meses.map(m => hist[m].r), backgroundColor: '#2ecc71', borderRadius: 4 },
+                        { label: 'Despesas', data: meses.map(m => hist[m].d), backgroundColor: '#e74c3c', borderRadius: 4 }
                     ]
-                }
+                },
+                options: { responsive: true, plugins: { legend: { position: 'top' } } }
             });
         }
 
-      let grafico; // Certifique-se de declarar no escopo global ou topo do script
-
-    function renderGraficoHistorico(hist, meses) {
-    const ctx = document.getElementById("graficoMensal").getContext("2d");
-    
-    // Destrói o gráfico anterior se existir para evitar bugs visuais
-    if (grafico) {
-        grafico.destroy();
-    }
-
-    const labels = meses.map(m => {
-        const [y, mes] = m.split("-");
-        return MESES_ABREV[parseInt(mes) - 1] + "/" + y.slice(2);
-    });
-
-    const receitas = meses.map(m => hist[m].r);
-    const despesas = meses.map(m => hist[m].d);
-    const saldos = meses.map(m => hist[m].r - hist[m].d);
-
-    grafico = new Chart(ctx, {
-        data: {
-            labels: labels,
-            datasets: [
-                {
-                    type: 'line',
-                    label: 'Saldo Líquido',
-                    data: saldos,
-                    borderColor: '#6c5ce7',
-                    backgroundColor: '#6c5ce7',
-                    borderWidth: 3,
-                    pointRadius: 4,
-                    tension: 0.4,
-                    order: 1
-                },
-                {
-                    type: 'bar',
-                    label: 'Receitas',
-                    data: receitas,
-                    backgroundColor: '#2ecc71',
-                    borderRadius: 5,
-                    order: 2
-                },
-                {
-                    type: 'bar',
-                    label: 'Despesas',
-                    data: despesas,
-                    backgroundColor: '#ff7675',
-                    borderRadius: 5,
-                    order: 3
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: { position: 'top' },
-                tooltip: { mode: 'index', intersect: false }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        callback: function(value) {
-                            return 'R$ ' + value.toLocaleString('pt-br');
-                        }
-                    }
-                }
-            }
-        }
-    });
-}
-        
 async function carregarAssinaturas() {
+
     try {
+
         const r = await fetch(`${URL_API}?action=listarAssinaturas`);
         const dados = await r.json();
-        
-        console.log("Dados recebidos das assinaturas:", dados); // Veja isso no F12 do navegador
 
         const corpo = document.getElementById("corpoAss");
         const totalEl = document.getElementById("totalAss");
-        
-        if (!corpo || !totalEl) {
-            console.error("IDs 'corpoAss' ou 'totalAss' não encontrados no HTML");
-            return;
-        }
+
+        if (!corpo || !totalEl) return;
 
         corpo.innerHTML = "";
+
         let somaAtivas = 0;
 
         dados.forEach(a => {
-            // Se a planilha tiver cabeçalho, a[0] pode ser "ID". 
-            // Verifique se o valor numérico não é NaN (Not a Number)
-            const valorRaw = String(a[3]).replace(',', '.'); // Troca vírgula por ponto se vier formatado
-            const valor = parseFloat(valorRaw) || 0;
-            
-            // Verifique se o Status está mesmo na coluna 6 (sétima coluna)
-            const status = (a[6] || "").trim(); 
 
-            if (status === "Ativo") {
+            const id = a[0];
+            const nome = a[1];
+            const venc = a[2];
+
+            let valor = a[3];
+
+            if (typeof valor === "string") {
+                valor = valor.replace(",", ".");
+            }
+
+            valor = parseFloat(valor) || 0;
+
+            const cartao = a[4] || "-";
+
+            const statusOriginal = String(a[5] || "Ativo").trim();
+            const statusMaiusculo = statusOriginal.toUpperCase();
+
+            if (statusMaiusculo === "ATIVO") {
                 somaAtivas += valor;
             }
 
             corpo.innerHTML += `
-                <tr>
-                    <td>${a[1]}</td>
-                    <td>Dia ${a[2]}</td>
-                    <td class="fw-bold">R$ ${valor.toFixed(2)}</td>
-                    <td><span class="badge bg-light text-dark">${a[4] || '-'}</span></td>
-                    <td class="text-muted">R$ ${(valor * 12).toFixed(2)}</td>
-                    <td><span class="badge ${status === 'Ativo' ? 'bg-success' : 'bg-danger'}">${status}</span></td>
-                    <td>
-                        <button class="btn btn-sm btn-outline-danger" onclick="excluirAssinatura('${a[0]}')">🗑️</button>
-                    </td>
-                </tr>`;
+            <tr>
+                <td>${nome}</td>
+                <td>Dia ${venc}</td>
+                <td class="fw-bold">R$ ${valor.toFixed(2)}</td>
+                <td><span class="badge bg-light text-dark">${cartao}</span></td>
+                <td class="text-muted">R$ ${(valor * 12).toFixed(2)}</td>
+                <td>
+                    <span class="badge ${statusMaiusculo === "ATIVO" ? "bg-success" : "bg-danger"}">
+                        ${statusOriginal}
+                    </span>
+                </td>
+                <td>
+                    <button class="btn btn-sm btn-outline-danger"
+                        onclick="excluirAssinatura('${id}')">🗑️</button>
+                </td>
+            </tr>`;
         });
 
-        // Exibe o total formatado
-        totalEl.innerText = somaAtivas.toLocaleString('pt-br', {style: 'currency', currency: 'BRL'});
-        
+        totalEl.innerText =
+            somaAtivas.toLocaleString('pt-br',{
+                style:'currency',
+                currency:'BRL'
+            });
+
     } catch (e) {
+
         console.error("Erro ao carregar assinaturas:", e);
+        mostrarToast("❌ Erro ao carregar assinaturas");
+
     }
 }
 
-// Lembre-se de adicionar a função de excluir para as assinaturas também
-async function excluirAssinatura(id) {
-    if (!confirm("Remover esta assinatura?")) return;
-    await fetch(URL_API, { method: "POST", body: JSON.stringify({ action: "deleteAssinatura", id: id }) });
-    carregarAssinaturas();
-    mostrarToast("🗑️ Assinatura removida");
-}
-        
         async function addAssinatura() {
+            const nome = document.getElementById("aNome").value;
+            const valor = document.getElementById("aValor").value;
+            
+            if(!nome || !valor) return mostrarToast("Preencha o Nome e Valor");
+            
             const payload = {
                 action: "addAssinatura",
-                nome: document.getElementById("aNome").value,
+                nome: nome,
                 venc: document.getElementById("aVenc").value,
-                valor: document.getElementById("aValor").value,
+                valor: valor,
                 cartao: document.getElementById("aCartao").value,
                 status: document.getElementById("aStatus").value,
                 user: userNow
             };
+            
             await fetch(URL_API, { method: "POST", body: JSON.stringify(payload) });
             carregarAssinaturas();
+            mostrarToast("✅ Assinatura adicionada!");
+            document.getElementById("aNome").value = "";
+            document.getElementById("aVenc").value = "";
+            document.getElementById("aValor").value = "";
+            document.getElementById("aCartao").value = "";
+            document.getElementById("aStatus").value = "Ativo";
         }
+
+async function excluirAssinatura(id){
+
+    if(!confirm("Remover esta assinatura?")) return;
+
+    try {
+
+        await fetch(URL_API,{
+            method:"POST",
+            body:JSON.stringify({
+                action:"deleteAss",
+                id:id
+            })
+        });
+
+        mostrarToast("🗑️ Assinatura removida");
+
+        carregarAssinaturas();
+
+    } catch (erro) {
+
+        console.error("Erro ao excluir:", erro);
+        mostrarToast("❌ Erro ao excluir assinatura");
+
+    }
+}
+document.addEventListener("keydown", function(e){
+
+    if(e.key === "Enter"){
+
+        const ativo = document.activeElement.id;
+
+        if(
+            ativo === "fDesc" ||
+            ativo === "fValor" ||
+            ativo === "fData"
+        ){
+            adicionar();
+        }
+
+    }
+
+});
+
     </script>
 </body>
 </html>
